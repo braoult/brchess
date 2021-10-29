@@ -12,6 +12,7 @@ CFLAGS += -g
 CFLAGS += -Wall
 CFLAGS += -Wextra
 CFLAGS += -pedantic
+CFLAGS += -Wno-pointer-arith
 #CFLAGS += -Werror
 CFLAGS += -Wmissing-declarations
 

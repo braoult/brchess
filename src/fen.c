@@ -1,3 +1,27 @@
+/* fen.c - fen notation.
+ *
+ * Copyright (C) 2021 Bruno Raoult ("br")
+ * Licensed under the GNU General Public License v3.0 or later.
+ * Some rights reserved. See COPYING.
+ *
+ * You should have received a copy of the GNU General Public License along with this
+ * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.htmlL>.
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later <https://spdx.org/licenses/GPL-3.0-or-later.html>
+ *
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <ctype.h>
+
+#include "chessdefs.h"
+#include "position.h"
+#include "board.h"
+#include "fen.h"
+
 /* Starting Position :
  * rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
  * After 1.e4 :
@@ -18,28 +42,16 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
-#include <ctype.h>
-
-#include "chessdefs.h"
-#include "position.h"
-#include "board.h"
-#include "fen.h"
-
 // warning, we expect a valid fen input
-POS *fen2pos(POS *pos, char *fen)
+pos_t *fen2pos(pos_t *pos, char *fen)
 {
     char *p = fen;
-    int rank, file, skip;
-    BOARD *board = pos->board;
+    short rank, file, skip;
+    board_t *board = pos->board;
 #   define SKIP_BLANK(p) for(;*(p) == ' '; (p)++)
 
-    //pos_init(pos);
-
-    // 1) get piece placement information
+    /* 1) get piece placement information
+     */
     for (rank = 7, file = 0; *p && *p != ' '; ++p) {
         char cp = toupper(*p);
         switch (cp) {
@@ -60,7 +72,7 @@ POS *fen2pos(POS *pos, char *fen)
                 goto color;
             case CHAR_KING:
                 board[SQ88(file, rank)]->piece = KING;
-                goto color;
+                //goto color;
                 //printf("f=%d r=%d *p=%c piece=%c\n", file, rank, *p, cp);
             color:
                 SET_COLOR(board[SQ88(file, rank)]->piece, islower(*p));
@@ -86,13 +98,14 @@ POS *fen2pos(POS *pos, char *fen)
         putchar('\n');
     }
 
-
-    // 2) next move color
+    /* 2) next move color
+     */
     SKIP_BLANK(p);
-    pos->turn = *p == 'w' ? TURN_WHITE : TURN_BLACK;
+    pos->turn = *p == 'w' ? WHITE : BLACK;
     p++;
 
-    // 3) castle status
+    /* 3) castle status
+     */
     SKIP_BLANK(p);
     pos->castle = 0;
     if (*p != '-') {
@@ -114,21 +127,20 @@ POS *fen2pos(POS *pos, char *fen)
         }
     }
 
-    // 4) en passant
+    /* 4) en passant
+     */
     SKIP_BLANK(p);
-    //printf("pos=%d\n", (int)(p-fen));
     pos->en_passant = 0;
     if (*p != '-') {
-        //printf("passant=%c\n", *p);
         SET_F(pos->en_passant, C2FILE(*p++));
         SET_R(pos->en_passant, C2RANK(*p++));
-        //printf("passant=%c\n", *p);
     } else {
         p++;
     }
 
-    // 5) half moves since last capture or pawn move and
-    // 6) current move number
+    /* 5) half moves since last capture or pawn move and
+     * 6) current move number
+     */
     SKIP_BLANK(p);
     //printf("pos=%d\n", (int)(p-fen));
     sscanf(p, "%hd %hd", &pos->clock_50, &pos->curmove);
@@ -138,7 +150,7 @@ POS *fen2pos(POS *pos, char *fen)
 #ifdef FENBIN
 int main(int ac, char**av)
 {
-    POS *pos;
+    pos_t *pos;
 
     pos = pos_create();
     if (ac == 1) {

@@ -1,56 +1,70 @@
+/* chessdefs.h - generic chess definitions.
+ *
+ * Copyright (C) 2021 Bruno Raoult ("br")
+ * Licensed under the GNU General Public License v3.0 or later.
+ * Some rights reserved. See COPYING.
+ *
+ * You should have received a copy of the GNU General Public License along with this
+ * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.htmlL>.
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later <https://spdx.org/licenses/GPL-3.0-or-later.html>
+ *
+ */
+
 #ifndef CHESSDEFS_H
 #define CHESSDEFS_H
 
-/* We use the following notation
- * Bit  Binary          Piece/color
- *
- * 0    0000 0001       White
- * 1    0000 0010       Black
- *
- * 2    0000 0100       Pawn
- * 3    0000 1000       Knight
- * 4    0001 0000       Bishop
- * 5    0010 0000       Rook
- * 6    0100 0000       Queen
- * 7    1000 0000       King
+/* piece_t bits structure
  */
+typedef unsigned char piece_t;
 
-//#define INVALID  -1                               /* unused in 0x88 */
-#define EMPTY        0
+#define EMPTY           0
 
-#define WHITE        (0)                          /* 0000000 0 */
-#define BLACK        (1)                          /* 0000000 1 */
+#define WHITE           0                         /* 0x00 00000000 */
+#define BLACK           1                         /* 0x01 00000001 */
 
-#define PAWN         (1 << 1)                     /* 0000001 0 */
-#define KNIGHT       (1 << 2)                     /* 0000010 0 */
-#define BISHOP       (1 << 3)                     /* 0000100 0 */
-#define ROOK         (1 << 4)                     /* 0001000 0 */
-#define QUEEN        (1 << 5)                     /* 0010000 0 */
-#define KING         (1 << 6)                     /* 0100000 0 */
+#define PAWN            (1 << 1)                  /* 0x02 00000010 */
+#define KNIGHT          (1 << 2)                  /* 0x04 00000100 */
+#define BISHOP          (1 << 3)                  /* 0x08 00001000 */
+#define ROOK            (1 << 4)                  /* 0x10 00010000 */
+#define QUEEN           (1 << 5)                  /* 0x20 00100000 */
+#define KING            (1 << 6)                  /* 0x40 01000000 */
 
-#define MASK_COLOR   0x01                         /* 0000000 1 */
-#define MASK_PIECE   0x7E                         /* 0111111 0 */
+#define MASK_COLOR      0x01                      /* 00000001 */
+#define MASK_PIECE      0x7E                      /* 01111110 */
 
-#define COLOR(p)    ((p) & MASK_COLOR)
-#define PIECE(p)    ((p) & MASK_PIECE)
+#define COLOR(p)        ((p) & MASK_COLOR)
+#define PIECE(p)        ((p) & MASK_PIECE)
 
-#define IS_WHITE(p)  (!COLOR(p))
-#define IS_BLACK(p)  (COLOR(p))
+#define IS_WHITE(p)     (!COLOR(p))
+#define IS_BLACK(p)     (COLOR(p))
 
 #define SET_WHITE(p)    ((p) &= ~MASK_COLOR)
 #define SET_BLACK(p)    ((p) |= MASK_COLOR)
 #define SET_COLOR(p, c) (!(c)? SET_WHITE(p): SET_BLACK(p))
 
-#define TURN_WHITE   0
-#define TURN_BLACK   1
+/* square_t bits structure : ffffrrrr
+ * ffff: file
+ * rrrr: rank
+ */
+typedef unsigned char square_t;
 
-typedef unsigned char piece_t, color_t;
+#define GET_F(s)        ((s) >> 4)
+#define GET_R(s)        ((s) & 0x0f)
+#define SET_F(s, f)     ((s) &= 0x0f, (s) |= (f)<<4)
+#define SET_R(s, r)     ((s) &= 0xf0, (s) |= (r))
 
-#define CASTLE_WK    0x01
-#define CASTLE_WQ    0x02
-#define CASTLE_BK    0x04
-#define CASTLE_BQ    0x08
-#define CASTLE_W     0x03                         /* white castle mask */
-#define CASTLE_B     0x0C                         /* black castle mask */
+/* castle_t bits structure
+ */
+typedef unsigned char castle_t;
+
+#define CASTLE_WK       1                         /* 0x01 00000001 */
+#define CASTLE_WQ       (1 << 1)                  /* 0x02 00000010 */
+#define CASTLE_BK       (1 << 2)                  /* 0x04 00000100 */
+#define CASTLE_BQ       (1 << 3)                  /* 0x08 00001000 */
+
+#define CASTLE_W        0x03                      /* 00000011 W castle mask */
+#define CASTLE_B        0x0C                      /* 00001100 B castle mask */
+
 
 #endif
