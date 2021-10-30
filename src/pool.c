@@ -18,11 +18,8 @@
 
 #include <stddef.h>
 #include <malloc.h>
-//extern char* strdup(const char*);
 #include <string.h>
 #include <stdlib.h>
-//#include <stdio.h>
-
 #include "list.h"
 #include "pool.h"
 
@@ -34,23 +31,23 @@ void pool_stats(pool_t *pool)
         printf("alloc:%u ", pool->allocated);
         printf("grow:%u ", pool->growsize);
         printf("eltsize:%lu ", pool->eltsize);
-        printf("offset:%lu ", pool->list_offset);
         printf("\n");
     }
 }
 
-pool_t *pool_init(const char *name, uint32_t growsize, size_t eltsize,
-                  ptrdiff_t list_offset)
+pool_t *pool_init(const char *name, uint32_t growsize, size_t eltsize)
 {
     pool_t *pool;
 
+    /* we need at least this space in struct */
+    if (eltsize < sizeof (struct list_head))
+        return NULL;
     if ((pool = malloc(sizeof (*pool)))) {
         pool->name = strdup(name);
         pool->growsize = growsize;
         pool->eltsize = eltsize;
         pool->available = 0;
         pool->allocated = 0;
-        pool->list_offset = list_offset;
         INIT_LIST_HEAD(&pool->head);
     }
     return pool;
@@ -74,8 +71,7 @@ static uint32_t _pool_add(pool_t *pool, struct list_head *elt)
 
 uint32_t pool_add(pool_t *pool, void *elt)
 {
-    struct list_head *plist = elt + pool->list_offset;;
-    return _pool_add(pool, plist);
+    return _pool_add(pool, elt);
 }
 
 static struct list_head *_pool_get(pool_t *pool)
@@ -83,7 +79,7 @@ static struct list_head *_pool_get(pool_t *pool)
     struct list_head *res = pool->head.next;
     pool->available--;
     list_del(res);
-    //printf("%s: res=%p\n", __func__, (void *)res);
+    // printf("%s: res=%p\n", __func__, (void *)res);
     return res;
 }
 
@@ -96,7 +92,6 @@ void *pool_get(pool_t *pool)
                pool->allocated);
         void *alloc = malloc(pool->eltsize * pool->growsize);
         void *cur;
-        struct list_head *plist;
         uint32_t i;
 
         if (!alloc)
@@ -105,16 +100,13 @@ void *pool_get(pool_t *pool)
         //printf("       (old=%u)\n", pool->allocated);
         for (i = 0; i < pool->growsize; ++i) {
             cur = alloc + i * pool->eltsize;
-            plist = cur + pool->list_offset;
-            printf("%s: alloc=%p cur=%p plist=%p off=%lu\n", __func__,
-                   alloc, cur, (void *)plist, (void *)plist-cur);
-            _pool_add(pool, plist);
+            printf("%s: alloc=%p cur=%p\n", __func__,
+                   alloc, cur);
+            _pool_add(pool, (struct list_head *)cur);
         }
     }
-    //list_del(pool->head.next);
-    void *res = _pool_get(pool);
-    printf("%s: returning %p pointer\n", __func__, res);
-    return res - pool->list_offset;
+    //printf("%s: returning %p pointer\n", __func__, res);
+    return  _pool_get(pool);
 }
 
 #ifdef POOLBIN
@@ -138,7 +130,7 @@ int main(int ac, char**av)
     printf("%s: sizeof(d)=%lu sizeof(*d)=%lu off=%lu\n", *av, sizeof(elt),
            sizeof(*elt), offsetof(struct d, list));
 
-    if ((pool = pool_init("dummy", 3, sizeof(*elt), offsetof(struct d, list)))) {
+    if ((pool = pool_init("dummy", 3, sizeof(*elt)))) {
         pool_stats(pool);
         for (int cur=1; cur<ac; ++cur) {
             total = atoi(av[cur]);

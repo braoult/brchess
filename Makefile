@@ -5,14 +5,14 @@ SRCDIR=./src
 
 SRC=$(wildcard $(SRCDIR)/*.c)
 INC=$(wildcard $(SRCDIR)/*.h)
-BIN=fen
+BIN=fen pool
 
-CFLAGS += -std=c99
+CFLAGS += -std=gnu99
 CFLAGS += -g
 CFLAGS += -Wall
 CFLAGS += -Wextra
-CFLAGS += -pedantic
-CFLAGS += -Wno-pointer-arith
+#CFLAGS += -pedantic
+#CFLAGS += -Wno-pointer-arith
 #CFLAGS += -Werror
 CFLAGS += -Wmissing-declarations
 
@@ -24,5 +24,10 @@ clean:
 
 fen: CFLAGS+=-DFENBIN
 fen: $(SRC)
+	echo SRC=$(SRC)
+	$(CC) $(CFLAGS) $? -o $@
+
+pool: CFLAGS+=-DPOOLBIN
+pool: $(SRC)
 	echo SRC=$(SRC)
 	$(CC) $(CFLAGS) $? -o $@

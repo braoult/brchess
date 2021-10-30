@@ -1,4 +1,4 @@
-/* pool.h - A simple pool manager.
+/* pool.h - A simple memory pool manager.
  *
  * Copyright (C) 2021 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
@@ -24,13 +24,11 @@ typedef struct {
     uint32_t allocated;
     uint32_t growsize;
     size_t eltsize;
-    ptrdiff_t list_offset;
     struct list_head head;
 } pool_t;
 
 void pool_stats(pool_t *pool);
-pool_t *pool_init(const char *name, uint32_t grow, size_t size, ptrdiff_t offset);
-//pool_t *pool_init(const char *name, uint32_t grow, size_t size);
+pool_t *pool_init(const char *name, uint32_t grow, size_t size);
 void *pool_get(pool_t *pool);
 uint32_t pool_add(pool_t *pool, void *elt);
 
