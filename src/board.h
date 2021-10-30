@@ -19,8 +19,9 @@
 
 typedef struct {
     piece_t piece;
-    //struct piece *s_piece;
-} board_t[8*8*2];                                 /* 0x88 board */
+    //piece_t *s_piece;
+} board_t;                                        /* 0x88 board */
+#define BOARDSIZE    (8*8*2)
 
 /* definitions for 0x88 representation
  */

@@ -17,13 +17,30 @@
 #include "chessdefs.h"
 #include "board.h"
 #include "list.h"
+#include "position.h"
+#include "pool.h"
 
-typedef struct piece {
+#define PIECE_DEFAULT_VALUE 0
+
+/* initial default values */
+#define PAWN_VALUE    100
+#define KNIGHT_VALUE  300
+#define BISHOP_VALUE  300
+#define ROOK_VALUE    500
+#define QUEEN_VALUE   900
+#define KING_VALUE    20000
+
+typedef struct {
     piece_t piece;
     square_t square;
     short castle;
     int64_t value;
     struct list_head list;
 } piece_list_t;
+
+void piece_list_print(struct list_head *list);
+void pieces_print_pos_pieces(pos_t *pos);
+pool_t *piece_pool_init();
+piece_list_t *piece_add(pos_t *pos, piece_t piece, square_t square);
 
 #endif

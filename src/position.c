@@ -21,7 +21,28 @@
 #include "position.h"
 #include "fen.h"
 
-inline static char piece2char(unsigned char p)
+char *piece2string(piece_t p)
+{
+    piece_t piece = PIECE(p);
+
+    switch (piece) {
+        case PAWN:
+            return "Pawn";
+        case KNIGHT:
+            return "Knight";
+        case BISHOP:
+            return "Bishop";
+        case ROOK:
+            return "Rook";
+        case QUEEN:
+            return "Queen";
+        case KING:
+            return "King";
+    }
+    return "Unknown";
+}
+
+inline static char piece2char(piece_t p)
 {
     piece_t piece = PIECE(p);
     char res;
@@ -55,6 +76,11 @@ inline static char piece2char(unsigned char p)
 
 }
 
+/* void pos_print - Print position on stdout.
+ * @pos:   Position address (pos_t * )
+ *
+ * Return: None.
+ */
 void pos_print(pos_t *pos)
 {
     int rank, file;
@@ -65,7 +91,7 @@ void pos_print(pos_t *pos)
     for (rank = 7; rank >= 0; --rank) {
         printf("%c |", rank + '1');
         for (file = 0; file < 8; ++file) {
-            piece = board[SQ88(file, rank)]->piece;
+            piece = board[SQ88(file, rank)].piece;
             printf(" %c |", piece2char(piece));
         }
         printf("\n  +---+---+---+---+---+---+---+---+\n");
@@ -101,10 +127,13 @@ pos_t *pos_init(pos_t *pos)
     int file, rank;
     board_t *board = pos->board;
 
-    for (rank = 0; rank < 8; ++rank) {
-        for (file = 0; file < 8; ++file) {
-            printf("file = %d rank = %d SQ88 = %#x\n", file, rank, SQ88(file, rank));
-            board[SQ88(file, rank)]->piece = EMPTY;
+    for (file = 0; file < 8; ++file) {
+        for (rank = 0; rank < 8; ++rank) {
+            /*printf("file = %d rank = %d SQ88 = %#2x = %d addr=%p\n", file, rank,
+                   SQ88(file, rank), SQ88(file, rank),
+                   &board[SQ88(file, rank)].piece);
+            */
+            board[SQ88(file, rank)].piece = EMPTY;
         }
     }
 
@@ -114,6 +143,8 @@ pos_t *pos_init(pos_t *pos)
     pos->curmove = 0;
     pos->en_passant = 0;
     pos->en_passant = 0;
+    INIT_LIST_HEAD(&pos->pieces_white);
+    INIT_LIST_HEAD(&pos->pieces_black);
 
     return pos;
 }
@@ -129,7 +160,9 @@ pos_t *pos_create()
 {
     pos_t *pos = malloc(sizeof(pos_t));
     if (pos) {
-        pos->board = malloc(sizeof (board_t));
+        //printf("sizeof(board)=%lu\n", sizeof (board_t));
+        pos->board = malloc(sizeof (board_t)*BOARDSIZE);
+        //printf("board mem: %p-%p\n", pos->board, pos->board+sizeof (board_t));
         if (pos->board)
             pos_init(pos);
         else {
@@ -137,7 +170,5 @@ pos_t *pos_create()
             pos = NULL;
         }
     }
-    INIT_LIST_HEAD(&pos->w_pieces);
-    INIT_LIST_HEAD(&pos->b_pieces);
     return pos;
 }

@@ -14,6 +14,8 @@
 #ifndef CHESSDEFS_H
 #define CHESSDEFS_H
 
+#include <stdint.h>
+
 /* piece_t bits structure
  */
 typedef unsigned char piece_t;
@@ -53,6 +55,7 @@ typedef unsigned char square_t;
 #define GET_R(s)        ((s) & 0x0f)
 #define SET_F(s, f)     ((s) &= 0x0f, (s) |= (f)<<4)
 #define SET_R(s, r)     ((s) &= 0xf0, (s) |= (r))
+#define SQUARE(f, r)    ((f) << 4 | (r))
 
 /* castle_t bits structure
  */
@@ -66,5 +69,8 @@ typedef unsigned char castle_t;
 #define CASTLE_W        0x03                      /* 00000011 W castle mask */
 #define CASTLE_B        0x0C                      /* 00001100 B castle mask */
 
+/* eval type
+ */
+typedef int64_t         eval_t;
 
 #endif

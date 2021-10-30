@@ -21,6 +21,7 @@
 #include "position.h"
 #include "board.h"
 #include "fen.h"
+#include "piece.h"
 
 /* Starting Position :
  * rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
@@ -46,36 +47,41 @@
 pos_t *fen2pos(pos_t *pos, char *fen)
 {
     char *p = fen;
-    short rank, file, skip;
+    short rank, file, skip, color;
+    piece_t piece;
     board_t *board = pos->board;
 #   define SKIP_BLANK(p) for(;*(p) == ' '; (p)++)
 
     /* 1) get piece placement information
      */
     for (rank = 7, file = 0; *p && *p != ' '; ++p) {
+        color = !!islower(*p);
         char cp = toupper(*p);
         switch (cp) {
             case CHAR_PAWN:
-                board[SQ88(file, rank)]->piece = PAWN;
-                goto color;
+                piece = PAWN;
+                goto set_square;
             case CHAR_KNIGHT:
-                board[SQ88(file, rank)]->piece = KNIGHT;
-                goto color;
+                piece = KNIGHT;
+                goto set_square;
             case CHAR_BISHOP:
-                board[SQ88(file, rank)]->piece = BISHOP;
-                goto color;
+                piece = BISHOP;
+                goto set_square;
             case CHAR_ROOK:
-                board[SQ88(file, rank)]->piece = ROOK;
-                goto color;
+                piece = ROOK;
+                goto set_square;
             case CHAR_QUEEN:
-                board[SQ88(file, rank)]->piece = QUEEN;
-                goto color;
+                piece = QUEEN;
+                goto set_square;
             case CHAR_KING:
-                board[SQ88(file, rank)]->piece = KING;
-                //goto color;
+                piece = KING;
+                //goto set_square;
+            set_square:
                 //printf("f=%d r=%d *p=%c piece=%c\n", file, rank, *p, cp);
-            color:
-                SET_COLOR(board[SQ88(file, rank)]->piece, islower(*p));
+                piece |= color;
+                //board[SQ88(file, rank)]->piece = piece;
+                board[SQ88(file, rank)].piece = piece;
+                piece_add(pos, piece, SQUARE(file, rank));
                 //board[SQ88(file, rank)]->piece |= isupper(*p)? WHITE: BLACK;
                 file++;
                 break;
@@ -87,16 +93,16 @@ pos_t *fen2pos(pos_t *pos, char *fen)
                 skip = cp - '0';
                 file += skip;
                 while (skip--) {
-                    board[SQ88(file, rank)]->piece = EMPTY;
+                    board[SQ88(file, rank)].piece = EMPTY;
                 }
         }
     }
-    for (rank = 7; rank >= 0; --rank) {
+    /*for (rank = 7; rank >= 0; --rank) {
         for (file = 0; file < 8; ++file) {
             printf("%2x ", board[SQ88(file, rank)]->piece);
         }
         putchar('\n');
-    }
+        }*/
 
     /* 2) next move color
      */
@@ -152,6 +158,7 @@ int main(int ac, char**av)
 {
     pos_t *pos;
 
+    piece_pool_init();
     pos = pos_create();
     if (ac == 1) {
         pos_startpos(pos);

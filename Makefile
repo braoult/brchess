@@ -5,7 +5,8 @@ SRCDIR=./src
 
 SRC=$(wildcard $(SRCDIR)/*.c)
 INC=$(wildcard $(SRCDIR)/*.h)
-BIN=fen pool
+
+BIN=fen pool piece
 
 CFLAGS += -std=gnu99
 CFLAGS += -g
@@ -29,5 +30,10 @@ fen: $(SRC)
 
 pool: CFLAGS+=-DPOOLBIN
 pool: $(SRC)
+	echo SRC=$(SRC)
+	$(CC) $(CFLAGS) $? -o $@
+
+piece: CFLAGS+=-DPIECEBIN
+piece: $(SRC)
 	echo SRC=$(SRC)
 	$(CC) $(CFLAGS) $? -o $@

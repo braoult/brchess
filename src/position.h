@@ -25,10 +25,14 @@ typedef struct position {
     square_t en_passant;
     short clock_50;
     short curmove;
+    eval_t eval;
+    struct list_head pieces_white;
+    struct list_head pieces_black;
     board_t *board;
-    struct list_head w_pieces, b_pieces;
 } pos_t;
 
+/* TODO: replace piece2string/piece2char with static array*/
+char *piece2string(piece_t piece);
 void pos_print(pos_t *pos);
 pos_t *pos_init(pos_t *pos);
 pos_t *pos_startpos(pos_t *pos);

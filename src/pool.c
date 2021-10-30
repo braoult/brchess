@@ -39,6 +39,8 @@ pool_t *pool_init(const char *name, uint32_t growsize, size_t eltsize)
 {
     pool_t *pool;
 
+    printf("%s: name=[%s] growsize=%u eltsize=%lu\n",
+           __func__, name, growsize, eltsize);
     /* we need at least this space in struct */
     if (eltsize < sizeof (struct list_head))
         return NULL;
@@ -88,22 +90,25 @@ void *pool_get(pool_t *pool)
     if (!pool)
         return NULL;
     if (!pool->available) {
-        printf("+++ %s [%s]: allocating new pool (old=%u)\n", __func__, pool->name,
-               pool->allocated);
         void *alloc = malloc(pool->eltsize * pool->growsize);
         void *cur;
         uint32_t i;
+        printf("+++ %s [%s]: growing pool from %u to %u elements.\n", __func__,
+               pool->name,
+               pool->allocated,
+               pool->allocated + pool->growsize);
 
         if (!alloc)
             return NULL;
-        pool->allocated += pool->growsize;
         //printf("       (old=%u)\n", pool->allocated);
+        pool->allocated += pool->growsize;
+        //printf("       (new=%u)\n", pool->allocated);
         for (i = 0; i < pool->growsize; ++i) {
             cur = alloc + i * pool->eltsize;
-            printf("%s: alloc=%p cur=%p\n", __func__,
-                   alloc, cur);
+            //printf("%s: alloc=%p cur=%p\n", __func__, alloc, cur);
             _pool_add(pool, (struct list_head *)cur);
         }
+        pool_stats(pool);
     }
     //printf("%s: returning %p pointer\n", __func__, res);
     return  _pool_get(pool);
