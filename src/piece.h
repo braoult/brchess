@@ -19,6 +19,7 @@
 #include "list.h"
 #include "position.h"
 #include "pool.h"
+#include "ctype.h"
 
 #define PIECE_DEFAULT_VALUE 0
 
@@ -37,6 +38,27 @@ typedef struct {
     int64_t value;
     struct list_head list;
 } piece_list_t;
+
+/* some default values for pieces
+ */
+extern struct piece_details {
+    char abbrev_w;                                /* used for game notation */
+    char abbrev_b;
+    char *symbol_w;
+    char *symbol_b;                               /* used for game notation */
+    char *name;
+    int64_t value;
+} piece_details[];
+#define P_NAME(p)      piece_details[PIECE(p)].name
+#define P_LETTER(p)    piece_details[PIECE(p)].abbrev_w
+#define P_SYM(p)       piece_details[PIECE(p)].symbol_b
+#define P_CSHORT(p)    (COLOR(p) == WHITE? piece_details[PIECE(p)].abbrev_w: \
+                        piece_details[PIECE(p)].abbrev_b)
+#define P_CSYM(p)      (COLOR(p) == WHITE? piece_details[PIECE(p)].symbol_w: \
+                        piece_details[PIECE(p)].symbol_b)
+/* use short name or symbol - no effect
+ */
+#define P_USE_UTF      1
 
 void piece_list_print(struct list_head *list);
 void pieces_print_pos_pieces(pos_t *pos);

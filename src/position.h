@@ -32,8 +32,6 @@ typedef struct position {
     board_t *board;
 } pos_t;
 
-/* TODO: replace piece2string/piece2char with static array*/
-char *piece2string(piece_t piece);
 void pos_print(pos_t *pos);
 pos_t *pos_init(pos_t *pos);
 pos_t *pos_startpos(pos_t *pos);

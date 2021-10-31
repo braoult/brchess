@@ -20,61 +20,7 @@
 #include "chessdefs.h"
 #include "position.h"
 #include "fen.h"
-
-char *piece2string(piece_t p)
-{
-    piece_t piece = PIECE(p);
-
-    switch (piece) {
-        case PAWN:
-            return "Pawn";
-        case KNIGHT:
-            return "Knight";
-        case BISHOP:
-            return "Bishop";
-        case ROOK:
-            return "Rook";
-        case QUEEN:
-            return "Queen";
-        case KING:
-            return "King";
-    }
-    return "Unknown";
-}
-
-inline static char piece2char(piece_t p)
-{
-    piece_t piece = PIECE(p);
-    char res;
-
-    //printf("%#x p=%#x\n", p, PIECE(p));
-    switch (piece) {
-        case PAWN:
-            res = CHAR_PAWN;
-            break;
-        case KNIGHT:
-            res = CHAR_KNIGHT;
-            break;
-        case BISHOP:
-            res = CHAR_BISHOP;
-            break;
-        case ROOK:
-            res = CHAR_ROOK;
-            break;
-        case QUEEN:
-            res = CHAR_QUEEN;
-            break;
-        case KING:
-            res = CHAR_KING;
-            break;
-        default:
-            res = CHAR_EMPTY;
-    }
-    if (IS_BLACK(p))
-        res = tolower(res);
-    return res;
-
-}
+#include "piece.h"
 
 /* void pos_print - Print position on stdout.
  * @pos:   Position address (pos_t * )
@@ -92,7 +38,7 @@ void pos_print(pos_t *pos)
         printf("%c |", rank + '1');
         for (file = 0; file < 8; ++file) {
             piece = board[SQ88(file, rank)].piece;
-            printf(" %c |", piece2char(piece));
+            printf(" %s |", P_CSYM(piece));
         }
         printf("\n  +---+---+---+---+---+---+---+---+\n");
     }

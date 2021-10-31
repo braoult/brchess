@@ -32,38 +32,6 @@ static struct vector {
     [KING] =   { 8, 0, { -1, -16, 1, 16, -15, -17, 15, 17}},
 };
 
-inline static char piece2char(piece_t p)
-{
-    piece_t piece = PIECE(p);
-    char res;
-
-    //printf("%#x p=%#x\n", p, PIECE(p));
-    switch (piece) {
-        case PAWN:
-            res = CHAR_PAWN;
-            break;
-        case KNIGHT:
-            res = CHAR_KNIGHT;
-            break;
-        case BISHOP:
-            res = CHAR_BISHOP;
-            break;
-        case ROOK:
-            res = CHAR_ROOK;
-            break;
-        case QUEEN:
-            res = CHAR_QUEEN;
-            break;
-        case KING:
-            res = CHAR_KING;
-            break;
-        default:
-            res = CHAR_EMPTY;
-    }
-    return res;
-
-}
-
 pool_t *moves_pool_init()
 {
     if (!moves_pool)
@@ -71,15 +39,13 @@ pool_t *moves_pool_init()
     return moves_pool;
 }
 
-
-
 void move_print(move_t *move)
 {
-    printf("%c%c%c", piece2char(move->piece),
+    printf("%s%c%c", P_SYM(move->piece),
            FILE2C(GET_F(move->from)),
            RANK2C(GET_R(move->from)));
     if (move->taken)
-        printf("x%c", piece2char(move->taken));
+        printf("x%s", P_SYM(move->taken));
     else
         printf("-");
     printf("%c%c",
