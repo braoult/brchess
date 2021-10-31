@@ -55,6 +55,10 @@ void move_print(move_t *move)
         printf("e.p.");
     if (move->promotion)
         printf("=%s", P_SYM(move->promotion));
+    if (move->flags & M_CASTLE_K)
+        printf("(O-O)");
+    if (move->flags & M_CASTLE_Q)
+        printf("(O-O-O)");
     printf(" ");
 }
 
@@ -196,6 +200,52 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece)
     return count;
 }
 
+int pseudo_moves_castle(pos_t *pos)
+{
+    //piece_t piece = PIECE(ppiece->piece);
+    //square_t square = ppiece->square, new;
+    unsigned char color = pos->turn;
+    board_t *board = pos->board;
+    unsigned char rank1, castle_K, castle_Q;
+    move_t *move = NULL;
+    unsigned short count=0;
+
+    if (color == WHITE) {
+        rank1 = 0;
+        castle_K = pos->castle & CASTLE_WK;
+        castle_Q = pos->castle & CASTLE_WQ;
+    } else {
+        rank1 = 7;
+        castle_K = pos->castle & CASTLE_WK;
+        castle_Q = pos->castle & CASTLE_WQ;
+    }
+
+    if (castle_K) {
+        if (!(board[SQUARE(5, rank1)].piece ||
+              board[SQUARE(6, rank1)].piece)) {
+            move = move_add(pos, board[SQUARE(4, rank1)].piece,
+                            SQUARE(4, rank1), SQUARE(6, rank1));
+            if (move) {
+                move->flags |= M_CASTLE_K;
+            }
+            count++;
+        }
+    }
+    if (castle_Q) {
+        if (!(board[SQUARE(1, rank1)].piece ||
+              board[SQUARE(2, rank1)].piece ||
+              board[SQUARE(3, rank1)].piece )) {
+            move = move_add(pos, board[SQUARE(4, rank1)].piece,
+                            SQUARE(4, rank1), SQUARE(2, rank1));
+            if (move) {
+                move->flags |= M_CASTLE_Q;
+            }
+            count++;
+        }
+    }
+    return count;
+}
+
 /* general rule moves for non pawn pieces
  */
 int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece)
@@ -252,6 +302,7 @@ int moves_get(pos_t *pos)
 
     piece_list = pos->turn == WHITE? &pos->pieces_white: &pos->pieces_black;
 
+    pseudo_moves_castle(pos);
     list_for_each_safe(p_cur, tmp, piece_list) {
         piece = list_entry(p_cur, piece_list_t, list);
         if (PIECE(piece->piece) != PAWN)

@@ -27,7 +27,8 @@ typedef unsigned char move_flags_t;
 #define M_CAPTURE      0x02
 #define M_EN_PASSANT   0x04
 #define M_PROMOTION    0x08
-#define M_CASTLE       0x10
+#define M_CASTLE_K     0x10
+#define M_CASTLE_Q     0x20
 
 typedef struct move_s {
     piece_t piece;
@@ -41,6 +42,7 @@ typedef struct move_s {
 pool_t *moves_pool_init();
 void move_print(move_t *move);
 void moves_print(pos_t *move);
+int pseudo_moves_castle(pos_t *pos);
 int pseudo_moves_gen(pos_t *pos, piece_list_t *piece);
 int pseudo_moves_pawn(pos_t *pos, piece_list_t *piece);
 int moves_get(pos_t *pos);
