@@ -91,9 +91,8 @@ pos_t *fen2pos(pos_t *pos, char *fen)
                 break;
             default:
                 skip = cp - '0';
-                file += skip;
                 while (skip--) {
-                    board[SQ88(file, rank)].piece = EMPTY;
+                    board[SQ88(file++, rank)].piece = EMPTY;
                 }
         }
     }
