@@ -51,11 +51,11 @@ typedef unsigned char piece_t;
  */
 typedef unsigned char square_t;
 
-#define GET_F(s)        ((s) >> 4)
-#define GET_R(s)        ((s) & 0x0f)
-#define SET_F(s, f)     ((s) &= 0x0f, (s) |= (f)<<4)
-#define SET_R(s, r)     ((s) &= 0xf0, (s) |= (r))
-#define SQUARE(f, r)    ((f) << 4 | (r))
+#define GET_R(s)        ((s) >> 4)
+#define GET_F(s)        ((s) & 0x0f)
+#define SET_R(s, f)     ((s) &= 0x0f, (s) |= (f)<<4)
+#define SET_F(s, r)     ((s) &= 0xf0, (s) |= (r))
+#define SQUARE(f, r)    ((r) << 4 | (f))
 
 /* castle_t bits structure
  */
