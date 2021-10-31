@@ -28,6 +28,7 @@ typedef struct position {
     eval_t eval;
     struct list_head pieces_white;
     struct list_head pieces_black;
+    struct list_head moves;
     board_t *board;
 } pos_t;
 

@@ -27,7 +27,10 @@ typedef struct {
  */
 #define SQ88(f, r)   (16 * (r) + (f))             /* from rank,file to sq88 */
 #define FILE88(s)    ((s) & 7)                    /* from sq88 to file */
-#define RANK88(s)    ((s) >> 8)                   /* from sq88 to rank */
+#define RANK88(s)    ((s) >> 4)                   /* from sq88 to rank */
+
+#define SQ88_NOK(s)  ((s) & 0x88)                 /* invalid square */
+#define SQ88_OK(s)   (!SQ88_NOK(s))
 
 /* piece human notation
  */

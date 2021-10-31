@@ -145,6 +145,7 @@ pos_t *pos_init(pos_t *pos)
     pos->en_passant = 0;
     INIT_LIST_HEAD(&pos->pieces_white);
     INIT_LIST_HEAD(&pos->pieces_black);
+    INIT_LIST_HEAD(&pos->moves);
 
     return pos;
 }

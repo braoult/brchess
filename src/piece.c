@@ -14,8 +14,41 @@
 #include <malloc.h>
 #include "chessdefs.h"
 #include "piece.h"
+#include "ctype.h"
 
 static pool_t *pieces_pool;
+
+inline static char piece2char(piece_t p)
+{
+    piece_t piece = PIECE(p);
+    char res;
+
+    //printf("%#x p=%#x\n", p, PIECE(p));
+    switch (piece) {
+        case PAWN:
+            res = CHAR_PAWN;
+            break;
+        case KNIGHT:
+            res = CHAR_KNIGHT;
+            break;
+        case BISHOP:
+            res = CHAR_BISHOP;
+            break;
+        case ROOK:
+            res = CHAR_ROOK;
+            break;
+        case QUEEN:
+            res = CHAR_QUEEN;
+            break;
+        case KING:
+            res = CHAR_KING;
+            break;
+        default:
+            res = CHAR_EMPTY;
+    }
+    return res;
+
+}
 
 void piece_list_print(struct list_head *list)
 {
@@ -26,7 +59,7 @@ void piece_list_print(struct list_head *list)
     list_for_each_safe(p_cur, tmp, list) {
         piece = list_entry(p_cur, piece_list_t, list);
 
-        printf("%c%c%c ", *piece2string(piece->piece),
+        printf("%c%c%c ", piece2char(piece->piece),
                FILE2C(GET_F(piece->square)),
                RANK2C(GET_R(piece->square)));
         /*printf("\t%d: %s on %c%c\n", i,

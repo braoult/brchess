@@ -6,7 +6,7 @@ SRCDIR=./src
 SRC=$(wildcard $(SRCDIR)/*.c)
 INC=$(wildcard $(SRCDIR)/*.h)
 
-BIN=fen pool piece
+BIN=fen pool piece move
 
 CFLAGS += -std=gnu99
 CFLAGS += -g
@@ -35,5 +35,10 @@ pool: $(SRC)
 
 piece: CFLAGS+=-DPIECEBIN
 piece: $(SRC)
+	echo SRC=$(SRC)
+	$(CC) $(CFLAGS) $? -o $@
+
+move: CFLAGS+=-DMOVEBIN
+move: $(SRC)
 	echo SRC=$(SRC)
 	$(CC) $(CFLAGS) $? -o $@

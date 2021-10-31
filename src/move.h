@@ -16,12 +16,24 @@
 
 #include "chessdefs.h"
 #include "position.h"
+#include "pool.h"
+#include "piece.h"
 
-typedef struct {
-    piece_t t;
+typedef struct move_s {
+    piece_t piece;
     square_t from, to;
-} MOVE;
+    piece_t taken;                                /* removed piece */
 
-extern MOVE *moves_rook(POS *pos);
+    struct list_head list;
+} move_t;
+
+pool_t *moves_pool_init();
+void move_print(move_t *move);
+void moves_print(pos_t *move);
+int pseudo_moves_get(pos_t *pos, piece_list_t *piece);
+int moves_get(pos_t *pos);
+
+/* not used */
+move_t *pseudo_moves_pawn(pos_t *pos);
 
 #endif
