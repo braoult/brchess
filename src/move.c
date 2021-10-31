@@ -25,11 +25,11 @@ static struct vector {
     char slide;
     char dir[8];
 } vectors[] = {
-    [KNIGHT] = { 8, 0, { -33, -31, -18, -14, 14, 18, 31, 33}},
-    [BISHOP] = { 4, 1, { -15, -17, 15, 17}},
-    [ROOK]   = { 4, 1, { -1, -16, 1, 16}},
-    [QUEEN] =  { 8, 1, { -1, -16, 1, 16, -15, -17, 15, 17}},
-    [KING] =   { 8, 0, { -1, -16, 1, 16, -15, -17, 15, 17}},
+    [KNIGHT] = { 8, 0, { -33, -31, -18, -14, 14,  18,  31, 33}},
+    [BISHOP] = { 4, 1, { -15, -17, 15,  17}},
+    [ROOK]   = { 4, 1, { -1,  -16, 1,   16}},
+    [QUEEN] =  { 8, 1, { -1,  -16, 1,   16,  -15, -17, 15, 17}},
+    [KING] =   { 8, 0, { -1,  -16, 1,   16,  -15, -17, 15, 17}},
 };
 
 pool_t *moves_pool_init()
@@ -60,14 +60,14 @@ void moves_print(pos_t *pos)
     move_t *move;
     int i = 0;
 
-    printf("%s pseudo-moves: ", pos->turn == WHITE? "White": "Black");
+    printf("%s pseudo-moves:\n\t", pos->turn == WHITE? "White": "Black");
     list_for_each_safe(p_cur, tmp, &pos->moves) {
         move = list_entry(p_cur, move_t, list);
 
         move_print(move);
         i++;
     }
-    printf("Total moves = %d\n", i);
+    printf("\n\tTotal moves = %d\n", i);
 }
 
 /* generate moves for non pawn pieces
