@@ -19,21 +19,30 @@
 #include "pool.h"
 #include "piece.h"
 
+/* move flags
+ */
+typedef unsigned char move_flags_t;
+#define M_NORMAL       0x00
+#define M_CHECK        0x01                       /* unsure if we know */
+#define M_CAPTURE      0x02
+#define M_EN_PASSANT   0x04
+#define M_PROMOTION    0x08
+#define M_CASTLE       0x10
+
 typedef struct move_s {
     piece_t piece;
     square_t from, to;
     piece_t taken;                                /* removed piece */
-
+    piece_t promotion;                            /* promoted piece */
+    move_flags_t flags;
     struct list_head list;
 } move_t;
 
 pool_t *moves_pool_init();
 void move_print(move_t *move);
 void moves_print(pos_t *move);
-int pseudo_moves_get(pos_t *pos, piece_list_t *piece);
+int pseudo_moves_gen(pos_t *pos, piece_list_t *piece);
+int pseudo_moves_pawn(pos_t *pos, piece_list_t *piece);
 int moves_get(pos_t *pos);
-
-/* not used */
-move_t *pseudo_moves_pawn(pos_t *pos);
 
 #endif

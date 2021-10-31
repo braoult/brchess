@@ -131,6 +131,7 @@ pos_t *fen2pos(pos_t *pos, char *fen)
             }
         }
     }
+    p++;
 
     /* 4) en passant
      */
