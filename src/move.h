@@ -30,6 +30,13 @@ typedef unsigned char move_flags_t;
 #define M_CASTLE_K     0x10
 #define M_CASTLE_Q     0x20
 
+/* moves_print flags
+ */
+#define M_PR_SEPARATE  0x40                       /* separate capture/non capture */
+#define M_PR_LONG      0x80
+#define M_PR_CAPT      0x01
+#define M_PR_NCAPT     0x02
+
 typedef struct move_s {
     piece_t piece;
     square_t from, to;
@@ -40,8 +47,8 @@ typedef struct move_s {
 } move_t;
 
 pool_t *moves_pool_init();
-void move_print(move_t *move);
-void moves_print(pos_t *move);
+void move_print(move_t *move, move_flags_t flags);
+void moves_print(pos_t *move, move_flags_t flags);
 int pseudo_moves_castle(pos_t *pos);
 int pseudo_moves_gen(pos_t *pos, piece_list_t *piece);
 int pseudo_moves_pawn(pos_t *pos, piece_list_t *piece);

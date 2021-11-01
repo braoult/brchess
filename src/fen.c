@@ -77,7 +77,9 @@ pos_t *fen2pos(pos_t *pos, char *fen)
                 piece = KING;
                 //goto set_square;
             set_square:
-                //printf("f=%d r=%d *p=%c piece=%c\n", file, rank, *p, cp);
+                /*printf("f=%d r=%d *p=%c piece=%c color=%d\n",
+                       file, rank, *p, cp, color);
+                */
                 piece |= color;
                 //board[SQ88(file, rank)]->piece = piece;
                 board[SQ88(file, rank)].piece = piece;
