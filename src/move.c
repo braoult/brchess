@@ -244,8 +244,6 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece)
 
 int pseudo_moves_castle(pos_t *pos)
 {
-    //piece_t piece = PIECE(ppiece->piece);
-    //square_t square = ppiece->square, new;
     unsigned char color = pos->turn;
     board_t *board = pos->board;
     unsigned char rank1, castle_K, castle_Q;
@@ -302,8 +300,8 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece)
     move_t *move;
     int count = 0;
 
-    //printf("square=%#04x piece=%#04x color = %s\n", square, piece, color==WHITE? "white": "black");
-    /*printf("%s: pos:%p piece:%d [%s] at %#04x[%c%c]\n", __func__, pos, piece,
+    /*printf("square=%#04x piece=%#04x color = %s\n", square, piece, color==WHITE? "white": "black");
+      printf("%s: pos:%p piece:%d [%s] at %#04x[%c%c]\n", __func__, pos, piece,
            P_NAME(piece),
            square,
            FILE2C(GET_F(square)),
@@ -373,16 +371,17 @@ int moves_get(pos_t *pos)
    };
 */
 
-#ifdef MOVEBIN
+#ifdef BIN_move
 #include "fen.h"
+#include "debug.h"
 int main(int ac, char**av)
 {
     pos_t *pos;
 
+    debug_init(1);
     pos = pos_create();
     piece_pool_init();
     moves_pool_init();
-
 
     if (ac == 1) {
         pos_startpos(pos);

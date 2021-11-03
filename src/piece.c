@@ -95,13 +95,11 @@ piece_list_t *piece_add(pos_t *pos, piece_t piece, square_t square)
     return new;
 }
 
-#ifdef PIECEBIN
+#ifdef BIN_piece
 #include "fen.h"
 int main(int ac, char**av)
 {
-    //size_t i;
     pos_t *pos;
-    //piece_list_t *plist;
 
     pos = pos_create();
     piece_pool_init();

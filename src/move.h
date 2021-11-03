@@ -11,8 +11,8 @@
  *
  */
 
-#ifndef ROOK_H
-#define ROOK_H
+#ifndef MOVE_H
+#define MOVE_H
 
 #include "chessdefs.h"
 #include "position.h"
@@ -54,4 +54,4 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *piece);
 int pseudo_moves_pawn(pos_t *pos, piece_list_t *piece);
 int moves_get(pos_t *pos);
 
-#endif
+#endif  /* MODE_H */

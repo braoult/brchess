@@ -21,19 +21,27 @@
 #define MILLISEC 1000000                          /* milli sec in sec */
 
 static int64_t timer_start;                       /* in nanosecond */
+static uint32_t debug_level=0;
 
-int clock_gettime(clockid_t clockid, struct timespec *tp);
+void debug_level_set(uint32_t level)
+{
+    debug_level = level;;
 
-void debug_init()
+    log(0, "debug level set to %u\n", level);
+}
+
+void debug_init(uint32_t level)
 {
     struct timespec timer;
+
+    debug_level_set(level);
     if (!clock_gettime(CLOCK_MONOTONIC, &timer)) {
         timer_start = timer.tv_sec * NANOSEC + timer.tv_nsec;
     }
     else {
         timer_start = 0;
     }
-    log("timer started.\n");
+    log(0, "timer started.\n");
 }
 
 inline static int64_t timer_elapsed()
@@ -51,9 +59,12 @@ inline static int64_t timer_elapsed()
  * @src       : source filename (or NULL)
  * @line      : line number
  */
-void debug(bool timestamp, uint32_t indent, const char *src,
+void debug(uint32_t level, bool timestamp, uint32_t indent, const char *src,
            uint32_t line, const char *fmt, ...)
 {
+    if (level > debug_level)
+        return;
+
     va_list ap;
 
     if (indent)
@@ -68,28 +79,30 @@ void debug(bool timestamp, uint32_t indent, const char *src,
     if (src) {
         if (line)
             printf("[%s:%u] ", src, line);
-        else {
+        else
             printf("[%s] ", src);
-        }
     }
     va_start(ap, fmt);
     vprintf(fmt, ap);
     va_end(ap);
 }
 
-#ifdef DEBUGBIN
+#ifdef BIN_debug
 #include <unistd.h>
 
 int main()
 {
     int foo=1;
-    debug_init();
+    debug_init(5);
 
-    log("log=%d\n", foo++);
-    log_i(1, "log_i=%d\n", foo++);
-    log_i(2, "log_i=%d\n", foo++);
-    log_it(3, "log_it=%d\n", foo++);
-    log_f("log_f=%d\n", foo++);
+    log(0, "log0=%d\n", foo++);
+    log(1, "log1=%d\n", foo++);
+    log(2, "log2=%d\n", foo++);
+    log_i(2, "log_i 2=%d\n", foo++);
+    log_i(5, "log_i 5=%d\n", foo++);
+    log_i(6, "log_i 6=%d\n", foo++);
+    log_it(4, "log_it 4=%d\n", foo++);
+    log_f(1, "log_f 5=%d\n", foo++);
 }
 #endif
 

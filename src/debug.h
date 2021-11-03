@@ -17,38 +17,50 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#ifdef DEBUG
-
-void debug_init(void);
-
-void debug(bool timestamp, uint32_t indent,
+void debug_init(uint32_t level);
+void debug_level_set(uint32_t level);
+void debug_devel_set(uint32_t level);
+void debug(uint32_t level, bool timestamp, uint32_t indent,
            const char *src, uint32_t line, const char *, ...);
 
-/* format: func name, no indent, no timestamp
+#ifdef DEBUG
+
+/* format: only printf
+ */
+#define log(level, fmt, args...) \
+    debug((level), false, 0, NULL, 0, fmt, ##args)
+
+/* format: func name, no line number, indent, no timestamp
  * foo:15 val=2
  */
-#define log(fmt, args...) debug(false, 0, __func__, __LINE__, fmt, ##args)
+#define log_f(level, fmt, args...) \
+    debug((level), false, 0, __func__, 0, fmt, ##args)
 
 /* format : func name, indent, no timestamp
  *   foo:15 val=2
  */
-#define log_i(i, fmt, args...) debug(false, (i), __func__, __LINE__, fmt, args)
+#define log_i(level, fmt, args...) \
+    debug((level), false, (level), __func__, __LINE__, fmt, args)
 
 /* format : func name, indent, timestamp
  *   []foo:15 val=2
  */
-#define log_it(i, fmt, args...) debug(true, (i), __func__, __LINE__, fmt, args)
+#define log_it(level, fmt, args...) \
+    debug((level), true, (level), __func__, __LINE__, fmt, args)
 
 /* format: file name, no indent, no timestamp
  * foo:15 val=2
+ *
+ * #define log_f(level, fmt, args...)                            \
+ *   debug((level), false, 0, __FILE__, __LINE__, fmt, args)
  */
-#define log_f(fmt, args...) debug(false, 0, __FILE__, __LINE__, fmt, args)
-
-
 
 #else
-#define log(...)
-#define f
+#define log(level, fmt, args...)
+#define log_i(...)
+#define log_it(...)
+#define log_f(...)
+
 #endif  /* DEBUG */
 
 #endif  /* DEBUG_H */

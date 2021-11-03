@@ -1,12 +1,28 @@
+# Makefile - GNU make only.
+#
+# Copyright (C) 2021 Bruno Raoult ("br")
+# Licensed under the GNU General Public License v3.0 or later.
+# Some rights reserved. See COPYING.
+#  * You should have received a copy of the GNU General Public License along with this
+# program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.htmlL>.
+#
+# SPDX-License-Identifier: GPL-3.0-or-later <https://spdx.org/licenses/GPL-3.0-or-later.html>
 #
 
-BINDIR=./bin
-SRCDIR=./src
+BINDIR := ./bin
+SRCDIR := ./src
+OBJDIR := ./obj
+DEPS   := make.deps
 
 SRC=$(wildcard $(SRCDIR)/*.c)
 INC=$(wildcard $(SRCDIR)/*.h)
+SRC_S=$(notdir $(SRC))
 
-BIN=fen pool piece move
+CC=gcc
+
+.SECONDEXPANSION:
+OBJ=$(addprefix $(OBJDIR)/,$(SRC_S:.c=.o))
+BIN=fen pool piece move debug
 
 CFLAGS += -std=gnu99
 CFLAGS += -g
@@ -17,28 +33,55 @@ CFLAGS += -Wextra
 #CFLAGS += -Werror
 CFLAGS += -Wmissing-declarations
 
-all: clean $(BIN)
+##################################### DEBUG flags
+CFLAGS += -DDEBUG		    # global
+CFLAGS += -DDEBUG_POOL              # memory pools management
+CFLAGS += -DDEBUG_FEN               # FEN decoding
+
+#CFLAGS += -DDEBUG_MAINSLEEP        # sleep 1 sec within main loop (SIGINTR test)
+#CFLAGS += -DDEBUG_EVAL2            # eval 2
+#CFLAGS += -DDEBUG_EVAL3            # eval 3
+#CFLAGS += -DDEBUG_MEM              # malloc
+
+all: $(OBJ) $(BIN)
+	@echo CFLAGS used: $(CFLAGS)
+
+$(DEPS): $(SRC) $(INC)
+	@echo generating dependancies.
+	@$(CC) -MM $(SRC) > $@
+	@sed -i "s|\(.*\.o\):|${OBJDIR}/\0:|" $@
+
+include $(DEPS)
 
 .PHONY: clean
 clean:
-	rm -rf *.o core $(BIN)
+	rm -rf $(OBJ) core $(BIN) $(DEPS)
 
-fen: CFLAGS+=-DFENBIN
-fen: $(SRC)
-	echo SRC=$(SRC)
-	$(CC) $(CFLAGS) $? -o $@
+#$(OBJ): $(OBJDIR)/%.o: $(SRCDIR)/%.c
+#	@mkdir -p $(@D)
+#	$(CC) -c $(CFLAGS) -o $@ $<
+$(OBJDIR)/%.o: $(SRCDIR)/%.c
+	@mkdir -p $(@D)
+	@echo compiling $@.
+	@$(CC) -c $(CFLAGS) -o $@ $<
 
-pool: CFLAGS+=-DPOOLBIN
-pool: $(SRC)
-	echo SRC=$(SRC)
-	$(CC) $(CFLAGS) $? -o $@
+#fen: CFLAGS+=-DBIN_$$@
+$(BIN): $$(subst $(OBJDIR)/$$@.o,,$(OBJ)) $(SRCDIR)/$$@.c
+	@echo compiling $@.
+	@$(CC) -DBIN_$@ $(CFLAGS) $^ -o $@
 
-piece: CFLAGS+=-DPIECEBIN
-piece: $(SRC)
-	echo SRC=$(SRC)
-	$(CC) $(CFLAGS) $? -o $@
+#pool: CFLAGS+=-DPOOLBIN
+#pool: $$(subst $(OBJDIR)/$$@.o,,$(OBJ)) $(SRCDIR)/$$@.c
+#	$(CC) $(CFLAGS) $^ -o $@
 
-move: CFLAGS+=-DMOVEBIN
-move: $(SRC)
-	echo SRC=$(SRC)
-	$(CC) $(CFLAGS) $? -o $@
+# piece: CFLAGS+=-DPIECEBIN
+# piece: $$(subst $(OBJDIR)/$$@.o,,$(OBJ)) $(SRCDIR)/$$@.c
+# 	$(CC) $(CFLAGS) $^ -o $@
+
+# move: CFLAGS+=-DMOVEBIN
+# move: $$(subst $(OBJDIR)/$$@.o,,$(OBJ)) $(SRCDIR)/$$@.c
+# 	$(CC) $(CFLAGS) $^ -o $@
+
+# debug: CFLAGS+=-DDEBUGBIN
+# debug: $$(subst $(OBJDIR)/$$@.o,,$(OBJ)) $(SRCDIR)/$$@.c
+# 	$(CC) $(CFLAGS) $^ -o $@

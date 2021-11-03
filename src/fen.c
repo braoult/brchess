@@ -17,6 +17,7 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "debug.h"
 #include "chessdefs.h"
 #include "position.h"
 #include "board.h"
@@ -77,14 +78,13 @@ pos_t *fen2pos(pos_t *pos, char *fen)
                 piece = KING;
                 //goto set_square;
             set_square:
-                /*printf("f=%d r=%d *p=%c piece=%c color=%d\n",
+#               ifdef DEBUG_FEN
+                log_i(5, "f=%d r=%d *p=%c piece=%c color=%d\n",
                        file, rank, *p, cp, color);
-                */
+#               endif
                 piece |= color;
-                //board[SQ88(file, rank)]->piece = piece;
                 board[SQ88(file, rank)].piece = piece;
                 piece_add(pos, piece, SQUARE(file, rank));
-                //board[SQ88(file, rank)]->piece |= isupper(*p)? WHITE: BLACK;
                 file++;
                 break;
             case '/':
@@ -98,12 +98,14 @@ pos_t *fen2pos(pos_t *pos, char *fen)
                 }
         }
     }
-    /*for (rank = 7; rank >= 0; --rank) {
+#   ifdef DEBUG_FEN
+    for (rank = 7; rank >= 0; --rank) {
         for (file = 0; file < 8; ++file) {
-            printf("%2x ", board[SQ88(file, rank)]->piece);
+            log(5, "%02x ", board[SQ88(file, rank)].piece);
         }
-        putchar('\n');
-        }*/
+        log(5, "\n");
+    }
+#   endif
 
     /* 2) next move color
      */
@@ -150,16 +152,17 @@ pos_t *fen2pos(pos_t *pos, char *fen)
      * 6) current move number
      */
     SKIP_BLANK(p);
-    //printf("pos=%d\n", (int)(p-fen));
+    log_i(5, "pos=%d\n", (int)(p-fen));
     sscanf(p, "%hd %hd", &pos->clock_50, &pos->curmove);
     return pos;
 }
 
-#ifdef FENBIN
+#ifdef BIN_fen
 int main(int ac, char**av)
 {
     pos_t *pos;
 
+    debug_init(3);
     piece_pool_init();
     pos = pos_create();
     if (ac == 1) {
