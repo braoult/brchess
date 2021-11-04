@@ -15,6 +15,7 @@
 #include "chessdefs.h"
 #include "piece.h"
 #include "ctype.h"
+#include "debug.h"
 
 static pool_t *pieces_pool;
 
@@ -74,16 +75,12 @@ piece_list_t *piece_add(pos_t *pos, piece_t piece, square_t square)
     piece_list_t *new;
     short color = COLOR(piece);
 
-    /* printf("%s: piece=%02x square=%02x\n", __func__, piece, square);
-    printf("%s: Adding %s %s on %c%c\n",
-           __func__,
-           color? "Black": "White",
-           piece2string(piece),
-           FILE2C(GET_F(square)),
-           RANK2C(GET_R(square)));
-    */
+#   ifdef DEBUG_PIECE
+    log_f(2, "piece=%02x square=%02x\n", piece, square);
+    log_f(5, "Adding %s %s on %c%c\n", color? "Black": "White",
+          piece2string(piece), FILE2C(GET_F(square)), RANK2C(GET_R(square)));
+#   endif
     if ((new = pool_get(pieces_pool))) {
-        //printf("color=%d addp=%p\n", COLOR(piece), &pos->pieces[COLOR(piece)]);
         list_add_tail(&new->list,
                  color? &pos->pieces_black: &pos->pieces_white);
         new->piece = piece;
@@ -101,9 +98,9 @@ int main(int ac, char**av)
 {
     pos_t *pos;
 
+    debug_init(5);
     pos = pos_create();
     piece_pool_init();
-
 
     if (ac == 1) {
         pos_startpos(pos);

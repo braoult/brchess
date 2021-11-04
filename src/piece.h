@@ -49,6 +49,7 @@ extern struct piece_details {
     char *name;
     int64_t value;
 } piece_details[];
+
 #define P_NAME(p)      piece_details[PIECE(p)].name
 #define P_LETTER(p)    piece_details[PIECE(p)].abbrev_w
 #define P_SYM(p)       piece_details[PIECE(p)].symbol_b

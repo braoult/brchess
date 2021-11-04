@@ -11,7 +11,6 @@
  *
  */
 
-//#ifdef DEBUG
 #include <stdio.h>
 #include <stdarg.h>
 #include <time.h>
@@ -56,7 +55,7 @@ inline static int64_t timer_elapsed()
 /* void debug - log function
  * @timestamp : boolean
  * @indent    : indent level (2 spaces each)
- * @src       : source filename (or NULL)
+ * @src       : source file/func name (or NULL)
  * @line      : line number
  */
 void debug(uint32_t level, bool timestamp, uint32_t indent, const char *src,
@@ -105,5 +104,3 @@ int main()
     log_f(1, "log_f 5=%d\n", foo++);
 }
 #endif
-
-//#endif /* DEBUG_H */

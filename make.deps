@@ -4,7 +4,7 @@
 ./obj/move.o:: src/move.c src/chessdefs.h src/piece.h src/board.h src/list.h \
  src/position.h src/pool.h src/move.h
 ./obj/piece.o:: src/piece.c src/chessdefs.h src/piece.h src/board.h src/list.h \
- src/position.h src/pool.h
+ src/position.h src/pool.h src/debug.h
 ./obj/pool.o:: src/pool.c src/list.h src/pool.h src/debug.h
 ./obj/position.o:: src/position.c src/chessdefs.h src/position.h src/board.h \
  src/list.h src/fen.h src/piece.h src/pool.h

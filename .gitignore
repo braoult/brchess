@@ -6,3 +6,6 @@ fen
 pool
 piece
 move
+debug
+/test/
+/obj/
