@@ -14,12 +14,13 @@
 #ifndef PIECE_H
 #define PIECE_H
 
+#include <ctype.h>
+
 #include "chessdefs.h"
 #include "board.h"
 #include "list.h"
 #include "position.h"
 #include "pool.h"
-#include "ctype.h"
 
 #define PIECE_DEFAULT_VALUE 0
 
@@ -31,7 +32,7 @@
 #define QUEEN_VALUE   900
 #define KING_VALUE    20000
 
-typedef struct {
+typedef struct piece_list_s {
     piece_t piece;
     square_t square;
     short castle;

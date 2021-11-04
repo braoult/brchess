@@ -73,4 +73,10 @@ typedef unsigned char castle_t;
  */
 typedef int64_t         eval_t;
 
+/* forward typedefs
+ */
+typedef struct piece_list_s piece_list_t;
+typedef struct board_s board_t;
+typedef struct pos_s pos_t;
+
 #endif

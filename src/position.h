@@ -19,7 +19,7 @@
 #include "board.h"
 #include "list.h"
 
-typedef struct position {
+typedef struct pos_s {
     piece_t turn;                                 /* we use only color bit */
     castle_t castle;
     square_t en_passant;

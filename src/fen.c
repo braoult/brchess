@@ -84,7 +84,7 @@ pos_t *fen2pos(pos_t *pos, char *fen)
 #               endif
                 piece |= color;
                 board[SQ88(file, rank)].piece = piece;
-                piece_add(pos, piece, SQUARE(file, rank));
+                board[SQ88(file, rank)].s_piece = piece_add(pos, piece, SQUARE(file, rank));
                 file++;
                 break;
             case '/':

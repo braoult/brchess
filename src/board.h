@@ -16,10 +16,12 @@
 
 #include <stdint.h>
 #include "chessdefs.h"
+#include "piece.h"
+#include "position.h"
 
-typedef struct {
+typedef struct board_s {
     piece_t piece;
-    //piece_t *s_piece;
+    piece_list_t *s_piece;
 } board_t;                                        /* 0x88 board */
 #define BOARDSIZE    (8*8*2)
 
@@ -51,4 +53,4 @@ typedef struct {
 #define FILE2C(f)    ((f) + 'a')
 #define RANK2C(r)    ((r) + '1')
 
-#endif
+#endif  /* BOARD_H */
