@@ -25,9 +25,12 @@ OBJ=$(addprefix $(OBJDIR)/,$(SRC_S:.c=.o))
 BIN=fen pool piece move debug
 
 CFLAGS += -std=gnu99
+
+FLAGS += -O2
 CFLAGS += -g
 CFLAGS += -Wall
 CFLAGS += -Wextra
+CFLAGS += -march=native
 #CFLAGS += -pedantic
 #CFLAGS += -Wno-pointer-arith
 #CFLAGS += -Werror
@@ -37,6 +40,7 @@ CFLAGS += -Wmissing-declarations
 CFLAGS += -DDEBUG		    # global
 CFLAGS += -DDEBUG_POOL              # memory pools management
 CFLAGS += -DDEBUG_FEN               # FEN decoding
+CFLAGS += -DDEBUG_MOVE              # move generation
 
 #CFLAGS += -DDEBUG_MAINSLEEP        # sleep 1 sec within main loop (SIGINTR test)
 #CFLAGS += -DDEBUG_EVAL2            # eval 2
@@ -85,3 +89,8 @@ $(BIN): $$(subst $(OBJDIR)/$$@.o,,$(OBJ)) $(SRCDIR)/$$@.c
 # debug: CFLAGS+=-DDEBUGBIN
 # debug: $$(subst $(OBJDIR)/$$@.o,,$(OBJ)) $(SRCDIR)/$$@.c
 # 	$(CC) $(CFLAGS) $^ -o $@
+
+.PHONY: bits
+bits: test/bits.c
+	$(CC) $(CFLAGS) -S $^ -o $@.s
+	$(CC) -DFOO $(CFLAGS) $^ -o $@

@@ -63,7 +63,6 @@ extern struct piece_details {
 #define P_USE_UTF      1
 
 void piece_list_print(struct list_head *list);
-void pieces_print_pos_pieces(pos_t *pos);
 pool_t *piece_pool_init();
 piece_list_t *piece_add(pos_t *pos, piece_t piece, square_t square);
 

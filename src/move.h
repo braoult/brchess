@@ -19,6 +19,10 @@
 #include "pool.h"
 #include "piece.h"
 
+/* move_add() return value when generating
+ */
+
+
 /* move flags
  */
 typedef unsigned char move_flags_t;
@@ -52,6 +56,6 @@ void moves_print(pos_t *move, move_flags_t flags);
 int pseudo_moves_castle(pos_t *pos);
 int pseudo_moves_gen(pos_t *pos, piece_list_t *piece);
 int pseudo_moves_pawn(pos_t *pos, piece_list_t *piece);
-int moves_get(pos_t *pos);
+int moves_gen(pos_t *pos, bool color);
 
 #endif  /* MODE_H */

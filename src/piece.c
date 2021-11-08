@@ -46,14 +46,6 @@ void piece_list_print(struct list_head *list)
     printf("Total pieces = %d\n", i);
 }
 
-void pieces_print_pos_pieces(pos_t *pos)
-{
-    printf("White pieces : \n\t");
-    piece_list_print(&pos->pieces_white);
-    printf("Black pieces : \n\t");
-    piece_list_print(&pos->pieces_black);
-}
-
 pool_t *piece_pool_init()
 {
     if (!pieces_pool)
@@ -81,8 +73,8 @@ piece_list_t *piece_add(pos_t *pos, piece_t piece, square_t square)
           piece2string(piece), FILE2C(GET_F(square)), RANK2C(GET_R(square)));
 #   endif
     if ((new = pool_get(pieces_pool))) {
-        list_add_tail(&new->list,
-                 color? &pos->pieces_black: &pos->pieces_white);
+        list_add_tail(&new->list, &pos->pieces[color]);
+                      //color? &pos->pieces_black: &pos->pieces_white);
         new->piece = piece;
         new->square = square;
         new->castle = 0;
@@ -108,6 +100,6 @@ int main(int ac, char**av)
         fen2pos(pos, av[1]);
     }
     pos_print(pos);
-    pieces_print_pos_pieces(pos);
+    pos_pieces_print(pos);
 }
 #endif

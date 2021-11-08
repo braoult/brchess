@@ -30,7 +30,7 @@ void debug(uint32_t level, bool timestamp, uint32_t indent,
 #define log(level, fmt, args...) \
     debug((level), false, 0, NULL, 0, fmt, ##args)
 
-/* format: func name, no line number, indent, no timestamp
+/* format: func name, no line number, no indent, no timestamp
  * foo:15 val=2
  */
 #define log_f(level, fmt, args...) \
@@ -40,13 +40,13 @@ void debug(uint32_t level, bool timestamp, uint32_t indent,
  *   foo:15 val=2
  */
 #define log_i(level, fmt, args...) \
-    debug((level), false, (level), __func__, __LINE__, fmt, args)
+    debug((level), false, (level), __func__, __LINE__, fmt, ##args)
 
 /* format : func name, indent, timestamp
  *   []foo:15 val=2
  */
 #define log_it(level, fmt, args...) \
-    debug((level), true, (level), __func__, __LINE__, fmt, args)
+    debug((level), true, (level), __func__, __LINE__, fmt, ##args)
 
 /* format: file name, no indent, no timestamp
  * foo:15 val=2

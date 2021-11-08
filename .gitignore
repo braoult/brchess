@@ -6,6 +6,8 @@ fen
 pool
 piece
 move
+bits
 debug
+*.s
 /test/
 /obj/

@@ -69,9 +69,14 @@ typedef unsigned char castle_t;
 #define CASTLE_W        0x03                      /* 00000011 W castle mask */
 #define CASTLE_B        0x0C                      /* 00001100 B castle mask */
 
+/* bitboard
+ */
+typedef uint64_t bitboard_t;
+
+
 /* eval type
  */
-typedef int64_t         eval_t;
+typedef int64_t eval_t;
 
 /* forward typedefs
  */

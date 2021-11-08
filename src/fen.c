@@ -76,12 +76,14 @@ pos_t *fen2pos(pos_t *pos, char *fen)
                 goto set_square;
             case CHAR_KING:
                 piece = KING;
+                pos->king[color]=SQ88(file, rank);
                 //goto set_square;
             set_square:
 #               ifdef DEBUG_FEN
                 log_i(5, "f=%d r=%d *p=%c piece=%c color=%d\n",
                        file, rank, *p, cp, color);
 #               endif
+                pos->occupied[color] |= (1LL << BB(file, rank));
                 piece |= color;
                 board[SQ88(file, rank)].piece = piece;
                 board[SQ88(file, rank)].s_piece = piece_add(pos, piece, SQUARE(file, rank));

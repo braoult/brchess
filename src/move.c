@@ -17,19 +17,20 @@
 #include "piece.h"
 #include "move.h"
 #include "list.h"
+#include "debug.h"
 
 static pool_t *moves_pool;
 
 static struct vector {
     unsigned char ndirs;
-    char slide;
-    char dir[8];
+    char          slide;
+    char          dir[8];
 } vectors[] = {
-    [KNIGHT] = { 8, 0, { -33, -31, -18, -14, 14,  18,  31, 33}},
-    [BISHOP] = { 4, 1, { -15, -17, 15,  17}},
-    [ROOK]   = { 4, 1, { -1,  -16, 1,   16}},
-    [QUEEN] =  { 8, 1, { -1,  -16, 1,   16,  -15, -17, 15, 17}},
-    [KING] =   { 8, 0, { -1,  -16, 1,   16,  -15, -17, 15, 17}},
+    [KNIGHT] = { 8, 0, { -33, -31, -18, -14, 14,  18,  31, 33 }},
+    [BISHOP] = { 4, 1, { -15, -17, 15,  17 }},
+    [ROOK]   = { 4, 1, { -1,  -16, 1,   16 }},
+    [QUEEN]  = { 8, 1, { -1,  -16, 1,   16,  -15, -17, 15, 17 }},
+    [KING]   = { 8, 0, { -1,  -16, 1,   16,  -15, -17, 15, 17 }}
 };
 
 pool_t *moves_pool_init()
@@ -42,11 +43,15 @@ pool_t *moves_pool_init()
 void move_print(move_t *move, move_flags_t flags)
 {
     if (flags & M_PR_CAPT && !(move->flags & M_CAPTURE)) {
-        // printf("capture & %#04x\n", move->flags);
+#       ifdef DEBUG_MOVE
+        log_i(4, "capture & %#04x\n", move->flags);
+#       endif
         return;
     }
     if (flags & M_PR_NCAPT && move->flags & M_CAPTURE) {
-        // printf("!capture & %#04x\n", move->flags);
+#       ifdef DEBUG_MOVE
+        log_i(4, "!capture & %#04x\n", move->flags);
+#       endif
         return;
     }
     if (move->flags & M_CASTLE_K) {
@@ -73,11 +78,6 @@ void move_print(move_t *move, move_flags_t flags)
             printf("e.p.");
         if (move->promotion)
             printf("=%s", P_SYM(move->promotion));
-        /*if (move->flags & M_CASTLE_K)
-            printf("(O-O)");
-        if (move->flags & M_CASTLE_Q)
-            printf("(O-O-O)");
-        */
     end:
         printf(" ");
     }
@@ -124,6 +124,8 @@ inline static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
     board_t *board = pos->board;
     move_t *move;
 
+    if (COLOR(piece) != pos->turn)
+        return NULL;
     if (!(move = pool_get(moves_pool)))
         return NULL;
     move->piece = piece;
@@ -141,11 +143,12 @@ inline static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
 inline static move_t *move_pawn_add(pos_t *pos, piece_t piece, square_t from,
                                     square_t to, unsigned char rank7)
 {
-    //board_t *board = pos->board;
     move_t *move;
     piece_t promote;
     unsigned char color = COLOR(piece);
 
+    if (color != pos->turn)
+        return NULL;
     if (RANK88(from) == rank7) {                  /* promotion */
         for (promote = QUEEN; promote > PAWN; promote >>= 1) {
             if ((move = move_add(pos, piece, from, to))) {
@@ -165,8 +168,8 @@ inline static move_t *move_pawn_add(pos_t *pos, piece_t piece, square_t from,
 int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece)
 {
     piece_t piece = PIECE(ppiece->piece);
-    square_t square = ppiece->square, new;
     unsigned char color = COLOR(ppiece->piece);
+    square_t square = ppiece->square, new;
     board_t *board = pos->board;
     unsigned char rank2, rank7, rank5;
     move_t *move = NULL;
@@ -189,19 +192,20 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece)
     /* normal push. We do not test for valid destination square here,
      * assuming position is valid. Is that correct ?
      */
-    //moves_print(pos);
     new = square + dir * 16;
     if (!board[new].piece) {
-        //printf("pushing pawn %#04x\n", square);
+#       ifdef DEBUG_MOVE
+        log_i(4, "pushing pawn %#04x\n", square);
+#       endif
         if ((move = move_pawn_add(pos, piece | color, square, new, rank7)))
             count++;
-        //moves_print(pos);
-
         /* push 2 squares */
         if (move && RANK88(square) == rank2) {
             new += dir * 16;
             if (SQ88_OK(new) && !board[new].piece) {
-                //printf("pushing pawn %#04x 2 squares\n", square);
+#               ifdef DEBUG_MOVE
+                log_i(4, "pushing pawn %#04x 2 squares\n", square);
+#               endif
                 if ((move = move_pawn_add(pos, piece | color, square, new, rank7)))
                     count++;
             }
@@ -213,9 +217,10 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece)
         unsigned char ep_file = FILE88(pos->en_passant);
         unsigned char sq_file = FILE88(square);
 
-        //printf("possible en passant on rank %#x (current = %#0x)\n", ep_file,
-        //    sq_file);
-
+#       ifdef DEBUG_MOVE
+        log_i(4, "possible en passant on rank %#x (current = %#0x)\n", ep_file,
+              sq_file);
+#       endif
         if (sq_file == ep_file - 1 || sq_file == ep_file + 1) {
             square_t taken = board[SQUARE(ep_file, rank5)].piece;
             move = move_pawn_add(pos, piece | color , square, pos->en_passant, rank7);
@@ -230,10 +235,12 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece)
     /* capture */
     int two=0;
     for (new = square + dir * 15; two < 2; new = square + dir * 17, two++) {
-        //for (new = square + dir * 15; new <= square + dir * 17; new += 2) {
-        //printf("pawn capture %#04x\n", square);
+#       ifdef DEBUG_MOVE
+        log_i(3, "pawn capture %#04x %#04x\n", square, new);
+#       endif
         if (SQ88_NOK(new))
             continue;
+        pos->controlled[color] |= (1ULL << BB(FILE88(new), RANK88(new)));
         if (board[new].piece && COLOR(board[new].piece) != color) {
             if ((move = move_pawn_add(pos, piece | color, square, new, rank7)))
                 count++;
@@ -291,47 +298,64 @@ int pseudo_moves_castle(pos_t *pos)
 int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece)
 {
     piece_t piece = PIECE(ppiece->piece);
+    unsigned char color = COLOR(ppiece->piece);
     struct vector *vector = vectors+piece;
     square_t square = ppiece->square;
     unsigned char ndirs = vector->ndirs;
     char slide = vector->slide;
     board_t *board = pos->board;
-    unsigned char color = COLOR(ppiece->piece);
     move_t *move;
     int count = 0;
 
-    /*printf("square=%#04x piece=%#04x color = %s\n", square, piece, color==WHITE? "white": "black");
-      printf("%s: pos:%p piece:%d [%s] at %#04x[%c%c]\n", __func__, pos, piece,
-           P_NAME(piece),
-           square,
-           FILE2C(GET_F(square)),
-           RANK2C(GET_R(square)));
-    printf("\tvector=%ld ndirs=%d slide=%d\n", vector-vectors, ndirs, slide);
-    */
+#   ifdef DEBUG_MOVE
+    log_i(4, "square=%#04x piece=%#04x color = %s\n", square, piece,
+          color==WHITE? "white": "black");
+    log_f(3, "pos:%p piece:%d [%s] at %#04x[%c%c]\n", pos, piece,
+          P_NAME(piece), square,
+          FILE2C(GET_F(square)), RANK2C(GET_R(square)));
+    log_i(4, "vector=%ld ndirs=%d slide=%d\n", vector-vectors, ndirs, slide);
+#   endif
 
     for (int curdir = 0; curdir < ndirs; ++curdir) {
         char dir = vector->dir[curdir];
         for (square_t new = square + dir; ; new = new + dir) {
             /* outside board */
             if (SQ88_NOK(new)) {
-                //printf("\t\tskipping %04x (invalid square)\n", new);
+#               ifdef DEBUG_MOVE
+                log_i(4,"skipping %04x (invalid square)\n", new);
+#               endif
                 break;
             }
-            // printf("\ttrying %c%c", FILE2C(GET_F(new)), RANK2C(GET_R(new)));
+#           ifdef DEBUG_MOVE
+            log_i(3, "trying %c%c\n", FILE2C(GET_F(new)), RANK2C(GET_R(new)));
+#           endif
             /* own color on dest square */
-            /*if (board[new].piece) {
-                printf("color=%d color2=%d\n", color, COLOR(board[new].piece));
-                }*/
-            if (board[new].piece && COLOR(board[new].piece) == color) {
-                //printf("\t\tskipping %04x (same color piece)\n", new);
-                break;
+            if (board[new].piece) {
+#               ifdef DEBUG_MOVE
+                log_i(4, "color=%d color2=%d\n", color, COLOR(board[new].piece));
+#               endif
+            }
+            pos->controlled[color] |= (1ULL << BB(FILE88(new), RANK88(new)));
+            if (board[new].piece) {
+                if (COLOR(board[new].piece) == color) {
+#                   ifdef DEBUG_MOVE
+                    log_i(3, "skipping %04x (same color piece)\n", new);
+#                   endif
+                    break;
+                }
             }
 
             /* we are sure the move is valid : we create move */
-            if ((move = move_add(pos, piece, square, new)))
-                count++;
-            if (move->taken)
+            if (color == pos->turn) {
+                if ((move = move_add(pos, piece, square, new))) {
+                    count++;
+                    //if (move->taken)
+                    //    break;
+                }
+            }
+            if (board[new].piece) {
                 break;
+            }
             if (!slide)
                 break;
         }
@@ -339,13 +363,13 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece)
     return count;
 }
 
-int moves_get(pos_t *pos)
+int moves_gen(pos_t *pos, bool color)
 {
     struct list_head *p_cur, *tmp, *piece_list;
     piece_list_t *piece;
     int count = 0;
 
-    piece_list = pos->turn == WHITE? &pos->pieces_white: &pos->pieces_black;
+    piece_list = &pos->pieces[color];
 
     pseudo_moves_castle(pos);
     list_for_each_safe(p_cur, tmp, piece_list) {
@@ -360,17 +384,6 @@ int moves_get(pos_t *pos)
     return count;
 }
 
-/* unused
-   move_t *(*moves_fct[])(pos_t *) = {
-   [PAWN] = pseudo_moves_pawn,
-   [KNIGHT] = pseudo_moves_knight,
-   [BISHOP] = pseudo_moves_bishop,
-   [ROOK] = pseudo_moves_rook,
-   [QUEEN] = pseudo_moves_queen,
-   [KING] = pseudo_moves_king
-   };
-*/
-
 #ifdef BIN_move
 #include "fen.h"
 #include "debug.h"
@@ -378,19 +391,20 @@ int main(int ac, char**av)
 {
     pos_t *pos;
 
-    debug_init(1);
-    pos = pos_create();
+    debug_init(2);
     piece_pool_init();
     moves_pool_init();
+    pos = pos_create();
 
     if (ac == 1) {
         pos_startpos(pos);
     } else {
         fen2pos(pos, av[1]);
     }
+    moves_gen(pos, WHITE);
+    moves_gen(pos, BLACK);
     pos_print(pos);
-    pieces_print_pos_pieces(pos);
-    moves_get(pos);
+    pos_pieces_print(pos);
     moves_print(pos, M_PR_SEPARATE);
 }
 #endif

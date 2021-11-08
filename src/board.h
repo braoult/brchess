@@ -34,6 +34,15 @@ typedef struct board_s {
 #define SQ88_NOK(s)  ((s) & 0x88)                 /* invalid square */
 #define SQ88_OK(s)   (!SQ88_NOK(s))
 
+/* definitions for bitboard representation
+ */
+#define BB(f, r)     (8 * (r) + (f))              /* from rank,file to bitboard */
+#define FILEBB(b)    ((b) % 8)                    /* from sq88 to file */
+#define RANKBB(b)    ((b) / 8)                    /* from sq88 to rank */
+
+#define SQ88_NOK(s)  ((s) & 0x88)                 /* invalid square */
+#define SQ88_OK(s)   (!SQ88_NOK(s))
+
 /* piece human notation
  */
 #define CHAR_EMPTY   ' '

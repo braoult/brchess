@@ -22,16 +22,23 @@
 typedef struct pos_s {
     piece_t turn;                                 /* we use only color bit */
     castle_t castle;
-    square_t en_passant;
     short clock_50;
     short curmove;
     eval_t eval;
-    struct list_head pieces_white;
-    struct list_head pieces_black;
-    struct list_head moves;
     board_t *board;
+
+    square_t en_passant;
+    square_t king[2];
+    bitboard_t occupied[2];
+    bitboard_t controlled[2];
+
+    struct list_head pieces[2];
+    struct list_head moves;
 } pos_t;
 
+void bitboard_print(bitboard_t bb);
+void bitboard_print2(bitboard_t bb1, bitboard_t bb2);
+void pos_pieces_print(pos_t *pos);
 void pos_print(pos_t *pos);
 pos_t *pos_init(pos_t *pos);
 pos_t *pos_startpos(pos_t *pos);

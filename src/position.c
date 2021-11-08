@@ -22,6 +22,43 @@
 #include "fen.h"
 #include "piece.h"
 
+#define BYTE_PRINT "%c%c%c%c%c%c%c%c"
+#define BYTE2BIN(b) ((b) & 0x01 ? '1' : '0'),  \
+        ((b) & 0x02 ? '1' : '0'),              \
+        ((b) & 0x04 ? '1' : '0'),              \
+        ((b) & 0x08 ? '1' : '0'),              \
+        ((b) & 0x10 ? '1' : '0'),              \
+        ((b) & 0x20 ? '1' : '0'),              \
+        ((b) & 0x40 ? '1' : '0'),              \
+        ((b) & 0x80 ? '1' : '0')
+
+inline void bitboard_print(bitboard_t bb)
+{
+    int i;
+    printf("%#018lx\n", bb);
+    for (i=56; i; i-=8)
+        printf("\t"BYTE_PRINT"\n",
+               BYTE2BIN(bb>>i));
+}
+
+inline void bitboard_print2(bitboard_t bb1, bitboard_t bb2)
+{
+    int i;
+    printf("\tW: %#018lx\tB: %#018lx\n", bb1, bb2);
+    for (i=56; i>=0; i-=8)
+        printf("\t"BYTE_PRINT"\t\t"BYTE_PRINT"\n",
+               BYTE2BIN(bb1>>i),
+               BYTE2BIN(bb2>>i));
+}
+
+void pos_pieces_print(pos_t *pos)
+{
+    printf("White pieces : \n\t");
+    piece_list_print(&pos->pieces[WHITE]);
+    printf("Black pieces : \n\t");
+    piece_list_print(&pos->pieces[BLACK]);
+}
+
 /* void pos_print - Print position on stdout.
  * @pos:   Position address (pos_t * )
  *
@@ -43,7 +80,12 @@ void pos_print(pos_t *pos)
         printf("\n  +---+---+---+---+---+---+---+---+\n");
     }
     printf("    A   B   C   D   E   F   G   H\n\n");
-    printf("Next move: %s.\n", IS_WHITE(pos->turn) ? "white" : "black");
+    printf("Turn: %s.\n", IS_WHITE(pos->turn) ? "white" : "black");
+    printf("Kings: W:%c%c B:%c%c\n",
+           FILE2C(GET_F(pos->king[WHITE])),
+           RANK2C(GET_R(pos->king[WHITE])),
+           FILE2C(GET_F(pos->king[BLACK])),
+           RANK2C(GET_R(pos->king[BLACK])));
     printf("Possible en-passant: [%#x] ", pos->en_passant);
     if (pos->en_passant == 0)
         printf("None.\n");
@@ -66,6 +108,10 @@ void pos_print(pos_t *pos)
 
     printf("\n50 half-moves-rule = %d\n", pos->clock_50);
     printf("Current move = %d\n", pos->curmove);
+    printf("Bitbords occupied :\n");
+    bitboard_print2(pos->occupied[WHITE], pos->occupied[BLACK]);
+    printf("Bitbords controlled :\n");
+    bitboard_print2(pos->controlled[WHITE], pos->controlled[BLACK]);
 }
 
 pos_t *pos_init(pos_t *pos)
@@ -87,10 +133,16 @@ pos_t *pos_init(pos_t *pos)
     pos->castle = 0;
     pos->clock_50 = 0;
     pos->curmove = 0;
+    pos->eval = 0;
     pos->en_passant = 0;
-    pos->en_passant = 0;
-    INIT_LIST_HEAD(&pos->pieces_white);
-    INIT_LIST_HEAD(&pos->pieces_black);
+    pos->king[WHITE] = 0;
+    pos->king[BLACK] = 0;
+    pos->occupied[WHITE] = 0;
+    pos->occupied[BLACK] = 0;
+    pos->controlled[WHITE] = 0;
+    pos->controlled[BLACK] = 0;
+    INIT_LIST_HEAD(&pos->pieces[WHITE]);
+    INIT_LIST_HEAD(&pos->pieces[BLACK]);
     INIT_LIST_HEAD(&pos->moves);
 
     return pos;
