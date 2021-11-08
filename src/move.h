@@ -51,7 +51,7 @@ typedef struct move_s {
 } move_t;
 
 pool_t *moves_pool_init();
-void move_print(move_t *move, move_flags_t flags);
+int move_print(move_t *move, move_flags_t flags);
 void moves_print(pos_t *move, move_flags_t flags);
 int pseudo_moves_castle(pos_t *pos);
 int pseudo_moves_gen(pos_t *pos, piece_list_t *piece);
