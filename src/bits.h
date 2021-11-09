@@ -155,11 +155,4 @@ static inline int popcount64(u64 n)
 #define bit_for_each64(pos, tmp, ul)                                    \
     for (tmp = ul, pos = ffs64(tmp); pos; tmp &= (tmp - 1),  pos = ffs64(tmp))
 
-/*
-U64 ls1b = x & -x; // isolate LS1B
-   ...
-   x &= x-1; // reset LS1B
-}
-*/
-
 #endif  /* BITS_H */
