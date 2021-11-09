@@ -94,7 +94,7 @@ void *pool_get(pool_t *pool)
         void *cur;
         uint32_t i;
 #       ifdef DEBUG_POOL
-        log_f(2, "[%s]: growing pool from %u to %u elements.\n",
+        log_f(1, "[%s]: growing pool from %u to %u elements.\n",
                pool->name,
                pool->allocated,
                pool->allocated + pool->growsize);

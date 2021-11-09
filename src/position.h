@@ -22,8 +22,8 @@
 typedef struct pos_s {
     piece_t turn;                                 /* we use only color bit */
     castle_t castle;
-    short clock_50;
-    short curmove;
+    uint16_t clock_50;
+    uint16_t curmove;
     eval_t eval;
     board_t *board;
 

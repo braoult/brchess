@@ -14,11 +14,11 @@
 #ifndef CHESSDEFS_H
 #define CHESSDEFS_H
 
-#include <stdint.h>
+#include "bits.h"
 
 /* piece_t bits structure
  */
-typedef unsigned char piece_t;
+typedef u8 piece_t;
 
 #define EMPTY           0
 

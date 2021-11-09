@@ -74,7 +74,7 @@ piece_list_t *piece_add(pos_t *pos, piece_t piece, square_t square)
 #   endif
     if ((new = pool_get(pieces_pool))) {
         list_add_tail(&new->list, &pos->pieces[color]);
-                      //color? &pos->pieces_black: &pos->pieces_white);
+        //color? &pos->pieces_black: &pos->pieces_white);
         new->piece = piece;
         new->square = square;
         new->castle = 0;

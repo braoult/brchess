@@ -120,7 +120,7 @@ static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
     move_t *move;
 
 #   ifdef DEBUG_MOVE
-    log_i(2, "piece_color=%d turn=%d from=%c%c to=%c%c\n",
+    log_i(3, "piece_color=%d turn=%d from=%c%c to=%c%c\n",
           COLOR(piece), pos->turn,
           FILE2C(GET_F(from)),
           RANK2C(GET_R(from)),
@@ -141,7 +141,7 @@ static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
         move->flags |= M_CAPTURE;
     list_add(&move->list, &pos->moves);
 #   ifdef DEBUG_MOVE
-    log_i(2, "added move from %c%c to %c%c\n",
+    log_i(3, "added move from %c%c to %c%c\n",
           FILE2C(GET_F(move->from)),
           RANK2C(GET_R(move->from)),
           FILE2C(GET_F(move->to)),
@@ -247,7 +247,7 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece)
     int two=0;
     for (new = square + dir * 15; two < 2; new = square + dir * 17, two++) {
 #       ifdef DEBUG_MOVE
-        log_i(3, "pawn capture %#04x %#04x\n", square, new);
+        log_i(4, "pawn capture %#04x %#04x\n", square, new);
 #       endif
         if (SQ88_NOK(new))
             continue;
@@ -319,14 +319,14 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece)
     int count = 0;
 
 #   ifdef DEBUG_MOVE
-    log_f(2, "pos:%p turn:%s piece:%d [%s %s] at %#04x[%c%c]\n",
+    log_f(4, "pos:%p turn:%s piece:%d [%s %s] at %#04x[%c%c]\n",
           pos,
           pos->turn ==WHITE? "white": "black",
           piece,
           color==WHITE? "white": "black", P_NAME(piece),
           square,
           FILE2C(GET_F(square)), RANK2C(GET_R(square)));
-    log_i(4, "vector=%ld ndirs=%d slide=%d\n", vector-vectors, ndirs, slide);
+    log_i(5, "vector=%ld ndirs=%d slide=%d\n", vector-vectors, ndirs, slide);
 #   endif
 
     for (int curdir = 0; curdir < ndirs; ++curdir) {
@@ -340,18 +340,18 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece)
                 break;
             }
 #           ifdef DEBUG_MOVE
-            log_i(3, "trying %c%c\n", FILE2C(GET_F(new)), RANK2C(GET_R(new)));
+            log_i(4, "trying %c%c\n", FILE2C(GET_F(new)), RANK2C(GET_R(new)));
 #           endif
 
             pos->controlled[color] |= (1ULL << BB(FILE88(new), RANK88(new)));
             if (board[new].piece) {
 #               ifdef DEBUG_MOVE
-                log_i(4, "color=%d color2=%d\n", color, COLOR(board[new].piece));
+                log_i(5, "color=%d color2=%d\n", color, COLOR(board[new].piece));
 #               endif
                 /* own color on dest square */
                 if (COLOR(board[new].piece) == color) {
 #                   ifdef DEBUG_MOVE
-                    log_i(3, "skipping %04x (same color piece)\n", new);
+                    log_i(5, "skipping %04x (same color piece)\n", new);
 #                   endif
                     break;
                 }
