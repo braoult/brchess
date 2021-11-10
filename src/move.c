@@ -180,6 +180,7 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece)
 {
     piece_t piece = PIECE(ppiece->piece);
     unsigned char color = COLOR(ppiece->piece);
+    unsigned char vcolor = VCOLOR(ppiece->piece);
     square_t square = ppiece->square, new;
     board_t *board = pos->board;
     unsigned char rank2, rank7, rank5;
@@ -188,7 +189,7 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece)
     int count = 0;
 
     /* setup direction */
-    if (color == WHITE) {
+    if (IS_WHITE(color)) {
         dir = 1;
         rank2 = 1;
         rank7 = 6;
@@ -199,6 +200,18 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece)
         rank7 = 1;
         rank5 = 3;
     }
+
+#   ifdef DEBUG_MOVE
+    log_f(4, "pos:%p turn:%s piece:%d [%s %s] dir:%d at %#04x[%c%c]\n",
+          pos,
+          IS_WHITE(pos->turn)? "white": "black",
+          piece,
+          IS_WHITE(color)? "white": "black",
+          P_NAME(piece),
+          dir,
+          square,
+          FILE2C(GET_F(square)), RANK2C(GET_R(square)));
+#   endif
 
     /* normal push. We do not test for valid destination square here,
      * assuming position is valid. Is that correct ?
@@ -251,7 +264,7 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece)
 #       endif
         if (SQ88_NOK(new))
             continue;
-        pos->controlled[color] |= (1ULL << BB(FILE88(new), RANK88(new)));
+        pos->controlled[vcolor] |= (1ULL << BB(FILE88(new), RANK88(new)));
         if (board[new].piece && COLOR(board[new].piece) != color) {
             if ((move = move_pawn_add(pos, piece | color, square, new, rank7)))
                 count++;
@@ -268,7 +281,7 @@ int pseudo_moves_castle(pos_t *pos)
     move_t *move = NULL;
     unsigned short count=0;
 
-    if (color == WHITE) {
+    if (IS_WHITE(color)) {
         rank1 = 0;
         castle_K = pos->castle & CASTLE_WK;
         castle_Q = pos->castle & CASTLE_WQ;
@@ -310,6 +323,7 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece)
 {
     piece_t piece = PIECE(ppiece->piece);
     unsigned char color = COLOR(ppiece->piece);
+    unsigned char vcolor = VCOLOR(ppiece->piece);
     struct vector *vector = vectors+piece;
     square_t square = ppiece->square;
     unsigned char ndirs = vector->ndirs;
@@ -321,9 +335,9 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece)
 #   ifdef DEBUG_MOVE
     log_f(4, "pos:%p turn:%s piece:%d [%s %s] at %#04x[%c%c]\n",
           pos,
-          pos->turn ==WHITE? "white": "black",
+          IS_WHITE(pos->turn)? "white": "black",
           piece,
-          color==WHITE? "white": "black", P_NAME(piece),
+          IS_WHITE(color)? "white": "black", P_NAME(piece),
           square,
           FILE2C(GET_F(square)), RANK2C(GET_R(square)));
     log_i(5, "vector=%ld ndirs=%d slide=%d\n", vector-vectors, ndirs, slide);
@@ -343,7 +357,7 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece)
             log_i(4, "trying %c%c\n", FILE2C(GET_F(new)), RANK2C(GET_R(new)));
 #           endif
 
-            pos->controlled[color] |= (1ULL << BB(FILE88(new), RANK88(new)));
+            pos->controlled[vcolor] |= (1ULL << BB(FILE88(new), RANK88(new)));
             if (board[new].piece) {
 #               ifdef DEBUG_MOVE
                 log_i(5, "color=%d color2=%d\n", color, COLOR(board[new].piece));

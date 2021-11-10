@@ -53,9 +53,9 @@ inline void bitboard_print2(bitboard_t bb1, bitboard_t bb2)
 
 void pos_pieces_print(pos_t *pos)
 {
-    printf("White pieces : \n\t");
+    printf("White pieces (%d): \t", popcount64(pos->occupied[WHITE]));
     piece_list_print(&pos->pieces[WHITE]);
-    printf("Black pieces : \n\t");
+    printf("Black pieces (%d): \t", popcount64(pos->occupied[BLACK]));
     piece_list_print(&pos->pieces[BLACK]);
 }
 
@@ -129,7 +129,7 @@ pos_t *pos_init(pos_t *pos)
         }
     }
 
-    pos->turn = WHITE;
+    SET_WHITE(pos->turn);
     pos->castle = 0;
     pos->clock_50 = 0;
     pos->curmove = 0;

@@ -51,13 +51,13 @@ extern struct piece_details {
     int64_t value;
 } piece_details[];
 
-#define P_NAME(p)      piece_details[PIECE(p)].name
-#define P_LETTER(p)    piece_details[PIECE(p)].abbrev_w
-#define P_SYM(p)       piece_details[PIECE(p)].symbol_b
-#define P_CSHORT(p)    (COLOR(p) == WHITE? piece_details[PIECE(p)].abbrev_w: \
-                        piece_details[PIECE(p)].abbrev_b)
-#define P_CSYM(p)      (COLOR(p) == WHITE? piece_details[PIECE(p)].symbol_w: \
-                        piece_details[PIECE(p)].symbol_b)
+#define P_NAME(p)      piece_details[E_PIECE(p)].name
+#define P_LETTER(p)    piece_details[E_PIECE(p)].abbrev_w
+#define P_SYM(p)       piece_details[E_PIECE(p)].symbol_b
+#define P_CSHORT(p)    (IS_WHITE(p)? piece_details[E_PIECE(p)].abbrev_w: \
+                        piece_details[E_PIECE(p)].abbrev_b)
+#define P_CSYM(p)      (IS_WHITE(p)? piece_details[E_PIECE(p)].symbol_w: \
+                        piece_details[E_PIECE(p)].symbol_b)
 /* use short name or symbol - no effect
  */
 #define P_USE_UTF      1

@@ -72,7 +72,11 @@ int main(int ac, char **av)
         printf("\n");
 
         bit_for_each64(curbit, _tmp, u) {
-            printf("loop: curbit=%d\n", curbit);
+            printf("loop: curbit=%d tmp=%ld\n", curbit, _tmp);
+        }
+        printf("\n");
+        bit_for_each64_2(curbit, _tmp, u) {
+            printf("loop2: curbit=%d tmp=%ld\n", curbit, _tmp);
         }
 
     }

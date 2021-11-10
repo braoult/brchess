@@ -153,6 +153,11 @@ static inline int popcount64(u64 n)
  * I should probably re-think the implementation...
  */
 #define bit_for_each64(pos, tmp, ul)                                    \
-    for (tmp = ul, pos = ffs64(tmp); pos; tmp &= (tmp - 1),  pos = ffs64(tmp))
+    for (tmp = ul, pos = ffs64(tmp); tmp; tmp &= (tmp - 1),  pos = ffs64(tmp))
+
+/** or would it be more useful (counting bits from zero instead of 1) ?
+ */
+#define bit_for_each64_2(pos, tmp, ul)                                  \
+    for (tmp = ul, pos = ctz64(tmp); tmp; tmp ^= 1<<pos, pos = ctz64(tmp))
 
 #endif  /* BITS_H */

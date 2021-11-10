@@ -56,7 +56,7 @@ pos_t *fen2pos(pos_t *pos, char *fen)
     /* 1) get piece placement information
      */
     for (rank = 7, file = 0; *p && *p != ' '; ++p) {
-        color = !!islower(*p);
+        color = isupper(*p)? WHITE: BLACK;
         char cp = toupper(*p);
         switch (cp) {
             case CHAR_PAWN:
@@ -84,9 +84,10 @@ pos_t *fen2pos(pos_t *pos, char *fen)
                        file, rank, *p, cp, color);
 #               endif
                 pos->occupied[color] |= (1LL << BB(file, rank));
-                piece |= color;
+                SET_COLOR(piece, color);
                 board[SQ88(file, rank)].piece = piece;
-                board[SQ88(file, rank)].s_piece = piece_add(pos, piece, SQUARE(file, rank));
+                board[SQ88(file, rank)].s_piece =
+                    piece_add(pos, piece, SQUARE(file, rank));
                 file++;
                 break;
             case '/':
@@ -112,7 +113,7 @@ pos_t *fen2pos(pos_t *pos, char *fen)
     /* 2) next move color
      */
     SKIP_BLANK(p);
-    pos->turn = *p == 'w' ? WHITE : BLACK;
+    SET_COLOR(pos->turn, *p == 'w' ? WHITE : BLACK);
     p++;
 
     /* 3) castle status
@@ -164,7 +165,7 @@ int main(int ac, char**av)
 {
     pos_t *pos;
 
-    debug_init(3);
+    debug_init(5);
     piece_pool_init();
     pos = pos_create();
     if (ac == 1) {

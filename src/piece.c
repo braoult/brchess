@@ -20,20 +20,19 @@
 static pool_t *pieces_pool;
 
 struct piece_details piece_details[] = {
-    [EMPTY] =  { ' ', ' ', " ", " ", "",       0 },
-    [PAWN] =   { 'P', 'p', "♙", "♟", "Pawn",   PAWN_VALUE },
-    [KNIGHT] = { 'N', 'n', "♘", "♞", "Knight", KNIGHT_VALUE },
-    [BISHOP] = { 'B', 'b', "♗", "♝", "Bishop", BISHOP_VALUE },
-    [ROOK] =   { 'R', 'r', "♖", "♜", "Rook",   ROOK_VALUE },
-    [QUEEN] =  { 'Q', 'q', "♕", "♛", "Queen",  QUEEN_VALUE },
-    [KING] =   { 'K', 'k', "♔", "♚", "King",   KING_VALUE }
+    [E_EMPTY]  = { ' ', ' ', " ", " ", "",       0 },
+    [E_PAWN]   = { 'P', 'p', "♙", "♟", "Pawn",   PAWN_VALUE },
+    [E_KNIGHT] = { 'N', 'n', "♘", "♞", "Knight", KNIGHT_VALUE },
+    [E_BISHOP] = { 'B', 'b', "♗", "♝", "Bishop", BISHOP_VALUE },
+    [E_ROOK]   = { 'R', 'r', "♖", "♜", "Rook",   ROOK_VALUE },
+    [E_QUEEN]  = { 'Q', 'q', "♕", "♛", "Queen",  QUEEN_VALUE },
+    [E_KING]   = { 'K', 'k', "♔", "♚", "King",   KING_VALUE }
 };
 
 void piece_list_print(struct list_head *list)
 {
     struct list_head *p_cur, *tmp;
     piece_list_t *piece;
-    int i = 0;
 
     list_for_each_safe(p_cur, tmp, list) {
         piece = list_entry(p_cur, piece_list_t, list);
@@ -41,9 +40,8 @@ void piece_list_print(struct list_head *list)
         printf("%s%c%c ", P_SYM(piece->piece),
                FILE2C(GET_F(piece->square)),
                RANK2C(GET_R(piece->square)));
-        i++;
     }
-    printf("Total pieces = %d\n", i);
+    printf("\n");
 }
 
 pool_t *piece_pool_init()
@@ -65,12 +63,12 @@ static eval_t pieces_values[] = {
 piece_list_t *piece_add(pos_t *pos, piece_t piece, square_t square)
 {
     piece_list_t *new;
-    short color = COLOR(piece);
+    short color = VCOLOR(piece);
 
 #   ifdef DEBUG_PIECE
     log_f(2, "piece=%02x square=%02x\n", piece, square);
     log_f(5, "Adding %s %s on %c%c\n", color? "Black": "White",
-          piece2string(piece), FILE2C(GET_F(square)), RANK2C(GET_R(square)));
+          P_NAME(piece), FILE2C(GET_F(square)), RANK2C(GET_R(square)));
 #   endif
     if ((new = pool_get(pieces_pool))) {
         list_add_tail(&new->list, &pos->pieces[color]);

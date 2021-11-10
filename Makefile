@@ -38,19 +38,26 @@ CFLAGS += -Wmissing-declarations
 
 ##################################### DEBUG flags
 CFLAGS += -DDEBUG		    # global
-CFLAGS += -DDEBUG_POOL              # memory pools management
+#CFLAGS += -DDEBUG_POOL              # memory pools management
 CFLAGS += -DDEBUG_FEN               # FEN decoding
 CFLAGS += -DDEBUG_MOVE              # move generation
 CFLAGS += -DDEBUG_EVAL	            # eval functions
-CFLAGS += -DDEBUG_BITS	            # bits functions
+CFLAGS += -DDEBUG_PIECE             # piece list management
+#CFLAGS += -DDEBUG_BITS	            # bits functions (take care !)
 
 #CFLAGS += -DDEBUG_EVAL	            # sleep 1 sec within main loop (SIGINTR test)
 #CFLAGS += -DDEBUG_EVAL2            # eval 2
 #CFLAGS += -DDEBUG_EVAL3            # eval 3
 #CFLAGS += -DDEBUG_MEM              # malloc
 
-all: $(OBJ) $(BIN)
+.PHONY: all cflags clean
+
+compile: cflags $(OBJ) $(BIN)
+
+cflags:
 	@echo CFLAGS used: $(CFLAGS)
+
+all: clean compile
 
 $(DEPS): $(SRC) $(INC)
 	@echo generating dependancies.
@@ -59,7 +66,6 @@ $(DEPS): $(SRC) $(INC)
 
 include $(DEPS)
 
-.PHONY: clean
 clean:
 	rm -rf $(OBJ) core $(BIN) $(DEPS)
 
