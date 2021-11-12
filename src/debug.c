@@ -67,7 +67,7 @@ void debug(uint32_t level, bool timestamp, uint32_t indent, const char *src,
     va_list ap;
 
     if (indent)
-        printf("%*s", 2*indent, "");
+        printf("%*s", 2*(indent-1), "");
 
     if (timestamp) {
         int64_t diff = timer_elapsed();
