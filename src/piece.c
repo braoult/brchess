@@ -66,7 +66,7 @@ piece_list_t *piece_add(pos_t *pos, piece_t piece, square_t square)
     short color = VCOLOR(piece);
 
 #   ifdef DEBUG_PIECE
-    log_f(2, "piece=%02x square=%02x\n", piece, square);
+    log_f(3, "piece=%02x square=%02x\n", piece, square);
     log_f(5, "Adding %s %s on %c%c\n", color? "Black": "White",
           P_NAME(piece), FILE2C(GET_F(square)), RANK2C(GET_R(square)));
 #   endif
@@ -99,5 +99,28 @@ int main(int ac, char**av)
     }
     pos_print(pos);
     pos_pieces_print(pos);
+    printf("0x1c:\n");
+    bitboard_print(0x1c);
+    printf("0x70:\n");
+    bitboard_print(0x70);
+    printf("0x0e:\n");
+    bitboard_print(0x0e);
+    printf("0x60:\n");
+    bitboard_print(0x60);
+
+    printf("A1:\n");
+    bitboard_print(A1);
+    printf("1:\n");
+    bitboard_print(1L);
+    printf("H1:\n");
+    bitboard_print(H1);
+    printf("C1:\n");
+    bitboard_print(C1);
+    printf("D1:\n");
+    bitboard_print(D1);
+    printf("C1|D1:\n");
+    bitboard_print(C1|D1);
+    printf("H8:\n");
+    bitboard_print(H8);
 }
 #endif

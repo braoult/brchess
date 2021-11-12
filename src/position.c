@@ -36,7 +36,7 @@ inline void bitboard_print(bitboard_t bb)
 {
     int i;
     printf("%#018lx\n", bb);
-    for (i=56; i; i-=8)
+    for (i=56; i>=0; i-=8)
         printf("\t"BYTE_PRINT"\n",
                BYTE2BIN(bb>>i));
 }
@@ -108,6 +108,10 @@ void pos_print(pos_t *pos)
 
     printf("\n50 half-moves-rule = %d\n", pos->clock_50);
     printf("Current move = %d\n", pos->curmove);
+    printf("Squares controlled: W:%d B:%d\n", popcount64(pos->controlled[WHITE]),
+           popcount64(pos->controlled[BLACK]));
+    printf("Mobility: W:%u B:%u\n", pos->mobility[WHITE],
+           pos->mobility[BLACK]);
     printf("Bitbords occupied :\n");
     bitboard_print2(pos->occupied[WHITE], pos->occupied[BLACK]);
     printf("Bitbords controlled :\n");
@@ -141,6 +145,8 @@ pos_t *pos_init(pos_t *pos)
     pos->occupied[BLACK] = 0;
     pos->controlled[WHITE] = 0;
     pos->controlled[BLACK] = 0;
+    pos->mobility[WHITE] = 0;
+    pos->mobility[BLACK] = 0;
     INIT_LIST_HEAD(&pos->pieces[WHITE]);
     INIT_LIST_HEAD(&pos->pieces[BLACK]);
     INIT_LIST_HEAD(&pos->moves);

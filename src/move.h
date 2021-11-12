@@ -54,8 +54,9 @@ pool_t *moves_pool_init();
 int move_print(move_t *move, move_flags_t flags);
 void moves_print(pos_t *move, move_flags_t flags);
 int pseudo_moves_castle(pos_t *pos);
-int pseudo_moves_gen(pos_t *pos, piece_list_t *piece);
-int pseudo_moves_pawn(pos_t *pos, piece_list_t *piece);
-int moves_gen(pos_t *pos, bool color);
+
+int pseudo_moves_gen(pos_t *pos, piece_list_t *piece, bool doit);
+int pseudo_moves_pawn(pos_t *pos, piece_list_t *piece, bool doit);
+int moves_gen(pos_t *pos, bool color, bool doit);
 
 #endif  /* MODE_H */

@@ -31,6 +31,9 @@ enum {
     E_COLOR = 8
 };
 
+
+/* piece bitmask in piece_t
+ */
 enum {
     EMPTY  = 0,
     PAWN   = 1 << (E_PAWN - 1),                   /* 0x01 00000001 */
@@ -43,6 +46,7 @@ enum {
 
 #define WHITE           0                         /* 0x00 00000000 */
 #define BLACK           1                         /* 0x01 00000001 */
+#define OPPONENT(p)     !(p)
 
 #define MASK_PIECE      0x3F                      /* 00111111 */
 #define MASK_COLOR      0x80                      /* 10000000 */
