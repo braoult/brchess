@@ -36,7 +36,8 @@ typedef struct board_s {
 
 /* definitions for bitboard representation
  */
-#define BB(f, r)     (8 * (r) + (f))              /* from rank,file to bitboard */
+#define BB(f, r)     (1ULL << (8 * (r) + (f)))    /* from rank,file to bitboard */
+#define SQ88_2_BB(s) (BB(FILE88(s), RANK88(s)))   /* from sq88 to bitboard */
 #define FILEBB(b)    ((b) % 8)                    /* from sq88 to file */
 #define RANKBB(b)    ((b) / 8)                    /* from sq88 to rank */
 

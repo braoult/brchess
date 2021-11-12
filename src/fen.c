@@ -83,7 +83,7 @@ pos_t *fen2pos(pos_t *pos, char *fen)
                 log_i(5, "f=%d r=%d *p=%c piece=%c color=%d\n",
                        file, rank, *p, cp, color);
 #               endif
-                pos->occupied[color] |= (1LL << BB(file, rank));
+                pos->occupied[color] |= BB(file, rank);
                 SET_COLOR(piece, color);
                 board[SQ88(file, rank)].piece = piece;
                 board[SQ88(file, rank)].s_piece =

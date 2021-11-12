@@ -280,7 +280,7 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece, bool doit)
 #       endif
         if (SQ88_NOK(new))
             continue;
-        pos->controlled[vcolor] |= (1ULL << BB(FILE88(new), RANK88(new)));
+        pos->controlled[vcolor] |= SQ88_2_BB(new);
         if (board[new].piece && COLOR(board[new].piece) != color) {
             //log_f(2, "pawn capture mobility\n");
             pos->mobility[vcolor]++;
@@ -374,6 +374,7 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece, bool doit)
     board_t *board = pos->board;
     move_t *move;
     int count = 0;
+    u64 bb_new;
 
 #   ifdef DEBUG_MOVE
     log_f(1, "pos:%p turn:%s piece:%d [%s %s] at %#04x[%c%c]\n",
@@ -397,22 +398,33 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece, bool doit)
 #               endif
                 break;
             }
+            bb_new = SQ88_2_BB(new);
 #           ifdef DEBUG_MOVE
-            log_i(4, "trying %c%c\n", FILE2C(GET_F(new)), RANK2C(GET_R(new)));
+            log_i(2, "trying %#x=%c%c bb=%#lx\n",
+                  new, FILE2C(GET_F(new)), RANK2C(GET_R(new)),
+                  bb_new);
+            //bitboard_print(new_bitboard);
 #           endif
 
-            pos->controlled[vcolor] |= (1ULL << BB(FILE88(new), RANK88(new)));
-            if (board[new].piece) {
+            pos->controlled[vcolor] |= bb_new;;
+
+            /* king: do not move to opponent controlled square */
+            if (piece == KING && pos->controlled[OPPONENT(vcolor)] & bb_new) {
 #               ifdef DEBUG_MOVE
-                log_i(5, "color=%d color2=%d\n", color, COLOR(board[new].piece));
+                log_i(1, "%s king cannot move to %c%c\n",
+                      IS_WHITE(color)? "white": "black",
+                      FILE2C(GET_F(new)), RANK2C(GET_R(new)));
 #               endif
-                /* own color on dest square */
-                if (COLOR(board[new].piece) == color) {
-#                   ifdef DEBUG_MOVE
-                    log_i(5, "skipping %04x (same color piece)\n", new);
-#                   endif
-                    break;
-                }
+                break;
+            }
+
+            if (bb_new & pos->occupied[vcolor]) {
+                //bitboard_print(pos->occupied[vcolor]);
+                //bitboard_print(pos->occupied[OPPONENT(vcolor)]);
+#               ifdef DEBUG_MOVE
+                log_i(1, "BB: skipping %#llx [%c%c] (same color piece)\n",
+                      new, FILE2C(GET_F(new)), RANK2C(GET_R(new)));
+#               endif
             }
 
             /* we are sure the move is valid : we create move */
