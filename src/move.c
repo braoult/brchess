@@ -425,6 +425,7 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece, bool doit)
                 log_i(1, "BB: skipping %#llx [%c%c] (same color piece)\n",
                       new, FILE2C(GET_F(new)), RANK2C(GET_R(new)));
 #               endif
+                break;
             }
 
             /* we are sure the move is valid : we create move */
