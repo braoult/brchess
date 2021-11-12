@@ -5,9 +5,9 @@
 ./obj/fen.o:: src/fen.c src/debug.h src/chessdefs.h src/bits.h src/position.h \
  src/board.h src/piece.h src/list.h src/pool.h src/fen.h
 ./obj/move.o:: src/move.c src/chessdefs.h src/bits.h src/debug.h src/piece.h \
- src/board.h src/position.h src/list.h src/pool.h src/move.h
+ src/board.h src/position.h src/pool.h src/list.h src/move.h
 ./obj/piece.o:: src/piece.c src/chessdefs.h src/bits.h src/debug.h src/piece.h \
- src/board.h src/position.h src/list.h src/pool.h
+ src/board.h src/position.h src/pool.h src/list.h
 ./obj/pool.o:: src/pool.c src/list.h src/pool.h src/debug.h
 ./obj/position.o:: src/position.c src/chessdefs.h src/bits.h src/debug.h \
  src/position.h src/board.h src/piece.h src/list.h src/pool.h src/fen.h

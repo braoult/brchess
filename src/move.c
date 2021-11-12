@@ -48,7 +48,7 @@ static struct can_castle {
 pool_t *moves_pool_init()
 {
     if (!moves_pool)
-        moves_pool = pool_init("moves", 128, sizeof(piece_list_t));
+        moves_pool = pool_init("moves", 128, sizeof(move_t));
     return moves_pool;
 }
 
@@ -481,7 +481,8 @@ int main(int ac, char**av)
     debug_init(1);
     piece_pool_init();
     moves_pool_init();
-    pos = pos_create();
+    pos_pool_init();
+    pos = pos_get();
 
     if (ac == 1) {
         pos_startpos(pos);

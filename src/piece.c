@@ -89,7 +89,8 @@ int main(int ac, char**av)
     pos_t *pos;
 
     debug_init(5);
-    pos = pos_create();
+    pos_pool_init();
+    pos = pos_get();
     piece_pool_init();
 
     if (ac == 1) {

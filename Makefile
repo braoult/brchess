@@ -38,7 +38,7 @@ CFLAGS += -Wmissing-declarations
 
 ##################################### DEBUG flags
 CFLAGS += -DDEBUG		    # global
-#CFLAGS += -DDEBUG_POOL              # memory pools management
+CFLAGS += -DDEBUG_POOL              # memory pools management
 CFLAGS += -DDEBUG_FEN               # FEN decoding
 CFLAGS += -DDEBUG_MOVE              # move generation
 CFLAGS += -DDEBUG_EVAL	            # eval functions

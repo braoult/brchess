@@ -167,7 +167,8 @@ int main(int ac, char**av)
 
     debug_init(5);
     piece_pool_init();
-    pos = pos_create();
+    pos_pool_init();
+    pos = pos_get();
     if (ac == 1) {
         pos_startpos(pos);
     } else {

@@ -22,6 +22,8 @@
 #include "fen.h"
 #include "piece.h"
 
+static pool_t *pos_pool;
+
 #define BYTE_PRINT "%c%c%c%c%c%c%c%c"
 #define BYTE2BIN(b) ((b) & 0x01 ? '1' : '0'),  \
         ((b) & 0x02 ? '1' : '0'),              \
@@ -112,13 +114,13 @@ void pos_print(pos_t *pos)
            popcount64(pos->controlled[BLACK]));
     printf("Mobility: W:%u B:%u\n", pos->mobility[WHITE],
            pos->mobility[BLACK]);
-    printf("Bitbords occupied :\n");
+    printf("Bitboards occupied :\n");
     bitboard_print2(pos->occupied[WHITE], pos->occupied[BLACK]);
-    printf("Bitbords controlled :\n");
+    printf("Bitboards controlled :\n");
     bitboard_print2(pos->controlled[WHITE], pos->controlled[BLACK]);
 }
 
-pos_t *pos_init(pos_t *pos)
+pos_t *pos_clear(pos_t *pos)
 {
     int file, rank;
     board_t *board = pos->board;
@@ -161,19 +163,26 @@ pos_t *pos_startpos(pos_t *pos)
     return fen2pos(pos, startfen);
 }
 
-pos_t *pos_create()
+pos_t *pos_get()
 {
-    pos_t *pos = malloc(sizeof(pos_t));
+    pos_t *pos = pool_get(pos_pool);
     if (pos) {
         //printf("sizeof(board)=%lu\n", sizeof (board_t));
         pos->board = malloc(sizeof (board_t)*BOARDSIZE);
         //printf("board mem: %p-%p\n", pos->board, pos->board+sizeof (board_t));
         if (pos->board)
-            pos_init(pos);
+            pos_clear(pos);
         else {
             free(pos);
             pos = NULL;
         }
     }
     return pos;
+}
+
+pool_t *pos_pool_init()
+{
+    if (!pos_pool)
+        pos_pool = pool_init("positions", 128, sizeof(pos_t));
+    return pos_pool;
 }
