@@ -12,10 +12,13 @@
  */
 
 #include <malloc.h>
+#include <ctype.h>
+
 #include "chessdefs.h"
 #include "piece.h"
-#include "ctype.h"
+#include "board.h"
 #include "debug.h"
+#include "position.h"
 
 static pool_t *pieces_pool;
 

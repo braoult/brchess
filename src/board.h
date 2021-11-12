@@ -17,7 +17,6 @@
 #include <stdint.h>
 #include "chessdefs.h"
 #include "piece.h"
-#include "position.h"
 
 typedef struct board_s {
     piece_t piece;

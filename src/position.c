@@ -168,14 +168,35 @@ pos_t *pos_get()
     pos_t *pos = pool_get(pos_pool);
     if (pos) {
         //printf("sizeof(board)=%lu\n", sizeof (board_t));
-        pos->board = malloc(sizeof (board_t)*BOARDSIZE);
+        //pos->board = malloc(sizeof (board_t)*BOARDSIZE);
         //printf("board mem: %p-%p\n", pos->board, pos->board+sizeof (board_t));
-        if (pos->board)
-            pos_clear(pos);
-        else {
-            free(pos);
-            pos = NULL;
-        }
+        //if (pos->board)
+        pos_clear(pos);
+        //else {
+        //    free(pos);
+        //    pos = NULL;
+        //}
+    }
+    return pos;
+}
+
+/* TODO: merge with pos_get - NULL for init, non null for duplicate */
+pos_t *pos_dup(pos_t *pos)
+{
+    pos_t *new = pool_get(pos_pool);
+    if (new) {
+        //printf("sizeof(board)=%lu\n", sizeof (board_t));
+        //new->board = malloc(sizeof (board_t)*BOARDSIZE);
+        //if (!new->board) {
+        //    pool_add(pos_pool, new);
+        //    return NULL;
+        //}
+
+        *new = *pos;
+        INIT_LIST_HEAD(&new->pieces[WHITE]);
+        INIT_LIST_HEAD(&new->pieces[BLACK]);
+        INIT_LIST_HEAD(&new->moves);
+        //printf("board mem: %p-%p\n", pos->board, pos->board+sizeof (board_t));
     }
     return pos;
 }

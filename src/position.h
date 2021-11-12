@@ -27,7 +27,7 @@ typedef struct pos_s {
     u16 curmove;
     u16 mobility[2];
     eval_t eval;
-    board_t *board;
+    board_t board[BOARDSIZE];
 
     square_t en_passant;
     square_t king[2];
@@ -46,5 +46,6 @@ pos_t *pos_startpos(pos_t *pos);
 pos_t *pos_create();
 pool_t *pos_pool_init();
 pos_t *pos_get();
+pos_t *pos_dup(pos_t *pos);
 
 #endif

@@ -17,9 +17,7 @@
 #include <ctype.h>
 
 #include "chessdefs.h"
-#include "board.h"
 #include "list.h"
-#include "position.h"
 #include "pool.h"
 
 #define PIECE_DEFAULT_VALUE 0

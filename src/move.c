@@ -14,6 +14,7 @@
 #include <malloc.h>
 #include <ctype.h>
 #include "chessdefs.h"
+#include "board.h"
 #include "piece.h"
 #include "move.h"
 #include "list.h"
@@ -149,6 +150,7 @@ static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
     move->to = to;
     move->taken = board[to].piece;
     move->flags = M_NORMAL;
+    move->pos = NULL;
     if (move->taken)
         move->flags |= M_CAPTURE;
     list_add(&move->list, &pos->moves);
@@ -470,6 +472,16 @@ int moves_gen(pos_t *pos, bool color, bool doit)
         count++;
     }
     return count;
+}
+
+int move_doit(pos_t *pos, move_t *move)
+{
+#   ifdef DEBUG_MOVE_TOTO
+    log_f(1, "color:%s doit:%d\n", color? "Black": "White", doit);
+#   endif
+    if (pos && move)
+        return 1;
+    return 0;
 }
 
 #ifdef BIN_move

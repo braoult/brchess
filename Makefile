@@ -26,7 +26,7 @@ BIN=fen pool piece move debug eval bits
 
 CFLAGS += -std=gnu99
 
-CFLAGS += -O2
+#CFLAGS += -O2
 CFLAGS += -g
 CFLAGS += -Wall
 CFLAGS += -Wextra
@@ -67,7 +67,7 @@ $(DEPS): $(SRC) $(INC)
 include $(DEPS)
 
 clean:
-	rm -rf $(OBJ) core $(BIN) $(DEPS)
+	rm -rf $(OBJ) core $(BIN)
 
 #$(OBJ): $(OBJDIR)/%.o: $(SRCDIR)/%.c
 #	@mkdir -p $(@D)
