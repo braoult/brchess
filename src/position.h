@@ -48,4 +48,4 @@ pool_t *pos_pool_init();
 pos_t *pos_get();
 pos_t *pos_dup(pos_t *pos);
 
-#endif
+#endif  /* POSITION_H */

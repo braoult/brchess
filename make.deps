@@ -1,4 +1,7 @@
 ./obj/bits.o:: src/bits.c src/bits.h src/debug.h
+./obj/bodichess.o:: src/bodichess.c src/chessdefs.h src/bits.h src/debug.h \
+ src/board.h src/piece.h src/list.h src/pool.h src/move.h src/position.h \
+ src/fen.h src/eval.h src/bodichess.h
 ./obj/debug.o:: src/debug.c src/debug.h
 ./obj/eval.o:: src/eval.c src/eval.h src/position.h src/chessdefs.h src/bits.h \
  src/debug.h src/board.h src/piece.h src/list.h src/pool.h

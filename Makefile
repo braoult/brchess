@@ -22,8 +22,9 @@ CC=gcc
 
 .SECONDEXPANSION:
 OBJ=$(addprefix $(OBJDIR)/,$(SRC_S:.c=.o))
-BIN=fen pool piece move debug eval bits
+BIN=fen pool piece move debug eval bits bodichess
 
+LIBS   = -lreadline -lncurses
 CFLAGS += -std=gnu99
 
 #CFLAGS += -O2
@@ -72,15 +73,21 @@ clean:
 #$(OBJ): $(OBJDIR)/%.o: $(SRCDIR)/%.c
 #	@mkdir -p $(@D)
 #	$(CC) -c $(CFLAGS) -o $@ $<
-$(OBJDIR)/%.o: $(SRCDIR)/%.c
+$(OBJDIR)/%.o:
 	@mkdir -p $(@D)
 	@echo compiling $@.
 	@$(CC) -c $(CFLAGS) -o $@ $<
 
 #fen: CFLAGS+=-DBIN_$$@
+#$(BIN): $$(subst $(OBJDIR)/$$@.o,,$(OBJ)) $(SRCDIR)/$$@.c
+#	@echo compiling $@.
+#	@$(CC) -DBIN_$@ $(CFLAGS) $^ $(LIBS) -o $@
+
+# TODO: find a better dependancy graph
 $(BIN): $$(subst $(OBJDIR)/$$@.o,,$(OBJ)) $(SRCDIR)/$$@.c
 	@echo compiling $@.
-	@$(CC) -DBIN_$@ $(CFLAGS) $^ -o $@
+	@echo NEED_TO_CHANGE_THIS=$^
+	@$(CC) -DBIN_$@ $(CFLAGS) $^ $(LIBS) -o $@
 
 #pool: CFLAGS+=-DPOOLBIN
 #pool: $$(subst $(OBJDIR)/$$@.o,,$(OBJ)) $(SRCDIR)/$$@.c

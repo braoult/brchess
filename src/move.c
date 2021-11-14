@@ -13,6 +13,7 @@
 
 #include <malloc.h>
 #include <ctype.h>
+
 #include "chessdefs.h"
 #include "board.h"
 #include "piece.h"
@@ -379,7 +380,7 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece, bool doit)
     u64 bb_new;
 
 #   ifdef DEBUG_MOVE
-    log_f(1, "pos:%p turn:%s piece:%d [%s %s] at %#04x[%c%c]\n",
+    log_f(2, "pos:%p turn:%s piece:%d [%s %s] at %#04x[%c%c]\n",
           pos,
           IS_WHITE(pos->turn)? "white": "black",
           piece,
@@ -413,7 +414,7 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece, bool doit)
             /* king: do not move to opponent controlled square */
             if (piece == KING && pos->controlled[OPPONENT(vcolor)] & bb_new) {
 #               ifdef DEBUG_MOVE
-                log_i(1, "%s king cannot move to %c%c\n",
+                log_i(2, "%s king cannot move to %c%c\n",
                       IS_WHITE(color)? "white": "black",
                       FILE2C(GET_F(new)), RANK2C(GET_R(new)));
 #               endif
@@ -424,7 +425,7 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece, bool doit)
                 //bitboard_print(pos->occupied[vcolor]);
                 //bitboard_print(pos->occupied[OPPONENT(vcolor)]);
 #               ifdef DEBUG_MOVE
-                log_i(1, "BB: skipping %#llx [%c%c] (same color piece)\n",
+                log_i(2, "BB: skipping %#llx [%c%c] (same color piece)\n",
                       new, FILE2C(GET_F(new)), RANK2C(GET_R(new)));
 #               endif
                 break;
@@ -455,7 +456,7 @@ int moves_gen(pos_t *pos, bool color, bool doit)
     int count = 0;
 
 #   ifdef DEBUG_MOVE
-    log_f(1, "color:%s doit:%d\n", color? "Black": "White", doit);
+    log_f(2, "color:%s doit:%d\n", color? "Black": "White", doit);
 #   endif
     piece_list = &pos->pieces[color];
 
@@ -477,7 +478,7 @@ int moves_gen(pos_t *pos, bool color, bool doit)
 int move_doit(pos_t *pos, move_t *move)
 {
 #   ifdef DEBUG_MOVE_TOTO
-    log_f(1, "color:%s doit:%d\n", color? "Black": "White", doit);
+    log_f(2, "color:%s doit:%d\n", color? "Black": "White", doit);
 #   endif
     if (pos && move)
         return 1;
@@ -501,7 +502,7 @@ int main(int ac, char**av)
     } else {
         fen2pos(pos, av[1]);
     }
-    printf("turn = %d opponent = %d\n", pos->turn, OPPONENT(pos->turn));
+    //printf("turn = %d opponent = %d\n", pos->turn, OPPONENT(pos->turn));
     moves_gen(pos, OPPONENT(pos->turn), false);
     moves_gen(pos, pos->turn, true);
     pos_print(pos);
@@ -511,4 +512,4 @@ int main(int ac, char**av)
     //bitboard_print2(castle_squares[0].controlled, castle_squares[1].controlled);
     //bitboard_print2(castle_squares[0].occupied, castle_squares[1].occupied);
 }
-#endif
+#endif  /* BIN_move */

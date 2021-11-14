@@ -1,4 +1,4 @@
-/* fen.h - fen notation.
+/* bodichess.h - main loop.
  *
  * Copyright (C) 2021 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
@@ -11,11 +11,11 @@
  *
  */
 
-#ifndef FEN_H
-#define FEN_H
+#ifndef BODICHESS_H
+#define BODICHESS_H
 
 #include "position.h"
 
-pos_t *fen2pos(pos_t *pos, char *fen);
+int bodichess(pos_t *pos);
 
-#endif /* FEN_H */
+#endif  /* BODICHESS_H */
