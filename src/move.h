@@ -19,10 +19,6 @@
 #include "pool.h"
 #include "piece.h"
 
-/* move_add() return value when generating
- */
-
-
 /* move flags
  */
 typedef unsigned char move_flags_t;
@@ -48,13 +44,17 @@ typedef struct move_s {
     piece_t promotion;                            /* promoted piece */
     move_flags_t flags;
     struct list_head list;                        /* next move */
-    struct pos_t *pos;                            /* resulting position */
+    struct pos_s *pos;                            /* resulting position */
 } move_t;
 
 pool_t *moves_pool_init();
+void moves_pool_stats();
 int move_print(move_t *move, move_flags_t flags);
 void moves_print(pos_t *move, move_flags_t flags);
 int pseudo_moves_castle(pos_t *pos);
+
+void move_del(struct list_head *ptr);
+int moves_del(pos_t *pos);
 
 int pseudo_moves_gen(pos_t *pos, piece_list_t *piece, bool doit);
 int pseudo_moves_pawn(pos_t *pos, piece_list_t *piece, bool doit);

@@ -53,6 +53,7 @@ pos_t *fen2pos(pos_t *pos, char *fen)
     board_t *board = pos->board;
 #   define SKIP_BLANK(p) for(;*(p) == ' '; (p)++)
 
+    pos_clear(pos);
     /* 1) get piece placement information
      */
     for (rank = 7, file = 0; *p && *p != ' '; ++p) {

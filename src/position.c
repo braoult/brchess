@@ -19,6 +19,7 @@
 
 #include "chessdefs.h"
 #include "position.h"
+#include "move.h"
 #include "fen.h"
 #include "piece.h"
 
@@ -149,9 +150,10 @@ pos_t *pos_clear(pos_t *pos)
     pos->controlled[BLACK] = 0;
     pos->mobility[WHITE] = 0;
     pos->mobility[BLACK] = 0;
-    INIT_LIST_HEAD(&pos->pieces[WHITE]);
-    INIT_LIST_HEAD(&pos->pieces[BLACK]);
-    INIT_LIST_HEAD(&pos->moves);
+    /* remove pieces / moves */
+    pieces_del(pos, WHITE);
+    pieces_del(pos, BLACK);
+    moves_del(pos);
 
     return pos;
 }
@@ -167,15 +169,10 @@ pos_t *pos_get()
 {
     pos_t *pos = pool_get(pos_pool);
     if (pos) {
-        //printf("sizeof(board)=%lu\n", sizeof (board_t));
-        //pos->board = malloc(sizeof (board_t)*BOARDSIZE);
-        //printf("board mem: %p-%p\n", pos->board, pos->board+sizeof (board_t));
-        //if (pos->board)
+        INIT_LIST_HEAD(&pos->pieces[WHITE]);
+        INIT_LIST_HEAD(&pos->pieces[BLACK]);
+        INIT_LIST_HEAD(&pos->moves);
         pos_clear(pos);
-        //else {
-        //    free(pos);
-        //    pos = NULL;
-        //}
     }
     return pos;
 }
@@ -206,4 +203,10 @@ pool_t *pos_pool_init()
     if (!pos_pool)
         pos_pool = pool_init("positions", 128, sizeof(pos_t));
     return pos_pool;
+}
+
+void pos_pool_stats()
+{
+    if (pos_pool)
+        pool_stats(pos_pool);
 }

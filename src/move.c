@@ -54,6 +54,12 @@ pool_t *moves_pool_init()
     return moves_pool;
 }
 
+void moves_pool_stats()
+{
+    if (moves_pool)
+        pool_stats(moves_pool);
+}
+
 int move_print(move_t *move, move_flags_t flags)
 {
     if (flags & M_PR_CAPT && !(move->flags & M_CAPTURE)) {
@@ -141,8 +147,17 @@ static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
           FILE2C(GET_F(to)),
           RANK2C(GET_R(to)));
 #   endif
+    /* impossible if opponent king is attacked
+     */
     if (COLOR(piece) != pos->turn)
         return NULL;
+    if (board[to].piece & KING) {
+#       ifdef DEBUG_MOVE
+        log_i(2, "invalid position: opponent king [%c%c] is in check.\n",
+              FILE2C(GET_F(to)), RANK2C(GET_R(to)));
+#       endif
+        return NULL;
+    }
     if (!(move = pool_get(moves_pool)))
         return NULL;
 
@@ -163,6 +178,42 @@ static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
           RANK2C(GET_R(move->to)));
 #   endif
     return move;
+}
+
+void move_del(struct list_head *ptr)
+{
+    move_t *move = list_entry(ptr, move_t, list);
+
+#   ifdef DEBUG_MOVE
+    log_i(3, "delete move from %c%c to %c%c\n",
+          FILE2C(GET_F(move->from)), RANK2C(GET_R(move->from)),
+          FILE2C(GET_F(move->to)), RANK2C(GET_R(move->to)));
+#   endif
+
+    /* TODO: remove move->pos if non null */
+    if (move->pos) {
+        pos_clear(move->pos);
+    }
+    list_del(ptr);
+    pool_add(moves_pool, move);
+    return;
+}
+
+int moves_del(pos_t *pos)
+{
+    struct list_head *p_cur, *tmp, *head;
+    int count = 0;
+
+    head = &pos->moves;
+
+    list_for_each_safe(p_cur, tmp, head) {
+        move_del(p_cur);
+        count++;
+    }
+#   ifdef DEBUG_PIECE
+    log_f(3, "removed=%d\n", count);
+#   endif
+    return count;
 }
 
 /* TODO: return nmoves */
@@ -217,7 +268,7 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece, bool doit)
     }
 
 #   ifdef DEBUG_MOVE
-    log_f(3, "pos:%p turn:%s piece:%d [%s %s] dir:%d at %#04x[%c%c]\n",
+    log_f(2, "pos:%p turn:%s piece:%d [%s %s] dir:%d at %#04x[%c%c]\n",
           pos,
           IS_WHITE(pos->turn)? "white": "black",
           piece,
@@ -464,6 +515,7 @@ int moves_gen(pos_t *pos, bool color, bool doit)
     if (doit)
         pseudo_moves_castle(pos);
     list_for_each_safe(p_cur, tmp, piece_list) {
+
         piece = list_entry(p_cur, piece_list_t, list);
         if (PIECE(piece->piece) != PAWN)
             pseudo_moves_gen(pos, piece, doit);

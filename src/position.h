@@ -45,6 +45,7 @@ pos_t *pos_clear(pos_t *pos);
 pos_t *pos_startpos(pos_t *pos);
 pos_t *pos_create();
 pool_t *pos_pool_init();
+void pos_pool_stats();
 pos_t *pos_get();
 pos_t *pos_dup(pos_t *pos);
 

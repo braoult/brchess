@@ -13,4 +13,5 @@
  src/list.h src/pool.h src/board.h src/position.h
 ./obj/pool.o:: src/pool.c src/list.h src/pool.h src/debug.h
 ./obj/position.o:: src/position.c src/chessdefs.h src/bits.h src/debug.h \
- src/position.h src/board.h src/piece.h src/list.h src/pool.h src/fen.h
+ src/position.h src/board.h src/piece.h src/list.h src/pool.h src/move.h \
+ src/fen.h

@@ -54,6 +54,12 @@ pool_t *piece_pool_init()
     return pieces_pool;
 }
 
+void piece_pool_stats()
+{
+    if (pieces_pool)
+        pool_stats(pieces_pool);
+}
+
 static eval_t pieces_values[] = {
     [PAWN] = PAWN_VALUE,
     [KNIGHT] = KNIGHT_VALUE,
@@ -83,6 +89,34 @@ piece_list_t *piece_add(pos_t *pos, piece_t piece, square_t square)
     }
 
     return new;
+}
+
+void piece_del(struct list_head *ptr)
+{
+    piece_list_t *piece = list_entry(ptr, piece_list_t, list);
+#   ifdef DEBUG_PIECE
+    log_f(3, "piece=%02x square=%02x\n", piece->piece, piece->square);
+#   endif
+    list_del(ptr);
+    pool_add(pieces_pool, piece);
+    return;
+}
+
+int pieces_del(pos_t *pos, short color)
+{
+    struct list_head *p_cur, *tmp, *head;
+    int count = 0;
+
+    head = &pos->pieces[color];
+
+    list_for_each_safe(p_cur, tmp, head) {
+        piece_del(p_cur);
+        count++;
+    }
+#   ifdef DEBUG_PIECE
+    log_f(3, "color=%d removed=%d\n", color, count);
+#   endif
+    return count;
 }
 
 #ifdef BIN_piece

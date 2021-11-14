@@ -62,6 +62,9 @@ extern struct piece_details {
 
 void piece_list_print(struct list_head *list);
 pool_t *piece_pool_init();
+void piece_pool_stats();
 piece_list_t *piece_add(pos_t *pos, piece_t piece, square_t square);
+void piece_del(struct list_head *ptr);
+int pieces_del(pos_t *pos, short color);
 
 #endif
