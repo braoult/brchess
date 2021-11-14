@@ -327,56 +327,6 @@ int do_help(__attribute__((unused)) pos_t *pos,
     return (0);
 }
 
-/*
-  static char *read_line(void)
-  {
-  char *line = NULL;
-  ssize_t bufsize = 0; // have getline allocate a buffer for us
-
-  if (getline(&line, &bufsize, stdin) == -1){
-  if (feof(stdin)) {
-  exit(EXIT_SUCCESS);  // We recieved an EOF
-  } else  {
-  perror("readline");
-  exit(EXIT_FAILURE);
-  }
-  }
-
-  return line;
-  }
-*/
-/*
-  int bodichess(pos_t *pos)
-  {
-  while (1) {
-  printf("bodichess> ");
-  if (side == computer_side)      // programme joue
-  {
-  //recherche du meilleur coup a profondeur max_depth
-  bestMove = programme_joue(max_depth, 1);
-  jouer_coup(bestMove);
-  affiche_echiquier();
-  affiche_infos();
-  affiche_resultat();
-  continue;
-  }
-  printf("isa> ");
-  //printf("Taper help pour voir les commandes dispos\n");
-  if (scanf("%s", s) == EOF)  //ferme le programme
-  return 0;
-  if (!strcmp(s, "d"))        //affichage de l'échiquier et des infos
-  {
-  affiche_echiquier();
-  continue;
-  }
-  debug_init(1);
-  piece_pool_init();
-  moves_pool_init();
-  pos_pool_init();
-  pos = pos_get();
-  }
-*/
-
 #ifdef BIN_bodichess
 /** main()
  * options:
