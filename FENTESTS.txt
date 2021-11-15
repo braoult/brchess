@@ -10,3 +10,12 @@ r2bkb1r/8/8/8/8/3bb3/8/R2BKB1R w KQkq - 0 1
 # illegal positions
 4k3/8/8/8/7b/8/8/4K3 b - - 0 1
 2r1k3/3P4/8/8/8/8/8/4K3 w - - 0 1
+
+# only kings on A1/H8
+k7/8/8/8/8/8/8/K7 b - - 0 1
+
+# only one move possible (Pf2xBg3)
+k7/8/8/1p1p4/pPpPp3/P1PpPpb1/NBNP1P2/KBB1B3 w - - 0 1
+
+# only 2 moves possible (Ph5xg6 e.p., Ph5-h6)
+k7/8/8/1p1p2pP/pPpPp3/P1PpPp2/NBNP1P2/KBB1B3 w - g6 0 1
