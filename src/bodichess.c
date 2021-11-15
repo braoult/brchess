@@ -53,6 +53,7 @@ int do_fen(pos_t *, char*);
 int do_pos(pos_t *, char*);
 int do_genmoves(pos_t *, char*);
 int do_prmoves(pos_t *, char*);
+int do_prmovepos(pos_t *pos, char *arg);
 int do_memstats(pos_t *, char*);
 int do_eval(pos_t *, char*);
 int do_quit(pos_t *, char*);
@@ -65,7 +66,8 @@ COMMAND commands[] = {
     { "pos", do_pos, "Print current position" },
     { "quit", do_quit, "Quit" },
     { "genmove", do_genmoves, "Generate next move list" },
-    { "prmoves", do_prmoves, "Generate next move list" },
+    { "prmoves", do_prmoves, "Print position move list" },
+    { "prmovepos", do_prmovepos, "Print Nth move resulting position" },
     { "memstats", do_memstats, "Generate next move list" },
     { "eval", do_eval, "Eval current position" },
     { "debug", do_debug, "Set log level to LEVEL" },
@@ -285,6 +287,22 @@ int do_prmoves(pos_t *pos,
 {
     log_f(1, "%s\n", arg);
     moves_print(pos, M_PR_SEPARATE);
+    return 1;
+}
+
+int do_prmovepos(pos_t *pos, char *arg)
+{
+    struct list_head *p_cur, *tmp;
+    int movenum = atoi(arg), cur = 0;             /* starts with 0 */
+    move_t *move;
+
+    log_f(1, "%s\n", arg);
+    list_for_each_safe(p_cur, tmp, &pos->moves) {
+        move = list_entry(p_cur, move_t, list);
+        if (cur++ == movenum)
+            break;
+    }
+    pos_print(move->newpos);
     return 1;
 }
 
