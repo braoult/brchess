@@ -137,6 +137,7 @@ static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
                         square_t to)
 {
     board_t *board = pos->board;
+    pos_t *newpos;
     move_t *move;
 
 #   ifdef DEBUG_MOVE
@@ -167,9 +168,31 @@ static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
     move->to = to;
     move->taken = board[to].piece;
     move->flags = M_NORMAL;
-    if (move->taken)
-        move->flags |= M_CAPTURE;
     move->newpos = pos_dup(pos);
+    newpos = move->newpos;
+    SET_COLOR(newpos->turn, IS_BLACK(newpos->turn) ? WHITE : BLACK);
+    newpos->turn = OPPONENT(newpos->turn);
+    if (move->taken) {
+        move->flags |= M_CAPTURE;
+        /* remove taken piece from new position piece list
+         * this does not apply for en passant
+         */
+        piece_del(&newpos->board[to].s_piece->list);
+        /* remove occupied bitboard */
+        newpos->occupied[OPPONENT(COLOR(piece))] ^= SQ88_2_BB(to);
+    }
+    /* always make "to" the piece square in new position */
+    newpos->board[to] = newpos->board[from];
+    /* fix dest square */
+    newpos->board[to].s_piece->square = to;
+    /* replace old occupied bitboard by new one */
+    newpos->occupied[VCOLOR(piece)] ^= SQ88_2_BB(from);
+    newpos->occupied[VCOLOR(piece)] |= SQ88_2_BB(to);
+
+    /* always make "from" square empty */
+    newpos->board[from].piece = 0;
+    newpos->board[from].s_piece = NULL;
+
 #   ifdef DEBUG_MOVE
     log_i(3, "added move from %c%c to %c%c\n",
           FILE2C(GET_F(move->from)), RANK2C(GET_R(move->from)),
@@ -230,12 +253,19 @@ static move_t *move_pawn_add(pos_t *pos, piece_t piece, square_t from,
             if ((move = move_add(pos, piece, from, to))) {
                 move->flags |= M_PROMOTION;
                 move->promotion = promote | color;
+                /* fix piece on board and piece list */
                 newpos = move->newpos;
+                newpos->board[to].piece = promote|color;
+                newpos->board[to].s_piece->piece = piece|color;
+                newpos->board[to].s_piece->value =  piece_details[PIECE(piece)].value;
+
                 //piece_del(&newpos->board[from].s_piece);
             }
         }
     } else {
         move = move_add(pos, piece, from, to);
+        newpos = move->newpos;
+
     }
     return move;
 }
@@ -319,11 +349,18 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece, bool doit)
               sq_file);
 #       endif
         if (sq_file == ep_file - 1 || sq_file == ep_file + 1) {
-            square_t taken = board[SQUARE(ep_file, rank5)].piece;
+            square_t t_square = SQUARE(ep_file, rank5); /* taken pawn square */
+            piece_t taken = board[t_square].piece;
             move = move_pawn_add(pos, piece | color , square, pos->en_passant, rank7);
             count++;
             move->flags |= M_EN_PASSANT | M_CAPTURE;
             move->taken = taken;
+
+            /* remove taken pawn from board */
+            piece_del(&move->newpos->board[t_square].s_piece->list);
+            move->newpos->board[t_square].piece = 0;
+            move->newpos->board[t_square].s_piece = NULL;
+
             count++;
         }
 
@@ -359,6 +396,7 @@ int pseudo_moves_castle(pos_t *pos)
     struct can_castle *can_castle;
     bitboard_t controlled;
     bitboard_t occupied = pos->occupied[WHITE] | pos->occupied[BLACK];
+    pos_t *newpos;
 
 #   ifdef DEBUG_MOVE
     log_f(2, "pos:%p turn:%s\n",
@@ -391,7 +429,14 @@ int pseudo_moves_castle(pos_t *pos)
         move = move_add(pos, board[SQUARE(4, rank1)].piece,
                         SQUARE(4, rank1), SQUARE(6, rank1));
         if (move) {
+            newpos = move->newpos;
             move->flags |= M_CASTLE_K;
+            /* move King rook to column F */
+            newpos->board[SQUARE(5, rank1)] = newpos->board[SQUARE(7, rank1)];
+            SET_F(newpos->board[SQUARE(5, rank1)].s_piece->square, 5);
+            newpos->board[SQUARE(7, rank1)].piece =  0;
+            newpos->board[SQUARE(7, rank1)].s_piece = NULL;
+
             count++;
         }
     }
@@ -410,6 +455,12 @@ next:
                         SQUARE(4, rank1), SQUARE(2, rank1));
         if (move) {
             move->flags |= M_CASTLE_Q;
+            /* move King rook to column F */
+            newpos->board[SQUARE(3, rank1)] = newpos->board[SQUARE(0, rank1)];
+            SET_F(newpos->board[SQUARE(3, rank1)].s_piece->square, 3);
+            newpos->board[SQUARE(0, rank1)].piece =  0;
+            newpos->board[SQUARE(0, rank1)].s_piece = NULL;
+
             count++;
         }
     }

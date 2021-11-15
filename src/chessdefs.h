@@ -63,7 +63,7 @@ enum {
 #define SET_BLACK(p)    ((p) |= MASK_COLOR)
 #define SET_COLOR(p, c) (!(c)? SET_WHITE(p): SET_BLACK(p))
 
-/* square_t bits structure : ffffrrrr
+/* square_t bits structure : rrrrffff
  * ffff: file
  * rrrr: rank
  */

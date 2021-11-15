@@ -203,7 +203,6 @@ pos_t *pos_dup(pos_t *pos)
 
             }
         }
-
     }
     return new;
 }

@@ -60,15 +60,6 @@ void piece_pool_stats()
         pool_stats(pieces_pool);
 }
 
-static eval_t pieces_values[] = {
-    [PAWN] = PAWN_VALUE,
-    [KNIGHT] = KNIGHT_VALUE,
-    [BISHOP] = BISHOP_VALUE,
-    [ROOK] = ROOK_VALUE,
-    [QUEEN] = QUEEN_VALUE,
-    [KING] = KING_VALUE
-};
-
 piece_list_t *piece_add(pos_t *pos, piece_t piece, square_t square)
 {
     piece_list_t *new;
@@ -85,7 +76,7 @@ piece_list_t *piece_add(pos_t *pos, piece_t piece, square_t square)
         new->piece = piece;
         new->square = square;
         new->castle = 0;
-        new-> value = pieces_values[PIECE(piece)];
+        new-> value = piece_details[PIECE(piece)].value;
     }
 
     return new;
