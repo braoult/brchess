@@ -180,22 +180,32 @@ pos_t *pos_get()
 /* TODO: merge with pos_get - NULL for init, non null for duplicate */
 pos_t *pos_dup(pos_t *pos)
 {
+    struct list_head *p_cur, *tmp, *piece_list;
+    piece_list_t *oldpiece;
+    board_t *board;
     pos_t *new = pool_get(pos_pool);
-    if (new) {
-        //printf("sizeof(board)=%lu\n", sizeof (board_t));
-        //new->board = malloc(sizeof (board_t)*BOARDSIZE);
-        //if (!new->board) {
-        //    pool_add(pos_pool, new);
-        //    return NULL;
-        //}
 
+    if (new) {
+        board = new->board;
         *new = *pos;
         INIT_LIST_HEAD(&new->pieces[WHITE]);
         INIT_LIST_HEAD(&new->pieces[BLACK]);
         INIT_LIST_HEAD(&new->moves);
-        //printf("board mem: %p-%p\n", pos->board, pos->board+sizeof (board_t));
+
+        /* duplicate piece list */
+        for (int color=0; color<2; ++color) {
+            piece_list = &pos->pieces[color];     /* white/black piece list */
+
+            list_for_each_safe(p_cur, tmp, piece_list) {
+                oldpiece = list_entry(p_cur, piece_list_t, list);
+                board[oldpiece->square].s_piece =
+                    piece_add(new, oldpiece->piece, oldpiece->square);
+
+            }
+        }
+
     }
-    return pos;
+    return new;
 }
 
 pool_t *pos_pool_init()

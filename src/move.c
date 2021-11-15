@@ -147,10 +147,10 @@ static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
           FILE2C(GET_F(to)),
           RANK2C(GET_R(to)));
 #   endif
-    /* impossible if opponent king is attacked
-     */
     if (COLOR(piece) != pos->turn)
         return NULL;
+    /* invalid position if opponent king is attacked
+     */
     if (board[to].piece & KING) {
 #       ifdef DEBUG_MOVE
         log_i(2, "invalid position: opponent king [%c%c] is in check.\n",
@@ -160,22 +160,20 @@ static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
     }
     if (!(move = pool_get(moves_pool)))
         return NULL;
+    list_add(&move->list, &pos->moves);
 
     move->piece = piece;
     move->from = from;
     move->to = to;
     move->taken = board[to].piece;
     move->flags = M_NORMAL;
-    move->pos = NULL;
     if (move->taken)
         move->flags |= M_CAPTURE;
-    list_add(&move->list, &pos->moves);
+    move->newpos = pos_dup(pos);
 #   ifdef DEBUG_MOVE
     log_i(3, "added move from %c%c to %c%c\n",
-          FILE2C(GET_F(move->from)),
-          RANK2C(GET_R(move->from)),
-          FILE2C(GET_F(move->to)),
-          RANK2C(GET_R(move->to)));
+          FILE2C(GET_F(move->from)), RANK2C(GET_R(move->from)),
+          FILE2C(GET_F(move->to)), RANK2C(GET_R(move->to)));
 #   endif
     return move;
 }
@@ -191,8 +189,8 @@ void move_del(struct list_head *ptr)
 #   endif
 
     /* TODO: remove move->pos if non null */
-    if (move->pos) {
-        pos_clear(move->pos);
+    if (move->newpos) {
+        pos_clear(move->newpos);
     }
     list_del(ptr);
     pool_add(moves_pool, move);
@@ -223,6 +221,7 @@ static move_t *move_pawn_add(pos_t *pos, piece_t piece, square_t from,
     move_t *move;
     piece_t promote;
     unsigned char color = COLOR(piece);
+    pos_t *newpos;
 
     if (color != pos->turn)
         return NULL;
@@ -231,6 +230,8 @@ static move_t *move_pawn_add(pos_t *pos, piece_t piece, square_t from,
             if ((move = move_add(pos, piece, from, to))) {
                 move->flags |= M_PROMOTION;
                 move->promotion = promote | color;
+                newpos = move->newpos;
+                //piece_del(&newpos->board[from].s_piece);
             }
         }
     } else {
@@ -300,8 +301,10 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece, bool doit)
 #               endif
                 //log_f(2, "pawn move2 mobility\n");
                 pos->mobility[vcolor]++;
-                if (doit && (move = move_pawn_add(pos, piece | color, square, new, rank7)))
+                if (doit &&
+                    (move = move_pawn_add(pos, piece | color, square, new, rank7))) {
                     count++;
+                }
             }
         }
     }

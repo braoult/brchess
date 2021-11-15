@@ -44,7 +44,7 @@ typedef struct move_s {
     piece_t promotion;                            /* promoted piece */
     move_flags_t flags;
     struct list_head list;                        /* next move */
-    struct pos_s *pos;                            /* resulting position */
+    struct pos_s *newpos;                         /* resulting position */
 } move_t;
 
 pool_t *moves_pool_init();

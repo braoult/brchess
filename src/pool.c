@@ -117,7 +117,10 @@ void *pool_get(pool_t *pool)
         }
         pool_stats(pool);
     }
-    return  _pool_get(pool);
+    /* this is the effective address if the object (and also the
+     * pool list_head address)
+     */
+    return _pool_get(pool);
 }
 
 #ifdef BIN_pool

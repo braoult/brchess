@@ -21,6 +21,7 @@
 typedef struct board_s {
     piece_t piece;
     piece_list_t *s_piece;
+    //struct list_head *s_piece;
 } board_t;                                        /* 0x88 board */
 #define BOARDSIZE    (8*8*2)
 
