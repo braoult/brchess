@@ -431,6 +431,7 @@ int pseudo_moves_castle(pos_t *pos)
         if (move) {
             newpos = move->newpos;
             move->flags |= M_CASTLE_K;
+
             /* move King rook to column F */
             newpos->board[SQUARE(5, rank1)] = newpos->board[SQUARE(7, rank1)];
             SET_F(newpos->board[SQUARE(5, rank1)].s_piece->square, 5);
@@ -454,6 +455,7 @@ next:
         move = move_add(pos, board[SQUARE(4, rank1)].piece,
                         SQUARE(4, rank1), SQUARE(2, rank1));
         if (move) {
+            newpos = move->newpos;
             move->flags |= M_CASTLE_Q;
             /* move King rook to column F */
             newpos->board[SQUARE(3, rank1)] = newpos->board[SQUARE(0, rank1)];
