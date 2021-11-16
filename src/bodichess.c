@@ -54,6 +54,7 @@ int do_pos(pos_t *, char*);
 int do_genmoves(pos_t *, char*);
 int do_prmoves(pos_t *, char*);
 int do_prmovepos(pos_t *pos, char *arg);
+int do_prpieces(pos_t *pos, char *arg);
 int do_memstats(pos_t *, char*);
 int do_eval(pos_t *, char*);
 int do_quit(pos_t *, char*);
@@ -68,6 +69,7 @@ COMMAND commands[] = {
     { "genmove", do_genmoves, "Generate next move list" },
     { "prmoves", do_prmoves, "Print position move list" },
     { "prmovepos", do_prmovepos, "Print Nth move resulting position" },
+    { "prpieces", do_prpieces, "Print Pieces (from pieces lists)" },
     { "memstats", do_memstats, "Generate next move list" },
     { "eval", do_eval, "Eval current position" },
     { "debug", do_debug, "Set log level to LEVEL" },
@@ -303,6 +305,13 @@ int do_prmovepos(pos_t *pos, char *arg)
             break;
     }
     pos_print(move->newpos);
+    return 1;
+}
+
+int do_prpieces(pos_t *pos, __attribute__((unused)) char *arg)
+{
+    log_f(1, "%s\n", arg);
+    pos_pieces_print(pos);
     return 1;
 }
 
