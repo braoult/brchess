@@ -19,3 +19,6 @@ k7/8/8/1p1p4/pPpPp3/P1PpPpb1/NBNP1P2/KBB1B3 w - - 0 1
 
 # only 2 moves possible (Ph5xg6 e.p., Ph5-h6)
 k7/8/8/1p1p2pP/pPpPp3/P1PpPp2/NBNP1P2/KBB1B3 w - g6 0 1
+
+# 2 Kings, W/B/ pawns on 7th for promotion
+k4n2/4P3/8/8/8/8/4p3/K4N2 w - - 0 1
