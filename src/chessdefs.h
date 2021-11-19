@@ -22,13 +22,13 @@ typedef u8 piece_t;
 
 enum {
     E_EMPTY = 0,
+    E_COLOR,                                      /* LSB */
     E_PAWN,
     E_KNIGHT,
     E_BISHOP,
     E_ROOK,
     E_QUEEN,
     E_KING,
-    E_COLOR = 8
 };
 
 
@@ -36,23 +36,22 @@ enum {
  */
 enum {
     EMPTY  = 0,
-    PAWN   = 1 << (E_PAWN - 1),                   /* 0x01 00000001 */
-    KNIGHT = 1 << (E_KNIGHT - 1),                 /* 0x02 00000010 */
-    BISHOP = 1 << (E_BISHOP - 1),                 /* 0x04 00000100 */
-    ROOK   = 1 << (E_ROOK - 1),                   /* 0x08 00001000 */
-    QUEEN  = 1 << (E_QUEEN - 1),                  /* 0x10 00010000 */
-    KING   = 1 << (E_KING - 1),                   /* 0x20 00100000 */
+    PAWN   = 1 << (E_PAWN - 1),                   /* 0x02 00000010 */
+    KNIGHT = 1 << (E_KNIGHT - 1),                 /* 0x04 00000100 */
+    BISHOP = 1 << (E_BISHOP - 1),                 /* 0x08 00001000 */
+    ROOK   = 1 << (E_ROOK - 1),                   /* 0x10 00010000 */
+    QUEEN  = 1 << (E_QUEEN - 1),                  /* 0x20 00100000 */
+    KING   = 1 << (E_KING - 1),                   /* 0x40 01000000 */
 };
 
 #define WHITE           0                         /* 0x00 00000000 */
 #define BLACK           1                         /* 0x01 00000001 */
 #define OPPONENT(p)     !(p)
 
-#define MASK_PIECE      0x3F                      /* 00111111 */
-#define MASK_COLOR      0x80                      /* 10000000 */
+#define MASK_COLOR      0x01                      /* 00000001 */
+#define MASK_PIECE      0x7E                      /* 01111110 */
 
 #define COLOR(p)        ((p) & MASK_COLOR)        /* bitmask */
-#define VCOLOR(p)       (!!COLOR(p))              /* WHITE/BLACK */
 #define PIECE(p)        ((p) & MASK_PIECE)
 #define E_PIECE(p)      (ffs64(PIECE(p)))         /* convert mask to E_XX */
 

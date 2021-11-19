@@ -186,8 +186,8 @@ static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
     /* fix dest square */
     newpos->board[to].s_piece->square = to;
     /* replace old occupied bitboard by new one */
-    newpos->occupied[VCOLOR(piece)] ^= SQ88_2_BB(from);
-    newpos->occupied[VCOLOR(piece)] |= SQ88_2_BB(to);
+    newpos->occupied[COLOR(piece)] ^= SQ88_2_BB(from);
+    newpos->occupied[COLOR(piece)] |= SQ88_2_BB(to);
 
     /* always make "from" square empty */
     newpos->board[from].piece = 0;
@@ -277,7 +277,6 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece, bool doit)
 {
     piece_t piece = PIECE(ppiece->piece);
     unsigned char color = COLOR(ppiece->piece);
-    unsigned char vcolor = VCOLOR(ppiece->piece);
     square_t square = ppiece->square, new;
     board_t *board = pos->board;
     unsigned char rank2, rank7, rank5;
@@ -319,7 +318,7 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece, bool doit)
         log_i(4, "pushing pawn %#04x\n", square);
 #       endif
         //log_f(4, "pawn move mobility\n");
-        pos->mobility[vcolor]++;
+        pos->mobility[color]++;
         if (doit && (move = move_pawn_add(pos, piece | color, square, new, rank7)))
             count++;
         /* push 2 squares */
@@ -330,7 +329,7 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece, bool doit)
                 log_i(4, "pushing pawn %#04x 2 squares\n", square);
 #               endif
                 //log_f(2, "pawn move2 mobility\n");
-                pos->mobility[vcolor]++;
+                pos->mobility[color]++;
                 if (doit &&
                     (move = move_pawn_add(pos, piece | color, square, new, rank7))) {
                     count++;
@@ -374,10 +373,10 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece, bool doit)
 #       endif
         if (SQ88_NOK(new))
             continue;
-        pos->controlled[vcolor] |= SQ88_2_BB(new);
+        pos->controlled[color] |= SQ88_2_BB(new);
         if (board[new].piece && COLOR(board[new].piece) != color) {
             //log_f(2, "pawn capture mobility\n");
-            pos->mobility[vcolor]++;
+            pos->mobility[color]++;
             if (doit &&
                 ((move = move_pawn_add(pos, piece | color, square, new, rank7))))
                 count++;
@@ -476,7 +475,6 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece, bool doit)
 {
     piece_t piece = PIECE(ppiece->piece);
     unsigned char color = COLOR(ppiece->piece);
-    unsigned char vcolor = VCOLOR(ppiece->piece);
     struct vector *vector = vectors+piece;
     square_t square = ppiece->square;
     unsigned char ndirs = vector->ndirs;
@@ -516,10 +514,10 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece, bool doit)
             //bitboard_print(new_bitboard);
 #           endif
 
-            pos->controlled[vcolor] |= bb_new;;
+            pos->controlled[color] |= bb_new;;
 
             /* king: do not move to opponent controlled square */
-            if (piece == KING && pos->controlled[OPPONENT(vcolor)] & bb_new) {
+            if (piece == KING && pos->controlled[OPPONENT(color)] & bb_new) {
 #               ifdef DEBUG_MOVE
                 log_i(2, "%s king cannot move to %c%c\n",
                       IS_WHITE(color)? "white": "black",
@@ -528,9 +526,9 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece, bool doit)
                 break;
             }
 
-            if (bb_new & pos->occupied[vcolor]) {
-                //bitboard_print(pos->occupied[vcolor]);
-                //bitboard_print(pos->occupied[OPPONENT(vcolor)]);
+            if (bb_new & pos->occupied[color]) {
+                //bitboard_print(pos->occupied[color]);
+                //bitboard_print(pos->occupied[OPPONENT(color)]);
 #               ifdef DEBUG_MOVE
                 log_i(2, "BB: skipping %#llx [%c%c] (same color piece)\n",
                       new, FILE2C(GET_F(new)), RANK2C(GET_R(new)));
@@ -540,7 +538,7 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece, bool doit)
 
             /* we are sure the move is valid : we create move */
             //log_f(2, "piece mobility\n");
-            pos->mobility[vcolor]++;
+            pos->mobility[color]++;
             if (doit && color == pos->turn) {
                 if ((move = move_add(pos, ppiece->piece, square, new))) {
                     count++;

@@ -63,7 +63,7 @@ void piece_pool_stats()
 piece_list_t *piece_add(pos_t *pos, piece_t piece, square_t square)
 {
     piece_list_t *new;
-    short color = VCOLOR(piece);
+    short color = COLOR(piece);
 
 #   ifdef DEBUG_PIECE
     log_f(3, "piece=%02x square=%02x\n", piece, square);
