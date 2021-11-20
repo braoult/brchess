@@ -88,7 +88,7 @@ pos_t *fen2pos(pos_t *pos, char *fen)
                 SET_COLOR(piece, color);
                 board[SQ88(file, rank)].piece = piece;
                 board[SQ88(file, rank)].s_piece =
-                    piece_add(pos, piece, SQUARE(file, rank));
+                    piece_add(pos, piece, SQ88(file, rank));
                 file++;
                 break;
             case '/':
@@ -146,8 +146,10 @@ pos_t *fen2pos(pos_t *pos, char *fen)
     SKIP_BLANK(p);
     pos->en_passant = 0;
     if (*p != '-') {
-        SET_F(pos->en_passant, C2FILE(*p++));
-        SET_R(pos->en_passant, C2RANK(*p++));
+        //SET_F(pos->en_passant, C2FILE(*p++));
+        //SET_R(pos->en_passant, C2RANK(*p++));
+        pos->en_passant = SQ88(C2FILE(*p), C2RANK(*(p+1)));
+        pos += 2;
     } else {
         p++;
     }

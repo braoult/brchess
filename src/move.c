@@ -82,8 +82,8 @@ int move_print(move_t *move, move_flags_t flags)
         goto end;
     } else {
         printf("%s%c%c", P_SYM(move->piece),
-               FILE2C(GET_F(move->from)),
-               RANK2C(GET_R(move->from)));
+               FILE2C(F88(move->from)),
+               RANK2C(R88(move->from)));
         if (move->taken) {
             printf("x");
             if (flags & M_PR_LONG)
@@ -92,8 +92,8 @@ int move_print(move_t *move, move_flags_t flags)
             printf("-");
         }
         printf("%c%c",
-               FILE2C(GET_F(move->to)),
-               RANK2C(GET_R(move->to)));
+               FILE2C(F88(move->to)),
+               RANK2C(R88(move->to)));
         if (flags & M_PR_LONG && move->flags & M_EN_PASSANT)
             printf("e.p.");
         if (move->promotion)
@@ -143,10 +143,10 @@ static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
 #   ifdef DEBUG_MOVE
     log_i(3, "piece_color=%d turn=%d from=%c%c to=%c%c\n",
           COLOR(piece), pos->turn,
-          FILE2C(GET_F(from)),
-          RANK2C(GET_R(from)),
-          FILE2C(GET_F(to)),
-          RANK2C(GET_R(to)));
+          FILE2C(F88(from)),
+          RANK2C(R88(from)),
+          FILE2C(F88(to)),
+          RANK2C(R88(to)));
 #   endif
     if (COLOR(piece) != pos->turn)
         return NULL;
@@ -155,7 +155,7 @@ static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
     if (board[to].piece & KING) {
 #       ifdef DEBUG_MOVE
         log_i(2, "invalid position: opponent king [%c%c] is in check.\n",
-              FILE2C(GET_F(to)), RANK2C(GET_R(to)));
+              FILE2C(F88(to)), RANK2C(R88(to)));
 #       endif
         return NULL;
     }
@@ -195,8 +195,8 @@ static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
 
 #   ifdef DEBUG_MOVE
     log_i(3, "added move from %c%c to %c%c\n",
-          FILE2C(GET_F(move->from)), RANK2C(GET_R(move->from)),
-          FILE2C(GET_F(move->to)), RANK2C(GET_R(move->to)));
+          FILE2C(F88(move->from)), RANK2C(R88(move->from)),
+          FILE2C(F88(move->to)), RANK2C(R88(move->to)));
 #   endif
     return move;
 }
@@ -207,8 +207,8 @@ void move_del(struct list_head *ptr)
 
 #   ifdef DEBUG_MOVE
     log_i(3, "delete move from %c%c to %c%c\n",
-          FILE2C(GET_F(move->from)), RANK2C(GET_R(move->from)),
-          FILE2C(GET_F(move->to)), RANK2C(GET_R(move->to)));
+          FILE2C(F88(move->from)), RANK2C(R88(move->from)),
+          FILE2C(F88(move->to)), RANK2C(R88(move->to)));
 #   endif
 
     /* TODO: remove move->pos if non null */
@@ -248,7 +248,7 @@ static move_t *move_pawn_add(pos_t *pos, piece_t piece, square_t from,
 
     if (color != pos->turn)
         return NULL;
-    if (RANK88(from) == rank7) {                  /* promotion */
+    if (R88(from) == rank7) {                  /* promotion */
         for (promote = QUEEN; promote > PAWN; promote >>= 1) {
             if ((move = move_add(pos, piece, from, to))) {
                 move->flags |= M_PROMOTION;
@@ -306,7 +306,7 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece, bool doit)
           P_NAME(piece),
           dir,
           square,
-          FILE2C(GET_F(square)), RANK2C(GET_R(square)));
+          FILE2C(F88(square)), RANK2C(R88(square)));
 #   endif
 
     /* normal push. We do not test for valid destination square here,
@@ -322,7 +322,7 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece, bool doit)
         if (doit && (move = move_pawn_add(pos, piece | color, square, new, rank7)))
             count++;
         /* push 2 squares */
-        if (move && RANK88(square) == rank2) {
+        if (move && R88(square) == rank2) {
             new += dir * 16;
             if (SQ88_OK(new) && !board[new].piece) {
 #               ifdef DEBUG_MOVE
@@ -339,16 +339,16 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece, bool doit)
     }
 
     /* en passant - not accounted for mobility. Correct ? */
-    if (doit && pos->en_passant && RANK88(square) == rank5) {
-        unsigned char ep_file = FILE88(pos->en_passant);
-        unsigned char sq_file = FILE88(square);
+    if (doit && pos->en_passant && R88(square) == rank5) {
+        unsigned char ep_file = F88(pos->en_passant);
+        unsigned char sq_file = F88(square);
 
 #       ifdef DEBUG_MOVE
         log_i(4, "possible en passant on rank %#x (current = %#0x)\n", ep_file,
               sq_file);
 #       endif
         if (sq_file == ep_file - 1 || sq_file == ep_file + 1) {
-            square_t t_square = SQUARE(ep_file, rank5); /* taken pawn square */
+            square_t t_square = SQ88(ep_file, rank5); /* taken pawn square */
             piece_t taken = board[t_square].piece;
             move = move_pawn_add(pos, piece | color , square, pos->en_passant, rank7);
             count++;
@@ -425,17 +425,17 @@ int pseudo_moves_castle(pos_t *pos)
             printf("Cannot castle K side: controlled\n");
             goto next;
         }
-        move = move_add(pos, board[SQUARE(4, rank1)].piece,
-                        SQUARE(4, rank1), SQUARE(6, rank1));
+        move = move_add(pos, board[SQ88(4, rank1)].piece,
+                        SQ88(4, rank1), SQ88(6, rank1));
         if (move) {
             newpos = move->newpos;
             move->flags |= M_CASTLE_K;
 
             /* move King rook to column F */
-            newpos->board[SQUARE(5, rank1)] = newpos->board[SQUARE(7, rank1)];
-            SET_F(newpos->board[SQUARE(5, rank1)].s_piece->square, 5);
-            newpos->board[SQUARE(7, rank1)].piece =  0;
-            newpos->board[SQUARE(7, rank1)].s_piece = NULL;
+            newpos->board[SQ88(5, rank1)] = newpos->board[SQ88(7, rank1)];
+            SETF88(newpos->board[SQ88(5, rank1)].s_piece->square, 5);
+            newpos->board[SQ88(7, rank1)].piece =  0;
+            newpos->board[SQ88(7, rank1)].s_piece = NULL;
 
             count++;
         }
@@ -451,16 +451,16 @@ next:
             printf("Cannot castle Q side: controlled\n");
             goto end;
         }
-        move = move_add(pos, board[SQUARE(4, rank1)].piece,
-                        SQUARE(4, rank1), SQUARE(2, rank1));
+        move = move_add(pos, board[SQ88(4, rank1)].piece,
+                        SQ88(4, rank1), SQ88(2, rank1));
         if (move) {
             newpos = move->newpos;
             move->flags |= M_CASTLE_Q;
             /* move King rook to column F */
-            newpos->board[SQUARE(3, rank1)] = newpos->board[SQUARE(0, rank1)];
-            SET_F(newpos->board[SQUARE(3, rank1)].s_piece->square, 3);
-            newpos->board[SQUARE(0, rank1)].piece =  0;
-            newpos->board[SQUARE(0, rank1)].s_piece = NULL;
+            newpos->board[SQ88(3, rank1)] = newpos->board[SQ88(0, rank1)];
+            SETF88(newpos->board[SQ88(3, rank1)].s_piece->square, 3);
+            newpos->board[SQ88(0, rank1)].piece =  0;
+            newpos->board[SQ88(0, rank1)].s_piece = NULL;
 
             count++;
         }
@@ -492,7 +492,7 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece, bool doit)
           IS_WHITE(color)? "white": "black",
           P_NAME(piece),
           square,
-          FILE2C(GET_F(square)), RANK2C(GET_R(square)));
+          FILE2C(F88(square)), RANK2C(R88(square)));
     log_i(5, "vector=%ld ndirs=%d slide=%d\n", vector-vectors, ndirs, slide);
 #   endif
 
@@ -509,7 +509,7 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece, bool doit)
             bb_new = SQ88_2_BB(new);
 #           ifdef DEBUG_MOVE
             log_i(2, "trying %#x=%c%c bb=%#lx\n",
-                  new, FILE2C(GET_F(new)), RANK2C(GET_R(new)),
+                  new, FILE2C(F88(new)), RANK2C(R88(new)),
                   bb_new);
             //bitboard_print(new_bitboard);
 #           endif
@@ -521,7 +521,7 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece, bool doit)
 #               ifdef DEBUG_MOVE
                 log_i(2, "%s king cannot move to %c%c\n",
                       IS_WHITE(color)? "white": "black",
-                      FILE2C(GET_F(new)), RANK2C(GET_R(new)));
+                      FILE2C(F88(new)), RANK2C(R88(new)));
 #               endif
                 break;
             }
@@ -531,7 +531,7 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece, bool doit)
                 //bitboard_print(pos->occupied[OPPONENT(color)]);
 #               ifdef DEBUG_MOVE
                 log_i(2, "BB: skipping %#llx [%c%c] (same color piece)\n",
-                      new, FILE2C(GET_F(new)), RANK2C(GET_R(new)));
+                      new, FILE2C(F88(new)), RANK2C(R88(new)));
 #               endif
                 break;
             }

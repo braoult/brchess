@@ -85,18 +85,19 @@ void pos_print(pos_t *pos)
     printf("    A   B   C   D   E   F   G   H\n\n");
     printf("Turn: %s.\n", IS_WHITE(pos->turn) ? "white" : "black");
     printf("Kings: W:%c%c B:%c%c\n",
-           FILE2C(GET_F(pos->king[WHITE])),
-           RANK2C(GET_R(pos->king[WHITE])),
-           FILE2C(GET_F(pos->king[BLACK])),
-           RANK2C(GET_R(pos->king[BLACK])));
+           FILE2C(F88(pos->king[WHITE])),
+           RANK2C(R88(pos->king[WHITE])),
+           FILE2C(F88(pos->king[BLACK])),
+           RANK2C(R88(pos->king[BLACK])));
     printf("Possible en-passant: [%#x] ", pos->en_passant);
     if (pos->en_passant == 0)
         printf("None.\n");
     else
-        printf("%d %d = %c%c\n", GET_F(pos->en_passant),
-               GET_R(pos->en_passant),
-               FILE2C(GET_F(pos->en_passant)),
-               RANK2C(GET_R(pos->en_passant)));
+        printf("%d %d = %c%c\n",
+               F88(pos->en_passant),
+               R88(pos->en_passant),
+               FILE2C(F88(pos->en_passant)),
+               RANK2C(R88(pos->en_passant)));
 
     printf("castle [%#x] : ", pos->castle);
 

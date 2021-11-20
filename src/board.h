@@ -27,9 +27,12 @@ typedef struct board_s {
 
 /* definitions for 0x88 representation
  */
-#define SQ88(f, r)   (16 * (r) + (f))             /* from rank,file to sq88 */
-#define FILE88(s)    ((s) & 7)                    /* from sq88 to file */
-#define RANK88(s)    ((s) >> 4)                   /* from sq88 to rank */
+#define SQ88(f, r)  (((r) << 4) | (f))            /* from rank,file to sq88 */
+#define F88(s)      ((s) & 0x0f)                  /* from sq88 to file */
+#define R88(s)      ((s) >> 4)                    /* from sq88 to rank */
+
+#define SETF88(s, r) ((s) &= 0xf0, (s) |= (r))
+#define SETR88(s, f) ((s) &= 0x0f, (s) |= (f)<<4)
 
 #define SQ88_NOK(s)  ((s) & 0x88)                 /* invalid square */
 #define SQ88_OK(s)   (!SQ88_NOK(s))
@@ -37,7 +40,7 @@ typedef struct board_s {
 /* definitions for bitboard representation
  */
 #define BB(f, r)     (1ULL << (8 * (r) + (f)))    /* from rank,file to bitboard */
-#define SQ88_2_BB(s) (BB(FILE88(s), RANK88(s)))   /* from sq88 to bitboard */
+#define SQ88_2_BB(s) (BB(F88(s), R88(s)))         /* from sq88 to bitboard */
 #define FILEBB(b)    ((b) % 8)                    /* from sq88 to file */
 #define RANKBB(b)    ((b) / 8)                    /* from sq88 to rank */
 

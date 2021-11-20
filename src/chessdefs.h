@@ -36,7 +36,7 @@ enum {
  */
 enum {
     EMPTY  = 0,
-    PAWN   = 1 << (E_PAWN - 1),                   /* 0x02 00000010 */
+    PAWN   = 1 << (E_PAWN - 1),                   /* 1<<(2-1) = 0x02 00000010 */
     KNIGHT = 1 << (E_KNIGHT - 1),                 /* 0x04 00000100 */
     BISHOP = 1 << (E_BISHOP - 1),                 /* 0x08 00001000 */
     ROOK   = 1 << (E_ROOK - 1),                   /* 0x10 00010000 */
@@ -67,12 +67,6 @@ enum {
  * rrrr: rank
  */
 typedef unsigned char square_t;
-
-#define GET_R(s)        ((s) >> 4)
-#define GET_F(s)        ((s) & 0x0f)
-#define SET_R(s, f)     ((s) &= 0x0f, (s) |= (f)<<4)
-#define SET_F(s, r)     ((s) &= 0xf0, (s) |= (r))
-#define SQUARE(f, r)    ((r) << 4 | (f))
 
 /* castle_t bits structure
  */

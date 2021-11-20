@@ -41,8 +41,8 @@ void piece_list_print(struct list_head *list)
         piece = list_entry(p_cur, piece_list_t, list);
 
         printf("%s%c%c ", P_SYM(piece->piece),
-               FILE2C(GET_F(piece->square)),
-               RANK2C(GET_R(piece->square)));
+               FILE2C(F88(piece->square)),
+               RANK2C(R88(piece->square)));
     }
     printf("\n");
 }
@@ -68,7 +68,7 @@ piece_list_t *piece_add(pos_t *pos, piece_t piece, square_t square)
 #   ifdef DEBUG_PIECE
     log_f(3, "piece=%02x square=%02x\n", piece, square);
     log_f(5, "Adding %s %s on %c%c\n", color? "Black": "White",
-          P_NAME(piece), FILE2C(GET_F(square)), RANK2C(GET_R(square)));
+          P_NAME(piece), FILE2C(F88(square)), RANK2C(R88(square)));
 #   endif
     if ((new = pool_get(pieces_pool))) {
         list_add_tail(&new->list, &pos->pieces[color]);
