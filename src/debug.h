@@ -17,11 +17,13 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-void debug_init(uint32_t level);
-void debug_level_set(uint32_t level);
-void debug_devel_set(uint32_t level);
-void debug(uint32_t level, bool timestamp, uint32_t indent,
-           const char *src, uint32_t line, const char *, ...);
+#include "bits.h"
+
+void debug_init(u32 level);
+void debug_level_set(u32 level);
+void debug_devel_set(u32 level);
+void debug(u32 level, bool timestamp, u32 indent,
+           const char *src, u32 line, const char *, ...);
 
 #ifdef DEBUG
 

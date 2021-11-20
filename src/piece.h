@@ -34,7 +34,7 @@ typedef struct piece_list_s {
     piece_t piece;
     square_t square;
     short castle;
-    int64_t value;
+    s64 value;
     struct list_head list;
 } piece_list_t;
 
@@ -46,7 +46,7 @@ extern struct piece_details {
     char *symbol_w;
     char *symbol_b;                               /* used for game notation */
     char *name;
-    int64_t value;
+    s64  value;
 } piece_details[];
 
 #define P_NAME(p)      piece_details[E_PIECE(p)].name

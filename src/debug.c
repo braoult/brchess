@@ -19,17 +19,17 @@
 #define NANOSEC  1000000000                       /* nano sec in sec */
 #define MILLISEC 1000000                          /* milli sec in sec */
 
-static int64_t timer_start;                       /* in nanosecond */
-static uint32_t debug_level=0;
+static s64 timer_start;                           /* in nanosecond */
+static u32 debug_level=0;
 
-void debug_level_set(uint32_t level)
+void debug_level_set(u32 level)
 {
     debug_level = level;;
 
     log(0, "debug level set to %u\n", level);
 }
 
-void debug_init(uint32_t level)
+void debug_init(u32 level)
 {
     struct timespec timer;
 
@@ -43,7 +43,7 @@ void debug_init(uint32_t level)
     log(0, "timer started.\n");
 }
 
-inline static int64_t timer_elapsed()
+inline static s64 timer_elapsed()
 {
     struct timespec timer;
 
@@ -58,8 +58,8 @@ inline static int64_t timer_elapsed()
  * @src       : source file/func name (or NULL)
  * @line      : line number
  */
-void debug(uint32_t level, bool timestamp, uint32_t indent, const char *src,
-           uint32_t line, const char *fmt, ...)
+void debug(u32 level, bool timestamp, u32 indent, const char *src,
+           u32 line, const char *fmt, ...)
 {
     if (level > debug_level)
         return;
@@ -70,7 +70,7 @@ void debug(uint32_t level, bool timestamp, uint32_t indent, const char *src,
         printf("%*s", 2*(indent-1), "");
 
     if (timestamp) {
-        int64_t diff = timer_elapsed();
+        s64 diff = timer_elapsed();
         printf("%ld.%03ld ", diff/NANOSEC, (diff/1000000)%1000);
         printf("%010ld ", diff);
     }

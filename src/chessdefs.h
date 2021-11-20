@@ -82,12 +82,12 @@ typedef unsigned char castle_t;
 
 /* bitboard
  */
-typedef uint64_t bitboard_t;
+typedef u64 bitboard_t;
 
 
 /* eval type
  */
-typedef int64_t eval_t;
+typedef u64 eval_t;
 
 /* forward typedefs
  */

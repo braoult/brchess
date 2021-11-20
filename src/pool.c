@@ -23,6 +23,7 @@
 #include "list.h"
 #include "pool.h"
 #include "debug.h"
+#include "bits.h"
 
 void pool_stats(pool_t *pool)
 {
@@ -35,7 +36,7 @@ void pool_stats(pool_t *pool)
     }
 }
 
-pool_t *pool_init(const char *name, uint32_t growsize, size_t eltsize)
+pool_t *pool_init(const char *name, u32 growsize, size_t eltsize)
 {
     pool_t *pool;
 
@@ -57,7 +58,7 @@ pool_t *pool_init(const char *name, uint32_t growsize, size_t eltsize)
     return pool;
 }
 
-static uint32_t _pool_add(pool_t *pool, struct list_head *elt)
+static u32 _pool_add(pool_t *pool, struct list_head *elt)
 {
 #   ifdef DEBUG_POOL
     log_f(10, "pool=%p &head=%p elt=%p off1=%lu off2=%lu\n",
@@ -72,7 +73,7 @@ static uint32_t _pool_add(pool_t *pool, struct list_head *elt)
     return ++pool->available;
 }
 
-uint32_t pool_add(pool_t *pool, void *elt)
+u32 pool_add(pool_t *pool, void *elt)
 {
     return _pool_add(pool, elt);
 }
@@ -92,7 +93,7 @@ void *pool_get(pool_t *pool)
     if (!pool->available) {
         void *alloc = malloc(pool->eltsize * pool->growsize);
         void *cur;
-        uint32_t i;
+        u32 i;
 #       ifdef DEBUG_POOL
         log_f(1, "[%s]: growing pool from %u to %u elements.\n",
                pool->name,
@@ -125,7 +126,7 @@ void *pool_get(pool_t *pool)
 
 #ifdef BIN_pool
 struct d {
-    uint16_t data1;
+    u16 data1;
     char c;
     struct list_head list;
 };
@@ -137,7 +138,7 @@ int main(int ac, char**av)
     pool_t *pool;
     int total;
     int action=0;
-    uint16_t icur=0;
+    u16 icur=0;
     char ccur='z';
     struct d *elt;
 

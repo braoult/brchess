@@ -17,19 +17,20 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "list.h"
+#include "bits.h"
 
 typedef struct {
     char *name;
-    uint32_t available;
-    uint32_t allocated;
-    uint32_t growsize;
+    u32 available;
+    u32 allocated;
+    u32 growsize;
     size_t eltsize;
     struct list_head head;
 } pool_t;
 
 void pool_stats(pool_t *pool);
-pool_t *pool_init(const char *name, uint32_t grow, size_t size);
+pool_t *pool_init(const char *name, u32 grow, size_t size);
 void *pool_get(pool_t *pool);
-uint32_t pool_add(pool_t *pool, void *elt);
+u32 pool_add(pool_t *pool, void *elt);
 
 #endif
