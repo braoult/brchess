@@ -1,14 +1,16 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
 /* adaptation of kernel's <linux/list.h>
- * Main change is that I don't use READ_ONCE and WRITE_ONCE
- * See https://www.kernel.org/doc/Documentation/memory-barriers.txt
+ *
  */
+
 #ifndef __BR_LIST_H
 #define __BR_LIST_H
 
 #include <stddef.h>
 #include <stdbool.h>
+#include "rwonce.h"
+#include "container-of.h"
 
 /************ originally in <include/linux/types.h> */
 struct list_head {
@@ -30,11 +32,6 @@ struct hlist_node {
  */
 #define LIST_POISON1  ((void *) 0x100 + POISON_POINTER_DELTA)
 #define LIST_POISON2  ((void *) 0x200 + POISON_POINTER_DELTA)
-
-/************ originally in <include/linux/kernel.h> */
-#define container_of(ptr, type, member) ({				\
-	void *__mptr = (void *)(ptr);					\
-	((type *)(__mptr - offsetof(type, member))); })
 
 /*
  * Circular doubly linked list implementation.
@@ -60,7 +57,7 @@ struct hlist_node {
  */
 static inline void INIT_LIST_HEAD(struct list_head *list)
 {
-    list->next = list;
+    WRITE_ONCE(list->next, list);
     list->prev = list;
 }
 
@@ -77,7 +74,7 @@ static inline void __list_add(struct list_head *new,
     next->prev = new;
     new->next  = next;
     new->prev  = prev;
-    prev->next = new;
+    WRITE_ONCE(prev->next, new);
 }
 
 /**
@@ -117,7 +114,7 @@ static inline void list_add_tail(struct list_head *new, struct list_head *head)
 static inline void __list_del(struct list_head * prev, struct list_head * next)
 {
     next->prev = prev;
-    prev->next = next;
+    WRITE_ONCE(prev->next, next);
 }
 
 /*
@@ -283,7 +280,7 @@ static inline int list_is_last(const struct list_head *list,
  */
 static inline int list_empty(const struct list_head *head)
 {
-    return head->next == head;
+    return READ_ONCE(head->next) == head;
 }
 
 /**
@@ -509,7 +506,7 @@ static inline void list_splice_tail_init(struct list_head *list,
  */
 #define list_first_entry_or_null(ptr, type, member) ({                  \
             struct list_head *head__ = (ptr);                           \
-            struct list_head *pos__ = head__->next;                     \
+            struct list_head *pos__ = READ_ONCE(head__->next);          \
             pos__ != head__ ? list_entry(pos__, type, member) : NULL;   \
         })
 
@@ -785,7 +782,7 @@ static inline int hlist_unhashed(const struct hlist_node *h)
  */
 static inline int hlist_unhashed_lockless(const struct hlist_node *h)
 {
-    return !h->pprev;
+    return !READ_ONCE(h->pprev);
 }
 
 /**
@@ -794,7 +791,7 @@ static inline int hlist_unhashed_lockless(const struct hlist_node *h)
  */
 static inline int hlist_empty(const struct hlist_head *h)
 {
-    return !h->first;
+    return !READ_ONCE(h->first);
 }
 
 static inline void __hlist_del(struct hlist_node *n)
@@ -802,9 +799,9 @@ static inline void __hlist_del(struct hlist_node *n)
     struct hlist_node *next = n->next;
     struct hlist_node **pprev = n->pprev;
 
-    *pprev = next;
+    WRITE_ONCE(*pprev, next);
     if (next)
-        next->pprev = pprev;
+        WRITE_ONCE(next->pprev, pprev);
 }
 
 /**
@@ -846,11 +843,11 @@ static inline void hlist_del_init(struct hlist_node *n)
 static inline void hlist_add_head(struct hlist_node *n, struct hlist_head *h)
 {
     struct hlist_node *first = h->first;
-    n->next = first;
+    WRITE_ONCE(n->next, first);
     if (first)
-        first->pprev = &n->next;
-    h->first = n;
-    n->pprev = &h->first;
+        WRITE_ONCE(first->pprev, &n->next);
+    WRITE_ONCE(h->first, n);
+    WRITE_ONCE(n->pprev, &h->first);
 }
 
 /**
@@ -861,10 +858,10 @@ static inline void hlist_add_head(struct hlist_node *n, struct hlist_head *h)
 static inline void hlist_add_before(struct hlist_node *n,
 				    struct hlist_node *next)
 {
-    n->pprev    = next->pprev;
-    n->next     = next;
-    next->pprev = &n->next;
-    *(n->pprev) = n;
+    WRITE_ONCE(n->pprev, next->pprev);
+    WRITE_ONCE(n->next, next);
+    WRITE_ONCE(next->pprev, &n->next);
+    WRITE_ONCE(*(n->pprev), n);
 }
 
 /**
@@ -875,12 +872,12 @@ static inline void hlist_add_before(struct hlist_node *n,
 static inline void hlist_add_behind(struct hlist_node *n,
 				    struct hlist_node *prev)
 {
-    n->next = prev->next;
-    prev->next = n;
-    n->pprev = &prev->next;
+    WRITE_ONCE(n->next, prev->next);
+    WRITE_ONCE(prev->next, n);
+    WRITE_ONCE(n->pprev, &prev->next);
 
     if (n->next)
-        n->next->pprev = &n->next;
+        WRITE_ONCE(n->next->pprev, &n->next);
 }
 
 /**
@@ -992,4 +989,4 @@ static inline void hlist_move_list(struct hlist_head *old,
          pos && ({ n = pos->member.next; 1; });                         \
          pos = hlist_entry_safe(n, __typeof__(*pos), member))
 
-#endif
+#endif  /* __BR_LIST_H */

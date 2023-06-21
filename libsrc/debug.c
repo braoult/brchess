@@ -1,11 +1,11 @@
 /* debug.c - debug/log management
  *
- * Copyright (C) 2021 Bruno Raoult ("br")
+ * Copyright (C) 2021-2022 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
  * Some rights reserved. See COPYING.
  *
  * You should have received a copy of the GNU General Public License along with this
- * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.htmlL>.
+ * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.html>.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later <https://spdx.org/licenses/GPL-3.0-or-later.html>
  *
@@ -14,19 +14,25 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <time.h>
+
+#ifndef DEBUG_DEBUG
+#define DEBUG_DEBUG
+#endif
+
+#include "bits.h"
 #include "debug.h"
 
 #define NANOSEC  1000000000                       /* nano sec in sec */
 #define MILLISEC 1000000                          /* milli sec in sec */
 
-static s64 timer_start;                           /* in nanosecond */
+static long long timer_start;                     /* in nanosecond */
 static u32 debug_level=0;
 
 void debug_level_set(u32 level)
 {
-    debug_level = level;;
+    debug_level = level;
 
-    log(0, "debug level set to %u\n", level);
+    log(1, "debug level set to %u\n", level);
 }
 
 void debug_init(u32 level)
@@ -43,14 +49,13 @@ void debug_init(u32 level)
     log(0, "timer started.\n");
 }
 
-inline static s64 timer_elapsed()
+inline static long long timer_elapsed()
 {
     struct timespec timer;
 
     clock_gettime(CLOCK_MONOTONIC, &timer);
     return (timer.tv_sec * NANOSEC + timer.tv_nsec) - timer_start;
 }
-
 
 /* void debug - log function
  * @timestamp : boolean
@@ -70,9 +75,9 @@ void debug(u32 level, bool timestamp, u32 indent, const char *src,
         printf("%*s", 2*(indent-1), "");
 
     if (timestamp) {
-        s64 diff = timer_elapsed();
-        printf("%ld.%03ld ", diff/NANOSEC, (diff/1000000)%1000);
-        printf("%010ld ", diff);
+        long long diff = timer_elapsed();
+        printf("%lld.%03lld ", diff/NANOSEC, (diff/1000000)%1000);
+        printf("%010lld ", diff);
     }
 
     if (src) {
