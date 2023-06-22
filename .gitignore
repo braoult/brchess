@@ -10,7 +10,9 @@ move
 bits
 eval
 debug
-bodichess
+brchess
+*.o
 *.s
 /test/
 /obj/
+/lib/
