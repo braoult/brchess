@@ -5,7 +5,7 @@
  * Some rights reserved. See COPYING.
  *
  * You should have received a copy of the GNU General Public License along with this
- * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.htmlL>.
+ * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.html>.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later <https://spdx.org/licenses/GPL-3.0-or-later.html>
  *
@@ -147,6 +147,9 @@ pos_t *pos_clear(pos_t *pos)
     pos->king[BLACK] = 0;
     pos->occupied[WHITE] = 0;
     pos->occupied[BLACK] = 0;
+    for (int color=0; color<2; ++color)
+        for (int piece = BB_ALL; piece < BB_END; ++piece)
+            pos->bb[color][piece] = 0;
     pos->controlled[WHITE] = 0;
     pos->controlled[BLACK] = 0;
     pos->mobility[WHITE] = 0;
@@ -172,8 +175,11 @@ pos_t *pos_get()
     if (pos) {
         INIT_LIST_HEAD(&pos->pieces[WHITE]);
         INIT_LIST_HEAD(&pos->pieces[BLACK]);
+
         INIT_LIST_HEAD(&pos->moves);
         pos_clear(pos);
+    } else {
+        fprintf(stderr, "zobaaa\n");
     }
     return pos;
 }
@@ -211,7 +217,7 @@ pos_t *pos_dup(pos_t *pos)
 pool_t *pos_pool_init()
 {
     if (!pos_pool)
-        pos_pool = pool_init("positions", 128, sizeof(pos_t));
+        pos_pool = pool_create("positions", 128, sizeof(pos_t));
     return pos_pool;
 }
 

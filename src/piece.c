@@ -5,7 +5,7 @@
  * Some rights reserved. See COPYING.
  *
  * You should have received a copy of the GNU General Public License along with this
- * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.htmlL>.
+ * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.html>.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later <https://spdx.org/licenses/GPL-3.0-or-later.html>
  *
@@ -14,10 +14,13 @@
 #include <malloc.h>
 #include <ctype.h>
 
+#include <debug.h>
+#include <pool.h>
+#include <list.h>
+
 #include "chessdefs.h"
 #include "piece.h"
 #include "board.h"
-#include "debug.h"
 #include "position.h"
 
 static pool_t *pieces_pool;
@@ -50,7 +53,7 @@ void piece_list_print(struct list_head *list)
 pool_t *piece_pool_init()
 {
     if (!pieces_pool)
-        pieces_pool = pool_init("pieces", 128, sizeof(piece_list_t));
+        pieces_pool = pool_create("pieces", 128, sizeof(piece_list_t));
     return pieces_pool;
 }
 
@@ -115,30 +118,37 @@ int pieces_del(pos_t *pos, short color)
 int main(int ac, char**av)
 {
     pos_t *pos;
-
-    debug_init(5);
+    printf("zobi\n");fflush(stdout);
+    debug_level_set(6);
+    log_f(5, "kfsjdhg\n");
     pos_pool_init();
     pos = pos_get();
     piece_pool_init();
 
     if (ac == 1) {
+    printf("zoba\n");fflush(stdout);
         pos_startpos(pos);
     } else {
         fen2pos(pos, av[1]);
     }
     pos_print(pos);
     pos_pieces_print(pos);
-    printf("0x1c:\n");
+
+    printf("0x1c = 11100 = C1-E1:\n");
     bitboard_print(0x1c);
-    printf("0x70:\n");
+
+    printf("0x70 = 111 = A1-C1\n");
     bitboard_print(0x70);
-    printf("0x0e:\n");
+
+    printf("0x0e = 1110 = B1-D1\n");
     bitboard_print(0x0e);
-    printf("0x60:\n");
+
+    printf("0x60 = 1100000 = F1-G1\n");
     bitboard_print(0x60);
 
     printf("A1:\n");
     bitboard_print(A1);
+
     printf("1:\n");
     bitboard_print(1L);
     printf("H1:\n");

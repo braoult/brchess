@@ -5,7 +5,7 @@
  * Some rights reserved. See COPYING.
  *
  * You should have received a copy of the GNU General Public License along with this
- * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.htmlL>.
+ * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.html>.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later <https://spdx.org/licenses/GPL-3.0-or-later.html>
  *
@@ -56,6 +56,7 @@ extern struct piece_details {
                         piece_details[E_PIECE(p)].abbrev_b)
 #define P_CSYM(p)      (IS_WHITE(p)? piece_details[E_PIECE(p)].symbol_w: \
                         piece_details[E_PIECE(p)].symbol_b)
+#define P_VALUE(p)     (piece_details[E_PIECE(p)].value)
 /* use short name or symbol - no effect
  */
 #define P_USE_UTF      1

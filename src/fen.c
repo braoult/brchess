@@ -5,7 +5,7 @@
  * Some rights reserved. See COPYING.
  *
  * You should have received a copy of the GNU General Public License along with this
- * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.htmlL>.
+ * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.html>.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later <https://spdx.org/licenses/GPL-3.0-or-later.html>
  *
@@ -17,7 +17,8 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "debug.h"
+#include <debug.h>
+
 #include "chessdefs.h"
 #include "position.h"
 #include "board.h"
@@ -48,7 +49,7 @@
 pos_t *fen2pos(pos_t *pos, char *fen)
 {
     char *p = fen;
-    short rank, file, skip, color;
+    short rank, file, skip, color, bbpiece;
     piece_t piece;
     board_t *board = pos->board;
 #   define SKIP_BLANK(p) for(;*(p) == ' '; (p)++)
@@ -61,29 +62,36 @@ pos_t *fen2pos(pos_t *pos, char *fen)
         char cp = toupper(*p);
         switch (cp) {
             case CHAR_PAWN:
+                bbpiece = BB_PAWN;
                 piece = PAWN;
                 goto set_square;
             case CHAR_KNIGHT:
+                bbpiece = BB_KNIGHT;
                 piece = KNIGHT;
                 goto set_square;
             case CHAR_BISHOP:
+                bbpiece = BB_BISHOP;
                 piece = BISHOP;
                 goto set_square;
             case CHAR_ROOK:
+                bbpiece = BB_ROOK;
                 piece = ROOK;
                 goto set_square;
             case CHAR_QUEEN:
+                bbpiece = BB_QUEEN;
                 piece = QUEEN;
                 goto set_square;
             case CHAR_KING:
+                bbpiece = BB_KING;
                 piece = KING;
-                pos->king[color]=SQ88(file, rank);
+                //pos->bb[color][BB_KING] = BB(file, rank);
                 //goto set_square;
             set_square:
 #               ifdef DEBUG_FEN
                 log_i(5, "f=%d r=%d *p=%c piece=%c color=%d\n",
-                       file, rank, *p, cp, color);
+                      file, rank, *p, cp, color);
 #               endif
+                pos->bb[color][bbpiece] |= BB(file, rank);
                 pos->occupied[color] |= BB(file, rank);
                 SET_COLOR(piece, color);
                 board[SQ88(file, rank)].piece = piece;
@@ -158,8 +166,11 @@ pos_t *fen2pos(pos_t *pos, char *fen)
      * 6) current move number
      */
     SKIP_BLANK(p);
-    log_i(5, "pos=%d\n", (int)(p-fen));
+    //log_i(5, "pos=%d\n", (int)(p-fen));
     sscanf(p, "%hd %hd", &pos->clock_50, &pos->curmove);
+#   ifdef DEBUG_FEN
+    log_i(5, "50 rule=%d current move=%d\n", pos->clock_50, pos->curmove);
+#   endif
     return pos;
 }
 

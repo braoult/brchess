@@ -5,7 +5,7 @@
  * Some rights reserved. See COPYING.
  *
  * You should have received a copy of the GNU General Public License along with this
- * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.htmlL>.
+ * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.html>.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later <https://spdx.org/licenses/GPL-3.0-or-later.html>
  *
@@ -13,26 +13,33 @@
 
 #include <stdio.h>
 
+#include <list.h>
+#include <debug.h>
+
 #include "eval.h"
-#include "list.h"
-#include "debug.h"
 
 eval_t eval(pos_t *pos)
 {
     eval_t material[2] = {0};
     eval_t control[2] = {0};
     eval_t res = 0;
-    struct list_head *p_cur, *p_tmp, *list;
-    piece_list_t *piece;
 
+    //printf("val(%d-%c) = %lu\n", PAWN, P_LETTER(PAWN), P_VALUE(PAWN));
+    //printf("val(%d-%c) = %lu\n", KNIGHT, P_LETTER(KNIGHT), P_VALUE(KNIGHT));
+    //bitboard_print2(pos->bb[0][BB_PAWN], pos->bb[1][BB_PAWN]);
+    //bitboard_print2(pos->bb[0][BB_QUEEN], pos->bb[1][BB_QUEEN]);
     /* 1) pieces value
      */
-    for (int color=0; color <2; ++color) {
-        list = &pos->pieces[color];
-        list_for_each_safe(p_cur, p_tmp, list) {
-            piece = list_entry(p_cur, piece_list_t, list);
-            if (PIECE(piece->piece) != KING)
-                material[color] += piece->value;
+    for (uint color = 0; color < 2; ++color) {
+        for (uint piece = PAWN; piece <= KING; piece <<= 1) {
+            uint bb = PIECETOBB(piece);
+#           ifdef DEBUG_EVAL
+            log_f(2, "color=%u piece=%u bb=%u=%c count=%ul val=%ld\n",
+                  color, piece, bb, P_LETTER(piece), popcount64(pos->bb[color][bb]),
+                  P_VALUE(piece));
+#           endif
+            /* attention here */
+            material[color] += popcount64(pos->bb[color][bb]) * P_VALUE(piece);
         }
     }
 
@@ -54,11 +61,11 @@ eval_t eval(pos_t *pos)
           res, (float)res/10);
 #   endif
 
-    /* 3) mobility: 5 mobility diff = 1 pawn
+    /* 3) mobility: 10 mobility diff = 1 pawn
      */
     res = pos->mobility[WHITE] - pos->mobility[BLACK];
 #   ifdef DEBUG_EVAL
-    log_f(2, "mobility: W:%ld B:%ld eval=%ld (%.3f pawns)\n",
+    log_f(2, "mobility: W:%ud B:%ud eval=%ld (%.3f pawns)\n",
           pos->mobility[WHITE], pos->mobility[BLACK],
           res, (float)res/5);
 #   endif
@@ -83,7 +90,7 @@ int main(int ac, char**av)
     pos_t *pos;
     eval_t res;
 
-    debug_init(2);
+    debug_level_set(9);
     piece_pool_init();
     moves_pool_init();
     pos_pool_init();
@@ -95,10 +102,15 @@ int main(int ac, char**av)
         fen2pos(pos, av[1]);
     }
 
-    moves_gen(pos, OPPONENT(pos->turn), false);
-    moves_gen(pos, pos->turn, true);
     pos_print(pos);
     pos_pieces_print(pos);
+
+    moves_gen(pos, OPPONENT(pos->turn), false);
+    moves_print(pos, M_PR_SEPARATE);
+    //pos_print(pos);
+    //pos_pieces_print(pos);
+    moves_gen(pos, pos->turn, false);
+    moves_print(pos, M_PR_SEPARATE);
     res = eval(pos);
     printf("eval=%ld (%.3f pawns)\n", res, (float)res/100);
 }

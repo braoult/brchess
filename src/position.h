@@ -5,7 +5,7 @@
  * Some rights reserved. See COPYING.
  *
  * You should have received a copy of the GNU General Public License along with this
- * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.htmlL>.
+ * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.html>.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later <https://spdx.org/licenses/GPL-3.0-or-later.html>
  *
@@ -15,10 +15,12 @@
 #define POSITION_H
 
 #include <stdint.h>
-#include "chessdefs.h"
 #include "board.h"
-#include "pool.h"
-#include "list.h"
+#include <pool.h>
+#include <list.h>
+#include <bits.h>
+
+#include "chessdefs.h"
 
 typedef struct pos_s {
     piece_t turn;                                 /* we use only color bit */
@@ -30,8 +32,10 @@ typedef struct pos_s {
     board_t board[BOARDSIZE];
 
     square_t en_passant;
-    square_t king[2];
-    bitboard_t occupied[2];
+    square_t king[2];                             /* obsolete by bb array */
+
+    bitboard_t bb[2][BB_END];                     /* use: pieces[BLACK][BB_PAWN] */
+    bitboard_t occupied[2];                       /* OR of bb[COLOR][x] */
     bitboard_t controlled[2];
     struct list_head pieces[2];
     struct list_head moves;

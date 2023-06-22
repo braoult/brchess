@@ -5,7 +5,7 @@
  * Some rights reserved. See COPYING.
  *
  * You should have received a copy of the GNU General Public License along with this
- * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.htmlL>.
+ * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.html>.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later <https://spdx.org/licenses/GPL-3.0-or-later.html>
  *
@@ -14,7 +14,7 @@
 #ifndef CHESSDEFS_H
 #define CHESSDEFS_H
 
-#include "bits.h"
+#include <bits.h>
 
 /* piece_t bits structure
  */
@@ -31,6 +31,19 @@ enum {
     E_KING,
 };
 
+/* pos_t bitboards tables
+ */
+enum {
+    BB_ALL = 0,                                   /* OR of all bitboards */
+    BB_UNUSED,                                    /* future use ? */
+    BB_PAWN = E_PAWN,
+    BB_KNIGHT,
+    BB_BISHOP,
+    BB_ROOK,
+    BB_QUEEN,
+    BB_KING,
+    BB_END
+};
 
 /* piece bitmask in piece_t
  */
@@ -43,6 +56,8 @@ enum {
     QUEEN  = 1 << (E_QUEEN - 1),                  /* 0x20 00100000 */
     KING   = 1 << (E_KING - 1),                   /* 0x40 01000000 */
 };
+
+#define PIECETOBB(p)    (ffs64(PIECE(p)))         /* from piece_t to bb piece array */
 
 #define WHITE           0                         /* 0x00 00000000 */
 #define BLACK           1                         /* 0x01 00000001 */

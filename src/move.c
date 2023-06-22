@@ -5,7 +5,7 @@
  * Some rights reserved. See COPYING.
  *
  * You should have received a copy of the GNU General Public License along with this
- * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.htmlL>.
+ * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.html>.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later <https://spdx.org/licenses/GPL-3.0-or-later.html>
  *
@@ -14,12 +14,13 @@
 #include <malloc.h>
 #include <ctype.h>
 
+#include <list.h>
+#include <debug.h>
+
 #include "chessdefs.h"
 #include "board.h"
 #include "piece.h"
 #include "move.h"
-#include "list.h"
-#include "debug.h"
 
 static pool_t *moves_pool;
 
@@ -50,7 +51,7 @@ static struct can_castle {
 pool_t *moves_pool_init()
 {
     if (!moves_pool)
-        moves_pool = pool_init("moves", 128, sizeof(move_t));
+        moves_pool = pool_create("moves", 128, sizeof(move_t));
     return moves_pool;
 }
 
@@ -530,8 +531,8 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece, bool doit)
                 //bitboard_print(pos->occupied[color]);
                 //bitboard_print(pos->occupied[OPPONENT(color)]);
 #               ifdef DEBUG_MOVE
-                log_i(2, "BB: skipping %#llx [%c%c] (same color piece)\n",
-                      new, FILE2C(F88(new)), RANK2C(R88(new)));
+                log_i(2, "BB: skipping %#lx [%c%c] (same color piece)\n",
+                      bb_new, FILE2C(F88(new)), RANK2C(R88(new)));
 #               endif
                 break;
             }
@@ -565,7 +566,8 @@ int moves_gen(pos_t *pos, bool color, bool doit)
 #   endif
     piece_list = &pos->pieces[color];
 
-    pos->mobility[color]=0;
+    pos->mobility[color] = 0;
+    pos->controlled[color] = 0;
     if (doit)
         pseudo_moves_castle(pos);
     list_for_each_safe(p_cur, tmp, piece_list) {
