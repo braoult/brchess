@@ -5,7 +5,7 @@
  * Some rights reserved. See COPYING.
  *
  * You should have received a copy of the GNU General Public License along with this
- * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.htmlL>.
+ * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.html>.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later <https://spdx.org/licenses/GPL-3.0-or-later.html>
  *
@@ -79,7 +79,7 @@ enum x88_square {
 
 /* necessary not to become mad to set bitboards
  */
-enum bb_square{
+enum bb_square {
     A1=(u64)1,     B1=(u64)A1<<1, C1=(u64)B1<<1, D1=(u64)C1<<1,
     E1=(u64)D1<<1, F1=(u64)E1<<1, G1=(u64)F1<<1, H1=(u64)G1<<1,
 

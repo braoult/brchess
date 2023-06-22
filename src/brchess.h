@@ -5,17 +5,17 @@
  * Some rights reserved. See COPYING.
  *
  * You should have received a copy of the GNU General Public License along with this
- * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.htmlL>.
+ * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.html>.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later <https://spdx.org/licenses/GPL-3.0-or-later.html>
  *
  */
 
-#ifndef BODICHESS_H
-#define BODICHESS_H
+#ifndef BRCHESS_H
+#define BRCHESS_H
 
 #include "position.h"
 
-int bodichess(pos_t *pos);
+int brchess(pos_t *pos);
 
-#endif  /* BODICHESS_H */
+#endif  /* BRCHESS_H */

@@ -1,11 +1,11 @@
-/* bodichess.c - main loop.
+/* brchess.c - main loop.
  *
  * Copyright (C) 2021 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
  * Some rights reserved. See COPYING.
  *
  * You should have received a copy of the GNU General Public License along with this
- * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.htmlL>.
+ * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.html>.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later <https://spdx.org/licenses/GPL-3.0-or-later.html>
  *
@@ -27,11 +27,11 @@
 #include "debug.h"
 #include "fen.h"
 #include "eval.h"
-#include "bodichess.h"
+#include "brchess.h"
 
 typedef struct {
     char *name;                                   /* User printable name */
-    int (*func)(pos_t *, char *);              /* function doing the job */
+    int (*func)(pos_t *, char *);                 /* function doing the job */
     char *doc;                                    /* function doc */
 } COMMAND;
 
@@ -78,7 +78,7 @@ COMMAND commands[] = {
 
 static int done=0;
 
-int bodichess(pos_t *pos)
+int brchess(pos_t *pos)
 {
     char *buffer, *s;
 
@@ -372,10 +372,10 @@ int do_help(__attribute__((unused)) pos_t *pos,
     return 0;
 }
 
-#ifdef BIN_bodichess
+#ifdef BIN_brchess
 /** main()
  * options:
- int bodichess(pos_t *pos)
+ int brchess(pos_t *pos)
  *
  */
 static int usage(char *prg)
@@ -413,6 +413,6 @@ int main(int ac, char **av)
     if (optind < ac)
         return usage(*av);
 
-    return bodichess(pos);
+    return brchess(pos);
 }
-#endif /* BIN_bodichess */
+#endif /* BIN_brchess */
