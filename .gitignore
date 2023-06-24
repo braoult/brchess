@@ -18,3 +18,4 @@ brchess
 /test/
 /obj/
 /lib/
+/.deps/

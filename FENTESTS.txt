@@ -22,3 +22,9 @@ k7/8/8/1p1p2pP/pPpPp3/P1PpPp2/NBNP1P2/KBB1B3 w - g6 0 1
 
 # 2 Kings, W/B/ pawns on 7th for promotion
 k4n2/4P3/8/8/8/8/4p3/K4N2 w - - 0 1
+
+# white castled, and can e.p. on c6 black can castle
+# white is a pawn down
+# white has 35 or 36 moves: P=11 + 1 e.p. N=6+3 B=5+5 R=1 Q=3 K=1 + 1 e.p.
+# black has 32 or 33 moves: P=11 N=2+7 B=5 R=3 Q=3 K=1 + castle
+rnbqk2r/pp1pbpp1/7p/2pPp3/4n3/3B1N2/PPP2PPP/RNBQ1RK1 w kq c6 0 7

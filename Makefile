@@ -14,7 +14,6 @@ SHELL     := /bin/bash
 CC        := gcc
 BEAR      := bear
 CCLSFILE  := compile_commands.json
-DEPFILE   := make.deps
 
 BINDIR    := ./bin
 SRCDIR    := ./src
@@ -33,132 +32,124 @@ SRC       := $(wildcard $(SRCDIR)/*.c)
 INC       := $(wildcard $(SRCDIR)/*.h)
 SRC_S     := $(notdir $(SRC))
 
-.SECONDEXPANSION:
-OBJ=$(addprefix $(OBJDIR)/,$(SRC_S:.c=.o))
 BIN=fen piece move eval brchess
 
-LIBS   = -l$(LIB) -lreadline -lncurses
+LIBS       = -l$(LIB) -lreadline -lncurses
 
 CFLAGS += -std=gnu11
 
 #CFLAGS += -O2
-CFLAGS += -g
-CFLAGS += -Wall
-CFLAGS += -Wextra
-CFLAGS += -march=native
-CFLAGS += -Wmissing-declarations
+CFLAGS    += -g
+CFLAGS    += -Wall
+CFLAGS    += -Wextra
+CFLAGS    += -march=native
+CFLAGS    += -Wmissing-declarations
 
 ##################################### DEBUG flags
-CFLAGS += -DDEBUG		    # global
-CFLAGS += -DDEBUG_DEBUG             # enable log() functions
-CFLAGS += -DDEBUG_POOL              # memory pools management
-CFLAGS += -DDEBUG_FEN               # FEN decoding
-CFLAGS += -DDEBUG_MOVE              # move generation
-CFLAGS += -DDEBUG_EVAL	            # eval functions
-CFLAGS += -DDEBUG_PIECE             # piece list management
-#CFLAGS += -DDEBUG_BITS	            # bits functions (take care !)
-
-#CFLAGS += -DDEBUG_EVAL	            # sleep 1 sec within main loop (SIGINTR test)
-#CFLAGS += -DDEBUG_EVAL2            # eval 2
-#CFLAGS += -DDEBUG_EVAL3            # eval 3
-#CFLAGS += -DDEBUG_MEM              # malloc
+CPPFLAGS   = -I$(INCDIR)
+CPPFLAGS  += -DDEBUG            # global
+CPPFLAGS  += -DDEBUG_DEBUG      # enable log() functions
+CPPFLAGS  += -DDEBUG_POOL       # memory pools management
+CPPFLAGS  += -DDEBUG_FEN                # FEN decoding
+CPPFLAGS  += -DDEBUG_MOVE       # move generation
+CPPFLAGS  += -DDEBUG_EVAL       # eval functions
+CPPFLAGS  += -DDEBUG_PIECE      # piece list management
 
 ##################################### General targets
-.PHONY: compile cflags all clean
+.PHONY: compile cflags all clean cleanall
 
-compile: lib $(OBJ) $(BIN)
+compile: libs objects bin
 
 cflags:
-	@echo CFLAGS used: $(CFLAGS)
+	@echo CFLAGS: "$(CFLAGS)"
+	@echo CPPFLAGS: $(CPPFLAGS)
+	@echo DEPFLAGS: $(DEPFLAGS)
+	@echo LDFLAGS: $(LDFLAGS)
 
 all: clean compile
 
-clean:
-	rm -rf $(OBJ) core $(BIN)
+clean: cleanobj cleanbin
 
-##################################### Generate and include dependencies
-.PHONY: deps cleandeps $(DEPFILE)
+cleanall: clean cleandeps cleanlib
+
+##################################### Dependencies
+.PHONY: deps cleandeps
+
+DEPDIR := ./.deps
+DEPFILES := $(addprefix $(DEPDIR)/,$(SRC_S:.c=.d))
+DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.d
+
+$(DEPFILES):
+
+include $(wildcard $(DEPFILES))
+
+$(DEPDIR):
+	@echo creating $@ directory.
+	@mkdir -p $@
 
 cleandeps:
-	rm -f $(DEPFILE)
-
-deps: $(DEPFILE)
-
-$(DEPFILE): $(SRC) $(INC)
-	@echo generating dependancies.
-	$(CC) -MM -MF $(DEPFILE) -I $(INCDIR) $(SRC)
-	#cp $@ $@.sav
-	sed -i "s|\(.*\.o\):|${OBJDIR}/\0:|" $@
-
-include $(DEPFILE)
+	$(RM) -rf $(DEPDIR)
 
 ##################################### objects
-.PHONY: obj
+.SECONDEXPANSION:
+OBJ=$(addprefix $(OBJDIR)/,$(SRC_S:.c=.o))
 
-obj: $(OBJ)
-#$(OBJ): $(OBJDIR)/%.o: $(SRCDIR)/%.c
-#	@mkdir -p $(@D)
-#	$(CC) -c $(CFLAGS) -o $@ $<
-$(OBJDIR)/%.o: $(SRCDIR)/%.c
-	echo SRC_S=$(SRC_S)
-	echo O=$(OBJ)
-	mkdir -p $(@D)
-	@echo compiling A=$@ I=$<
-	$(CC) -c $(CFLAGS) -I $(INCDIR) -o $@ $<
+.PHONY: cleanobj
+
+objects: $(OBJ)
+
+cleanobj:
+	$(RM) -rf $(OBJDIR)
+
+$(OBJDIR):
+	@echo creating $@ directory.
+	@mkdir -p $@
+
+$(OBJDIR)/%.o: $(SRCDIR)/%.c $(DEPDIR)/%.d | $(OBJDIR) $(DEPDIR)
+	@echo compiling $<.
+	@$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEPFLAGS) -I $(INCDIR) -o $@ $<
 
 ##################################### binaries
-#fen: CFLAGS+=-DBIN_$$@
-#$(BIN): $$(subst $(OBJDIR)/$$@.o,,$(OBJ)) $(SRCDIR)/$$@.c
-#	@echo compiling $@.
-#	@$(CC) -DBIN_$@ $(CFLAGS) $^ $(LIBS) -o $@
+.PHONY: bin cleanbin
+
+bin: $(BIN)
+
+cleanbin:
+	$(RM) -f $(BIN)
 
 # TODO: find a better dependancy graph
 $(BIN): $$(subst $(OBJDIR)/$$@.o,,$(OBJ)) $(SRCDIR)/$$@.c
-	@echo compiling $@.
-	@echo NEED_TO_CHANGE_THIS=$^
-	$(CC) -DBIN_$@ $(CFLAGS) -I $(INCDIR) $^ $(LDFLAGS) $(LIBS) -o $@
-
-#pool: CFLAGS+=-DPOOLBIN
-#pool: $$(subst $(OBJDIR)/$$@.o,,$(OBJ)) $(SRCDIR)/$$@.c
-#	$(CC) $(CFLAGS) $^ -o $@
-
-# piece: CFLAGS+=-DPIECEBIN
-# piece: $$(subst $(OBJDIR)/$$@.o,,$(OBJ)) $(SRCDIR)/$$@.c
-# 	$(CC) $(CFLAGS) $^ -o $@
-
-# move: CFLAGS+=-DMOVEBIN
-# move: $$(subst $(OBJDIR)/$$@.o,,$(OBJ)) $(SRCDIR)/$$@.c
-# 	$(CC) $(CFLAGS) $^ -o $@
-
-# debug: CFLAGS+=-DDEBUGBIN
-# debug: $$(subst $(OBJDIR)/$$@.o,,$(OBJ)) $(SRCDIR)/$$@.c
-# 	$(CC) $(CFLAGS) $^ -o $@
-
-#.PHONY: bits
-#bits2: src/bits.c
-#	$(CC) $(CFLAGS) -S $^ -o $@.s
-#	$(CC) $(CFLAGS) $^ -o $@
+	@echo generating $@.
+	@#echo NEED_TO_CHANGE_THIS=$^
+	@$(CC) -DBIN_$@ $(CFLAGS) -I $(INCDIR) $^ $(LDFLAGS) $(LIBS) -o $@
 
 ##################################### br library
-.PHONY: cleanlib lib
+.PHONY: cleanlib libs
 
-cleanlib: clean
-	@$(RM) -f $(SLIB) $(DLIB) $(LIBOBJ)
+ARFLAGS = r
 
-lib: $(DLIB) $(SLIB)
+cleanlib:
+	$(RM) -rf $(LIBDIR) $(LIBOBJ)
 
-$(SLIB): $(LIBOBJ)
+$(LIBDIR):
+	@echo creating $@ directory.
+	@mkdir -p $@
+
+libs: $(DLIB) $(SLIB) | $(LIBDIR)
+
+# remove default rule
+%.o: %.c
+
+$(LIBSRCDIR)/%.o: $(LIBSRCDIR)/%.c
+	@echo compiling library $< "->" $@.
+	@$(CC) -c $(CPPFLAGS) $(CFLAGS) -I $(INCDIR) -o $@ $<
+
+$(SLIB): $(LIBOBJ) | $(LIBDIR)
 	@echo building $@ static library.
-	@mkdir -p $(LIBDIR)
 	@$(AR) $(ARFLAGS) -o $@ $^
 
 $(DLIB): CFLAGS += -fPIC
 $(DLIB): LDFLAGS += -shared
-$(DLIB): $(LIBOBJ)
+$(DLIB): $(LIBOBJ) | $(LIBDIR)
 	@echo building $@ shared library.
-	@mkdir -p $(LIBDIR)
 	@$(CC) $(LDFLAGS) $^ -o $@
-
-.c.o:
-	@echo compiling $<.
-	@$(CC) -c $(CFLAGS) $(LDFLAGS) -I $(INCDIR) -o $@ $<
