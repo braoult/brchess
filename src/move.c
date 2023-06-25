@@ -65,13 +65,13 @@ int move_print(move_t *move, move_flags_t flags)
 {
     if (flags & M_PR_CAPT && !(move->flags & M_CAPTURE)) {
 #       ifdef DEBUG_MOVE
-        log_i(5, "capture & %#04x\n", move->flags);
+        log_i(9, "skipping capture & %#04x\n", move->flags);
 #       endif
         return 0;
     }
     if (flags & M_PR_NCAPT && move->flags & M_CAPTURE) {
 #       ifdef DEBUG_MOVE
-        log_i(5, "!capture & %#04x\n", move->flags);
+        log_i(9, "skipping !capture & %#04x\n", move->flags);
 #       endif
         return 0;
     }
@@ -109,28 +109,29 @@ void moves_print(pos_t *pos, move_flags_t flags)
 {
     struct list_head *p_cur, *tmp;
     move_t *move;
-    int i = 0;
     move_flags_t details = flags & M_PR_LONG;
 
-    printf("%s pseudo-moves:\n\t", pos->turn == WHITE? "White": "Black");
-    if (! (flags & M_PR_SEPARATE)) {
-        list_for_each_safe(p_cur, tmp, &pos->moves) {
-            move = list_entry(p_cur, move_t, list);
-            i += move_print(move, details);
+    for (int color=WHITE; color <= BLACK; ++color) {
+        int verif = 0;
+        printf("%s pseudo-moves:\n\t", color == WHITE? "White": "Black");
+        if (! (flags & M_PR_SEPARATE)) {
+            list_for_each_safe(p_cur, tmp, &pos->moves[color]) {
+                move = list_entry(p_cur, move_t, list);
+                verif += move_print(move, details);
+            }
+        } else {
+            printf("captures: ");
+            list_for_each_safe(p_cur, tmp, &pos->moves[color]) {
+                move = list_entry(p_cur, move_t, list);
+                verif += move_print(move, details | M_PR_CAPT);
+            }
+            printf("\n\tothers  : ");
+            list_for_each_safe(p_cur, tmp, &pos->moves[color]) {
+                move = list_entry(p_cur, move_t, list);
+                verif += move_print(move, details | M_PR_NCAPT);
+            }
         }
-        printf("\n\tTotal moves = %d\n", i);
-    } else {
-        printf("captures: ");
-        list_for_each_safe(p_cur, tmp, &pos->moves) {
-            move = list_entry(p_cur, move_t, list);
-            i += move_print(move, details | M_PR_CAPT);
-        }
-        printf("\n\tothers  : ");
-        list_for_each_safe(p_cur, tmp, &pos->moves) {
-            move = list_entry(p_cur, move_t, list);
-            i += move_print(move, details | M_PR_NCAPT);
-        }
-        printf("\n\tTotal moves = %d\n", i);
+        printf("\n\tTotal moves = %d mobility=%u\n", verif, pos->mobility[color]);
     }
 }
 
@@ -140,17 +141,18 @@ static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
     board_t *board = pos->board;
     pos_t *newpos;
     move_t *move;
+    int color = COLOR(piece);
 
 #   ifdef DEBUG_MOVE
     log_i(3, "piece_color=%d turn=%d from=%c%c to=%c%c\n",
-          COLOR(piece), pos->turn,
+          color, pos->turn,
           FILE2C(F88(from)),
           RANK2C(R88(from)),
           FILE2C(F88(to)),
           RANK2C(R88(to)));
 #   endif
-    if (COLOR(piece) != pos->turn)
-        return NULL;
+    //if (COLOR(piece) != pos->turn)
+    //    return NULL;
     /* invalid position if opponent king is attacked
      */
     if (board[to].piece & KING) {
@@ -162,7 +164,7 @@ static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
     }
     if (!(move = pool_get(moves_pool)))
         return NULL;
-    list_add(&move->list, &pos->moves);
+    list_add(&move->list, &pos->moves[color]);
 
     move->piece = piece;
     move->from = from;
@@ -226,11 +228,13 @@ int moves_del(pos_t *pos)
     struct list_head *p_cur, *tmp, *head;
     int count = 0;
 
-    head = &pos->moves;
+    for (int color = WHITE; color <= BLACK; ++color) {
+        head = &pos->moves[color];
 
-    list_for_each_safe(p_cur, tmp, head) {
-        move_del(p_cur);
-        count++;
+        list_for_each_safe(p_cur, tmp, head) {
+            move_del(p_cur);
+            count++;
+        }
     }
 #   ifdef DEBUG_PIECE
     log_f(3, "removed=%d\n", count);
@@ -247,8 +251,8 @@ static move_t *move_pawn_add(pos_t *pos, piece_t piece, square_t from,
     unsigned char color = COLOR(piece);
     pos_t *newpos;
 
-    if (color != pos->turn)
-        return NULL;
+    //if (color != pos->turn)
+    //    return NULL;
     if (R88(from) == rank7) {                  /* promotion */
         for (promote = QUEEN; promote > PAWN; promote >>= 1) {
             if ((move = move_add(pos, piece, from, to))) {
@@ -320,10 +324,12 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece, bool doit)
 #       endif
         //log_f(4, "pawn move mobility\n");
         pos->mobility[color]++;
-        if (doit && (move = move_pawn_add(pos, piece | color, square, new, rank7)))
-            count++;
+        count++;
+        if (doit)
+            move_pawn_add(pos, piece | color, square, new, rank7);
         /* push 2 squares */
-        if (move && R88(square) == rank2) {
+        log(4, "R88(%#x)=%d R2=%d \n", square, R88(square), rank2);
+        if (R88(square) == rank2) {
             new += dir * 16;
             if (SQ88_OK(new) && !board[new].piece) {
 #               ifdef DEBUG_MOVE
@@ -331,16 +337,15 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece, bool doit)
 #               endif
                 //log_f(2, "pawn move2 mobility\n");
                 pos->mobility[color]++;
-                if (doit &&
-                    (move = move_pawn_add(pos, piece | color, square, new, rank7))) {
-                    count++;
-                }
+                count++;
+                if (doit)
+                    move_pawn_add(pos, piece | color, square, new, rank7);
             }
         }
     }
 
     /* en passant - not accounted for mobility. Correct ? */
-    if (doit && pos->en_passant && R88(square) == rank5) {
+    if (pos->en_passant && R88(square) == rank5) {
         unsigned char ep_file = F88(pos->en_passant);
         unsigned char sq_file = F88(square);
 
@@ -352,7 +357,6 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece, bool doit)
             square_t t_square = SQ88(ep_file, rank5); /* taken pawn square */
             piece_t taken = board[t_square].piece;
             move = move_pawn_add(pos, piece | color , square, pos->en_passant, rank7);
-            count++;
             move->flags |= M_EN_PASSANT | M_CAPTURE;
             move->taken = taken;
 
@@ -361,6 +365,7 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece, bool doit)
             move->newpos->board[t_square].piece = 0;
             move->newpos->board[t_square].s_piece = NULL;
 
+            pos->mobility[color]++;
             count++;
         }
 
@@ -378,17 +383,28 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece, bool doit)
         if (board[new].piece && COLOR(board[new].piece) != color) {
             //log_f(2, "pawn capture mobility\n");
             pos->mobility[color]++;
-            if (doit &&
-                ((move = move_pawn_add(pos, piece | color, square, new, rank7))))
-                count++;
+            count++;
+            if (doit)
+                move_pawn_add(pos, piece | color, square, new, rank7);
         }
     }
+#   ifdef DEBUG_MOVE
+    log_f(2, "pos:%p turn:%s piece:%d [%s %s] dir:%d at %#04x[%c%c] count=%d\n",
+          pos,
+          IS_WHITE(pos->turn)? "white": "black",
+          piece,
+          IS_WHITE(color)? "white": "black",
+          P_NAME(piece),
+          dir,
+          square,
+          FILE2C(F88(square)), RANK2C(R88(square)), count);
+#   endif
     return count;
 }
 
-int pseudo_moves_castle(pos_t *pos)
+int pseudo_moves_castle(pos_t *pos, bool color, bool doit)
 {
-    unsigned char color = pos->turn;
+    //unsigned char color = pos->turn;
     board_t *board = pos->board;
     unsigned char rank1, castle_K, castle_Q;
     move_t *move = NULL;
@@ -399,9 +415,10 @@ int pseudo_moves_castle(pos_t *pos)
     pos_t *newpos;
 
 #   ifdef DEBUG_MOVE
-    log_f(2, "pos:%p turn:%s\n",
+    log_f(2, "pos:%p turn:%s color:%s\n",
           pos,
-          IS_WHITE(pos->turn)? "white": "black");
+          IS_WHITE(pos->turn)? "white": "black",
+          IS_WHITE(color)? "white": "black");
 #   endif
 
     if (IS_WHITE(color)) {
@@ -419,51 +436,64 @@ int pseudo_moves_castle(pos_t *pos)
     }
     if (castle_K) {
         if (occupied & can_castle->occupied[1]) {
-            printf("Cannot castle K side: occupied\n");
+#           ifdef DEBUG_MOVE
+            log(5, "Cannot castle K side: occupied\n");
+#           endif
             goto next;
         }
         if (controlled & can_castle->controlled[1]) {
-            printf("Cannot castle K side: controlled\n");
+#           ifdef DEBUG_MOVE
+            log(5, "Cannot castle K side: controlled\n");
+#           endif
             goto next;
         }
-        move = move_add(pos, board[SQ88(4, rank1)].piece,
-                        SQ88(4, rank1), SQ88(6, rank1));
-        if (move) {
-            newpos = move->newpos;
-            move->flags |= M_CASTLE_K;
+        pos->mobility[color]++;
+        count++;
+        if (doit) {
+            move = move_add(pos, board[SQ88(4, rank1)].piece,
+                            SQ88(4, rank1), SQ88(6, rank1));
+            if (move) {
+                newpos = move->newpos;
+                move->flags |= M_CASTLE_K;
 
-            /* move King rook to column F */
-            newpos->board[SQ88(5, rank1)] = newpos->board[SQ88(7, rank1)];
-            SETF88(newpos->board[SQ88(5, rank1)].s_piece->square, 5);
-            newpos->board[SQ88(7, rank1)].piece =  0;
-            newpos->board[SQ88(7, rank1)].s_piece = NULL;
+                /* move King rook to column F */
+                newpos->board[SQ88(5, rank1)] = newpos->board[SQ88(7, rank1)];
+                SETF88(newpos->board[SQ88(5, rank1)].s_piece->square, 5);
+                newpos->board[SQ88(7, rank1)].piece =  0;
+                newpos->board[SQ88(7, rank1)].s_piece = NULL;
 
-            count++;
+            }
         }
     }
 
 next:
     if (castle_Q) {
         if (occupied & can_castle->occupied[0]) {
-            printf("Cannot castle Q side: occupied\n");
+#           ifdef DEBUG_MOVE
+            log(5, "Cannot castle Q side: occupied\n");
+#           endif
             goto end;
         }
         if (controlled & can_castle->controlled[0]) {
-            printf("Cannot castle Q side: controlled\n");
+#           ifdef DEBUG_MOVE
+            log(5, "Cannot castle Q side: controlled\n");
+#           endif
             goto end;
         }
-        move = move_add(pos, board[SQ88(4, rank1)].piece,
-                        SQ88(4, rank1), SQ88(2, rank1));
-        if (move) {
-            newpos = move->newpos;
-            move->flags |= M_CASTLE_Q;
-            /* move King rook to column F */
-            newpos->board[SQ88(3, rank1)] = newpos->board[SQ88(0, rank1)];
-            SETF88(newpos->board[SQ88(3, rank1)].s_piece->square, 3);
-            newpos->board[SQ88(0, rank1)].piece =  0;
-            newpos->board[SQ88(0, rank1)].s_piece = NULL;
-
-            count++;
+        pos->mobility[color]++;
+        count++;
+        if (doit) {
+            move = move_add(pos, board[SQ88(4, rank1)].piece,
+                            SQ88(4, rank1), SQ88(2, rank1));
+            if (move) {
+                newpos = move->newpos;
+                move->flags |= M_CASTLE_Q;
+                /* move King rook to column F */
+                newpos->board[SQ88(3, rank1)] = newpos->board[SQ88(0, rank1)];
+                SETF88(newpos->board[SQ88(3, rank1)].s_piece->square, 3);
+                newpos->board[SQ88(0, rank1)].piece =  0;
+                newpos->board[SQ88(0, rank1)].s_piece = NULL;
+            }
         }
     }
 end:
@@ -481,7 +511,7 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece, bool doit)
     unsigned char ndirs = vector->ndirs;
     char slide = vector->slide;
     board_t *board = pos->board;
-    move_t *move;
+    //move_t *move;
     int count = 0;
     u64 bb_new;
 
@@ -540,10 +570,10 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece, bool doit)
             /* we are sure the move is valid : we create move */
             //log_f(2, "piece mobility\n");
             pos->mobility[color]++;
-            if (doit && color == pos->turn) {
-                if ((move = move_add(pos, ppiece->piece, square, new))) {
-                    count++;
-                }
+            count++;
+            if (doit) {
+                //move = move_add(pos, ppiece->piece, square, new);
+                move_add(pos, ppiece->piece, square, new);
             }
             if (board[new].piece) {               /* stopper move */
                 break;
@@ -552,6 +582,16 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece, bool doit)
                 break;
         }
     }
+#   ifdef DEBUG_MOVE
+    log_f(2, "pos:%p turn:%s piece:%d [%s %s] at %#04x[%c%c] count=%d\n",
+          pos,
+          IS_WHITE(pos->turn)? "white": "black",
+          piece,
+          IS_WHITE(color)? "white": "black",
+          P_NAME(piece),
+          square,
+          FILE2C(F88(square)), RANK2C(R88(square)), count);
+#   endif
     return count;
 }
 
@@ -568,15 +608,13 @@ int moves_gen(pos_t *pos, bool color, bool doit)
 
     pos->mobility[color] = 0;
     pos->controlled[color] = 0;
-    if (doit)
-        pseudo_moves_castle(pos);
+    count += pseudo_moves_castle(pos, color, doit);
     list_for_each_safe(p_cur, tmp, piece_list) {
-
         piece = list_entry(p_cur, piece_list_t, list);
         if (PIECE(piece->piece) != PAWN)
-            pseudo_moves_gen(pos, piece, doit);
+            count += pseudo_moves_gen(pos, piece, doit);
         else
-            pseudo_moves_pawn(pos, piece, doit);
+            count += pseudo_moves_pawn(pos, piece, doit);
 
         count++;
     }
@@ -599,20 +637,21 @@ int main(int ac, char**av)
 {
     pos_t *pos;
 
-    debug_init(1);
+    debug_level_set(5);
     piece_pool_init();
     moves_pool_init();
     pos_pool_init();
     pos = pos_get();
 
     if (ac == 1) {
-        pos_startpos(pos);
+        fen2pos(pos, "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2");
+        //pos_startpos(pos);
     } else {
         fen2pos(pos, av[1]);
     }
     //printf("turn = %d opponent = %d\n", pos->turn, OPPONENT(pos->turn));
-    moves_gen(pos, OPPONENT(pos->turn), false);
-    moves_gen(pos, pos->turn, true);
+    moves_gen(pos, WHITE, false);
+    moves_gen(pos, BLACK, false);
     pos_print(pos);
     pos_pieces_print(pos);
     moves_print(pos, M_PR_SEPARATE);

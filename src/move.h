@@ -51,11 +51,11 @@ pool_t *moves_pool_init();
 void moves_pool_stats();
 int move_print(move_t *move, move_flags_t flags);
 void moves_print(pos_t *move, move_flags_t flags);
-int pseudo_moves_castle(pos_t *pos);
 
 void move_del(struct list_head *ptr);
 int moves_del(pos_t *pos);
 
+int pseudo_moves_castle(pos_t *pos, bool color, bool doit);
 int pseudo_moves_gen(pos_t *pos, piece_list_t *piece, bool doit);
 int pseudo_moves_pawn(pos_t *pos, piece_list_t *piece, bool doit);
 int moves_gen(pos_t *pos, bool color, bool doit);
