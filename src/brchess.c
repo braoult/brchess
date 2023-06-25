@@ -19,12 +19,14 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
+#include <br.h>
+#include <list.h>
+#include <debug.h>
+
 #include "chessdefs.h"
 #include "board.h"
 #include "piece.h"
 #include "move.h"
-#include "list.h"
-#include "debug.h"
 #include "fen.h"
 #include "eval.h"
 #include "brchess.h"
@@ -50,6 +52,7 @@ char *stripwhite (char *string);
 /* The names of functions that actually do the manipulation. */
 int do_help(pos_t *, char*);
 int do_fen(pos_t *, char*);
+int do_init(pos_t *, char*);
 int do_pos(pos_t *, char*);
 int do_genmoves(pos_t *, char*);
 int do_prmoves(pos_t *, char*);
@@ -64,9 +67,10 @@ COMMAND commands[] = {
     { "help", do_help, "Display this text" },
     { "?", do_help, "Synonym for 'help'" },
     { "fen", do_fen, "Set position to FEN" },
+    { "init", do_init, "Set position to normal start position" },
     { "pos", do_pos, "Print current position" },
     { "quit", do_quit, "Quit" },
-    { "genmove", do_genmoves, "Generate next move list" },
+    { "genmove", do_genmoves, "Generate move list for " },
     { "prmoves", do_prmoves, "Print position move list" },
     { "prmovepos", do_prmovepos, "Print Nth move resulting position" },
     { "prpieces", do_prpieces, "Print Pieces (from pieces lists)" },
@@ -108,9 +112,7 @@ int brchess(pos_t *pos)
 }
 
 //char **commands_completion(const char *text, int start, int end)
-char **commands_completion(const char *text,
-                           __attribute__((unused)) int start,
-                           __attribute__((unused)) int end)
+char **commands_completion(const char *text, __unused int start, __unused int end)
 {
     rl_attempted_completion_over = 1;
     return rl_completion_matches(text, commands_generator);
@@ -252,31 +254,41 @@ char *stripwhite(char *string)
     return s;
 }
 
-int do_eval(__attribute__((unused)) pos_t *pos,
-            __attribute__((unused)) char *arg)
+int do_eval(__unused pos_t *pos, __unused char *arg)
 {
+    eval_t material[2], control[2], mobility[2];
+    for (int color = WHITE; color <= BLACK; ++color) {
+        material[color] = eval_material(pos, color);
+        control[color] = eval_square_control(pos, color);
+        mobility[color] = eval_mobility(pos, color);
+        printf("%s: material=%d mobility=%d controlled=%d\n",
+               color? "Black": "White", material[color],
+               mobility[color], control[color]);
+    }
     eval_t res = eval(pos);
-    printf("eval=%ld (%.3f pawns)\n", res, (float)res/100);
+    printf("eval = %d centipawns\n", res);
     return 1;
 }
 
 int do_fen(pos_t *pos, char *arg)
 {
-    log_f(1, "%s\n", arg);
     fen2pos(pos, arg);
     return 1;
 }
 
-int do_pos(pos_t *pos,
-            __attribute__((unused)) char *arg)
+int do_init(pos_t *pos, __unused char *arg)
 {
-    log_f(1, "%s\n", arg);
+    pos_startpos(pos);
+    return 1;
+}
+
+int do_pos(pos_t *pos, __unused char *arg)
+{
     pos_print(pos);
     return 1;
 }
 
-int do_genmoves(pos_t *pos,
-                __attribute__((unused)) char *arg)
+int do_genmoves(pos_t *pos, __unused char *arg)
 {
     log_f(1, "%s\n", arg);
     moves_gen(pos, OPPONENT(pos->turn), false);
@@ -284,8 +296,7 @@ int do_genmoves(pos_t *pos,
     return 1;
 }
 
-int do_prmoves(pos_t *pos,
-               __attribute__((unused)) char *arg)
+int do_prmoves(pos_t *pos, __unused char *arg)
 {
     log_f(1, "%s\n", arg);
     moves_print(pos, M_PR_SEPARATE);
@@ -299,16 +310,18 @@ int do_prmovepos(pos_t *pos, char *arg)
     move_t *move;
 
     log_f(1, "%s\n", arg);
-    list_for_each_safe(p_cur, tmp, &pos->moves) {
+    list_for_each_safe(p_cur, tmp, &pos->moves[pos->turn]) {
         move = list_entry(p_cur, move_t, list);
-        if (cur++ == movenum)
+        if (cur++ == movenum) {
+            pos_print(move->newpos);
             break;
+        }
     }
-    pos_print(move->newpos);
+
     return 1;
 }
 
-int do_prpieces(pos_t *pos, __attribute__((unused)) char *arg)
+int do_prpieces(pos_t *pos, __unused char *arg)
 {
     log_f(1, "%s\n", arg);
     pos_pieces_print(pos);
@@ -347,7 +360,7 @@ int do_help(__attribute__((unused)) pos_t *pos,
 
     for (i = 0; commands[i].name; i++) {
         if (!*arg || (strcmp(arg, commands[i].name) == 0)) {
-            printf("%s\t\t%s.\n", commands[i].name, commands[i].doc);
+            printf("%-11.11s%s.\n", commands[i].name, commands[i].doc);
             printed++;
         }
     }
@@ -409,7 +422,6 @@ int main(int ac, char **av)
                 return usage(*av);
         }
     }
-    printf("optind = %d ac = %d\n", optind, ac);
     if (optind < ac)
         return usage(*av);
 
