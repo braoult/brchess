@@ -102,7 +102,7 @@ typedef u64 bitboard_t;
 
 /* eval type
  */
-typedef u64 eval_t;
+typedef s32 eval_t;
 
 /* forward typedefs
  */
