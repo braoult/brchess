@@ -176,7 +176,8 @@ pos_t *pos_get()
         INIT_LIST_HEAD(&pos->pieces[WHITE]);
         INIT_LIST_HEAD(&pos->pieces[BLACK]);
 
-        INIT_LIST_HEAD(&pos->moves);
+        INIT_LIST_HEAD(&pos->moves[WHITE]);
+        INIT_LIST_HEAD(&pos->moves[BLACK]);
         pos_clear(pos);
     } else {
         fprintf(stderr, "zobaaa\n");
@@ -197,7 +198,8 @@ pos_t *pos_dup(pos_t *pos)
         *new = *pos;
         INIT_LIST_HEAD(&new->pieces[WHITE]);
         INIT_LIST_HEAD(&new->pieces[BLACK]);
-        INIT_LIST_HEAD(&new->moves);
+        INIT_LIST_HEAD(&new->moves[WHITE]);
+        INIT_LIST_HEAD(&new->moves[BLACK]);
 
         /* duplicate piece list */
         for (int color=0; color<2; ++color) {

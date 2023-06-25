@@ -27,7 +27,6 @@ typedef struct pos_s {
     castle_t castle;
     u16 clock_50;
     u16 curmove;
-    u16 mobility[2];
     eval_t eval;
     board_t board[BOARDSIZE];
 
@@ -37,8 +36,9 @@ typedef struct pos_s {
     bitboard_t bb[2][BB_END];                     /* use: pieces[BLACK][BB_PAWN] */
     bitboard_t occupied[2];                       /* OR of bb[COLOR][x] */
     bitboard_t controlled[2];
+    u16 mobility[2];
     struct list_head pieces[2];
-    struct list_head moves;
+    struct list_head moves[2];
 } pos_t;
 
 void bitboard_print(bitboard_t bb);
