@@ -16,6 +16,10 @@
 
 #include "position.h"
 
+eval_t eval_material(pos_t *pos, bool color);
+eval_t eval_mobility(pos_t *pos, bool color);
+eval_t eval_square_control(pos_t *pos, bool color);
+
 eval_t eval(pos_t *pos);
 
 #endif  /* EVAL_H */

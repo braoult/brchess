@@ -18,64 +18,72 @@
 
 #include "eval.h"
 
-eval_t eval(pos_t *pos)
+inline eval_t eval_material(pos_t *pos, bool color)
 {
-    eval_t material[2] = {0};
-    eval_t control[2] = {0};
     eval_t res = 0;
 
-    //printf("val(%d-%c) = %lu\n", PAWN, P_LETTER(PAWN), P_VALUE(PAWN));
-    //printf("val(%d-%c) = %lu\n", KNIGHT, P_LETTER(KNIGHT), P_VALUE(KNIGHT));
-    //bitboard_print2(pos->bb[0][BB_PAWN], pos->bb[1][BB_PAWN]);
-    //bitboard_print2(pos->bb[0][BB_QUEEN], pos->bb[1][BB_QUEEN]);
-    /* 1) pieces value
+    /* I need to do something about the king, if it can be potentially taken
+     * if pseudo-moves include a pinned piece on King.
      */
-    for (uint color = 0; color < 2; ++color) {
-        for (uint piece = PAWN; piece <= KING; piece <<= 1) {
-            uint bb = PIECETOBB(piece);
-#           ifdef DEBUG_EVAL
-            log_f(2, "color=%u piece=%u bb=%u=%c count=%ul val=%ld\n",
-                  color, piece, bb, P_LETTER(piece), popcount64(pos->bb[color][bb]),
-                  P_VALUE(piece));
-#           endif
-            /* attention here */
-            material[color] += popcount64(pos->bb[color][bb]) * P_VALUE(piece);
-        }
+    for (uint piece = PAWN; piece < KING; piece <<= 1) {
+        uint bb = PIECETOBB(piece);
+#       ifdef DEBUG_EVAL
+        log_f(2, "color=%u piece=%u bb=%u=%c count=%ul val=%ld\n",
+              color, piece, bb, P_LETTER(piece), popcount64(pos->bb[color][bb]),
+              P_VALUE(piece));
+#       endif
+        /* attention here */
+        res += popcount64(pos->bb[color][bb]) * P_VALUE(piece);
     }
+    return res;
+}
 
-    res = material[WHITE] - material[BLACK];
+inline eval_t eval_mobility(pos_t *pos, bool color)
+{
+    return popcount64(pos->controlled[color]);
+}
+
+inline eval_t eval_square_control(pos_t *pos, bool color)
+{
+    return pos->mobility[color];
+}
+
+eval_t eval(pos_t *pos)
+{
+    eval_t material[2] = {0}, control[2] = {0};
+
+    /* 1) pieces value */
+    material[WHITE] = eval_material(pos, WHITE);
+    material[BLACK] = eval_material(pos, BLACK);
+
 #   ifdef DEBUG_EVAL
-    log_f(2, "material: W:%ld B:%ld eval=%ld (%.3f pawns)\n",
-          material[WHITE], material[BLACK],
-          material[WHITE] - material[BLACK], (float)res/100);
+    log_f(2, "material: W:%d B:%d diff=%d\n",
+          material[WHITE], material[BLACK], material[WHITE] - material[BLACK]);
 #   endif
 
-    /* 2) square control: 10 square controls diff = 1 pawn
-     */
-    control[WHITE] = popcount64(pos->controlled[WHITE]);
-    control[BLACK] = popcount64(pos->controlled[BLACK]);
-    res = control[WHITE] - control[BLACK];
+    /* 2) square control: 10 square controls diff = 1 pawn */
+    control[WHITE] = eval_square_control(pos, WHITE);
+    control[BLACK] = eval_square_control(pos, BLACK);
+
 #   ifdef DEBUG_EVAL
-    log_f(2, "square control: W:%ld B:%ld eval=%ld (%.3f pawns)\n",
+    log_f(2, "square control: W:%d B:%d diff=%d\n",
           control[WHITE], control[BLACK],
-          res, (float)res/10);
+          (control[WHITE] - control[BLACK]) * 10);
 #   endif
 
     /* 3) mobility: 10 mobility diff = 1 pawn
      */
-    res = pos->mobility[WHITE] - pos->mobility[BLACK];
 #   ifdef DEBUG_EVAL
-    log_f(2, "mobility: W:%ud B:%ud eval=%ld (%.3f pawns)\n",
+    log_f(2, "mobility: W:%u B:%u diff=%d\n",
           pos->mobility[WHITE], pos->mobility[BLACK],
-          res, (float)res/5);
+          (pos->mobility[WHITE] - pos->mobility[BLACK]) * 10);
 #   endif
 
-    res = material[WHITE] - material[BLACK] +
+    eval_t res = material[WHITE] - material[BLACK] +
         (control[WHITE] - control[BLACK]) * 10 +
-        (pos->mobility[WHITE] - pos->mobility[BLACK]) * 20;
+        (pos->mobility[WHITE] - pos->mobility[BLACK]) * 10;
 #   ifdef DEBUG_EVAL
-    log_f(2, "eval: %ld (%.3f pawns)\n",
-          res, (float)res/100);
+    log_f(2, "eval: %d\n", res);
 #   endif
 
     return res;
@@ -90,7 +98,7 @@ int main(int ac, char**av)
     pos_t *pos;
     eval_t res;
 
-    debug_level_set(9);
+    debug_init(5);
     piece_pool_init();
     moves_pool_init();
     pos_pool_init();
@@ -106,12 +114,12 @@ int main(int ac, char**av)
     pos_pieces_print(pos);
 
     moves_gen(pos, OPPONENT(pos->turn), false);
-    moves_print(pos, M_PR_SEPARATE);
+    //moves_print(pos, M_PR_SEPARATE);
     //pos_print(pos);
     //pos_pieces_print(pos);
-    moves_gen(pos, pos->turn, false);
+    moves_gen(pos, pos->turn, true);
     moves_print(pos, M_PR_SEPARATE);
     res = eval(pos);
-    printf("eval=%ld (%.3f pawns)\n", res, (float)res/100);
+    printf("eval=%d centipawns)\n", res);
 }
 #endif
