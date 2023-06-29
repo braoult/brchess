@@ -13,30 +13,33 @@
 SHELL     := /bin/bash
 CC        := gcc
 BEAR      := bear
+TOUCH     := touch
+RM        := rm
 CCLSFILE  := compile_commands.json
 
-BINDIR    := ./bin
 SRCDIR    := ./src
-OBJDIR    := ./obj
 INCDIR    := ./include
-LIBDIR    := ./lib
 LIBSRCDIR := ./libsrc
+BINDIR    := ./bin
+OBJDIR    := ./obj
+LIBDIR    := ./lib
 LDFLAGS   := -L$(LIBDIR)
-LIB       := br_$(shell uname -m)
-SLIB      := $(LIBDIR)/lib$(LIB).a
-DLIB      := $(LIBDIR)/lib$(LIB).so
-LIBSRC    := $(wildcard $(LIBSRCDIR)/*.c)
-LIBOBJ    := $(patsubst %.c,%.o,$(LIBSRC))
 
-SRC       := $(wildcard $(SRCDIR)/*.c)
-INC       := $(wildcard $(SRCDIR)/*.h)
-SRC_S     := $(notdir $(SRC))
+SRC       := $(wildcard $(SRCDIR)/*.c)                      # project sources
+SRC_FN    := $(notdir $(SRC))                               # source basename
 
-BIN=fen piece move eval brchess
+LIBSRC    := $(wildcard $(LIBSRCDIR)/*.c)                   # lib sources
+LIBOBJ    := $(patsubst %.c,%.o,$(LIBSRC))                  # and objects
 
-LIBS       = -l$(LIB) -lreadline -lncurses
+LIB       := br_$(shell uname -m)                           # library name
+SLIB      := $(addsuffix .a, $(LIBDIR)/lib$(LIB))           # static lib
+DLIB      := $(addsuffix .so, $(LIBDIR)/lib$(LIB))          # dynamic lib
 
-CFLAGS += -std=gnu11
+BIN       := fen piece move eval brchess
+
+LIBS      := -l$(LIB) -lreadline -lncurses
+
+CFLAGS    := -std=gnu11
 
 #CFLAGS += -O2
 CFLAGS    += -g
@@ -44,21 +47,25 @@ CFLAGS    += -Wall
 CFLAGS    += -Wextra
 CFLAGS    += -march=native
 CFLAGS    += -Wmissing-declarations
+# for gprof
+# CFLAGS += -pg
+# Next one may be useful for valgrind (when invalid instructions)
+# CFLAGS += -mno-tbm
 
 ##################################### DEBUG flags
-CPPFLAGS   = -I$(INCDIR)
-CPPFLAGS  += -DDEBUG            # global
-CPPFLAGS  += -DDEBUG_DEBUG      # enable log() functions
-CPPFLAGS  += -DDEBUG_POOL       # memory pools management
-CPPFLAGS  += -DDEBUG_FEN                # FEN decoding
-CPPFLAGS  += -DDEBUG_MOVE       # move generation
-CPPFLAGS  += -DDEBUG_EVAL       # eval functions
-CPPFLAGS  += -DDEBUG_PIECE      # piece list management
+CPPFLAGS  := -I$(INCDIR)
+CPPFLAGS  += -DDEBUG                         # global
+CPPFLAGS  += -DDEBUG_DEBUG                   # enable log() functions
+CPPFLAGS  += -DDEBUG_POOL                    # memory pools management
+CPPFLAGS  += -DDEBUG_FEN                     # FEN decoding
+CPPFLAGS  += -DDEBUG_MOVE                    # move generation
+CPPFLAGS  += -DDEBUG_EVAL                    # eval functions
+CPPFLAGS  += -DDEBUG_PIECE                   # piece list management
 
 ##################################### General targets
 .PHONY: compile cflags all clean cleanall
 
-compile: libs objects bin
+compile: objects bin
 
 cflags:
 	@echo CFLAGS: "$(CFLAGS)"
@@ -72,11 +79,11 @@ clean: cleanobj cleanbin
 
 cleanall: clean cleandeps cleanlib
 
-##################################### Dependencies
+##################################### Dependencies files
 .PHONY: deps cleandeps
 
 DEPDIR := ./.deps
-DEPFILES := $(addprefix $(DEPDIR)/,$(SRC_S:.c=.d))
+DEPFILES := $(addprefix $(DEPDIR)/,$(SRC_FN:.c=.d))
 DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.d
 
 $(DEPFILES):
@@ -92,13 +99,14 @@ cleandeps:
 
 ##################################### objects
 .SECONDEXPANSION:
-OBJ=$(addprefix $(OBJDIR)/,$(SRC_S:.c=.o))
+OBJ = $(addprefix $(OBJDIR)/,$(SRC_FN:.c=.o))
 
 .PHONY: cleanobj
 
 objects: $(OBJ)
 
 cleanobj:
+	echo $(OBJ)
 	$(RM) -rf $(OBJDIR)
 
 $(OBJDIR):
@@ -109,20 +117,6 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c $(DEPDIR)/%.d | $(OBJDIR) $(DEPDIR)
 	@echo compiling $<.
 	@$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEPFLAGS) -I $(INCDIR) -o $@ $<
 
-##################################### binaries
-.PHONY: bin cleanbin
-
-bin: $(BIN)
-
-cleanbin:
-	$(RM) -f $(BIN)
-
-# TODO: find a better dependancy graph
-$(BIN): $$(subst $(OBJDIR)/$$@.o,,$(OBJ)) $(SRCDIR)/$$@.c
-	@echo generating $@.
-	@#echo NEED_TO_CHANGE_THIS=$^
-	@$(CC) -DBIN_$@ $(CFLAGS) -I $(INCDIR) $^ $(LDFLAGS) $(LIBS) -o $@
-
 ##################################### br library
 .PHONY: cleanlib libs
 
@@ -131,11 +125,11 @@ ARFLAGS = r
 cleanlib:
 	$(RM) -rf $(LIBDIR) $(LIBOBJ)
 
+libs: $(DLIB) $(SLIB)
+
 $(LIBDIR):
 	@echo creating $@ directory.
 	@mkdir -p $@
-
-libs: $(DLIB) $(SLIB) | $(LIBDIR)
 
 # remove default rule
 %.o: %.c
@@ -153,3 +147,55 @@ $(DLIB): LDFLAGS += -shared
 $(DLIB): $(LIBOBJ) | $(LIBDIR)
 	@echo building $@ shared library.
 	@$(CC) $(LDFLAGS) $^ -o $@
+
+##################################### binaries
+.PHONY: bin prebin cleanbin
+
+BINMARK := .bindone
+
+bin: $(BIN) postbin
+
+postbin:
+	@[[ ! -f $(BINMARK) ]] || echo done.
+	@$(RM) -f $(BINMARK)
+
+cleanbin:
+	$(RM) -f $(BIN)
+
+# TODO: find a better dependancy graph
+$(BIN): $(SRCDIR)/$$@.c $(DLIB) $$(subst $(OBJDIR)/$$@.o,,$(OBJ))
+	@[[ -f $(BINMARK) ]] || echo -n "generating binaries: "
+	@echo -n "$@... "
+	@$(CC) -DBIN_$@ $(CFLAGS) -I $(INCDIR) $(subst libs,,$^) $(LDFLAGS) $(LIBS) -o $@
+	@$(TOUCH) $(BINMARK)
+
+##################################### ccls
+.PHONY: ccls
+
+ccls: $(CCLSFILE)
+
+# generate compile_commands.json
+$(CCLSFILE): brchess Makefile
+	$(BEAR) -- make clean bin
+
+##################################### LSP (ccls)
+.PHONY: bear
+ROOTDIR = .ccls-root
+
+$(CCLSROOT):
+	@echo creating root marker file.
+	@$(TOUCH) $@
+
+bear: clean $(CCLSROOT)
+	@touch .ccls-root
+	@$(BEAR) -- make compile
+
+##################################### LSP (ccls)
+.PHONY: memcheck
+
+VALGRIND       = valgrind
+VALGRINDFLAGS  = --leak-check=full --show-leak-kinds=all
+VALGRINDFLAGS += --track-origins=yes --sigill-diagnostics=yes
+VALGRINDFLAGS += --quiet --show-error-list=yes
+
+memcheck: brchess
