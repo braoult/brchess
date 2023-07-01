@@ -106,7 +106,6 @@ OBJ = $(addprefix $(OBJDIR)/,$(SRC_FN:.c=.o))
 objects: $(OBJ)
 
 cleanobj:
-	echo $(OBJ)
 	$(RM) -rf $(OBJDIR)
 
 $(OBJDIR):
@@ -160,13 +159,13 @@ postbin:
 	@$(RM) -f $(BINMARK)
 
 cleanbin:
-	$(RM) -f $(BIN)
+	$(RM) -f $(BIN) core
 
 # TODO: find a better dependancy graph
 $(BIN): $(SRCDIR)/$$@.c $(DLIB) $$(subst $(OBJDIR)/$$@.o,,$(OBJ))
 	@[[ -f $(BINMARK) ]] || echo -n "generating binaries: "
 	@echo -n "$@... "
-	@$(CC) -DBIN_$@ $(CFLAGS) -I $(INCDIR) $(subst libs,,$^) $(LDFLAGS) $(LIBS) -o $@
+	@$(CC) -DBIN_$@ $(CPPFLAGS) $(CFLAGS) -I $(INCDIR) $(subst libs,,$^) $(LDFLAGS) $(LIBS) -o $@
 	@$(TOUCH) $(BINMARK)
 
 ##################################### ccls
