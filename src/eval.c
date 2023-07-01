@@ -98,7 +98,8 @@ int main(int ac, char**av)
     pos_t *pos;
     eval_t res;
 
-    debug_init(5);
+    debug_init(5, stderr);
+
     piece_pool_init();
     moves_pool_init();
     pos_pool_init();
@@ -118,6 +119,7 @@ int main(int ac, char**av)
     //pos_print(pos);
     //pos_pieces_print(pos);
     moves_gen(pos, pos->turn, true);
+    pos_print(pos);
     moves_print(pos, M_PR_SEPARATE);
     res = eval(pos);
     printf("eval=%d centipawns)\n", res);

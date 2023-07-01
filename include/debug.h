@@ -14,29 +14,34 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
+#include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <br.h>
 #include <bits.h>
 
-#define _unused __attribute__((__unused__))
 #define _printf __attribute__ ((format (printf, 6, 7)))
 
 #ifdef DEBUG_DEBUG
-void debug_init(u32 level);
+
+void debug_init(u32 level, FILE *stream);
 void debug_level_set(u32 level);
-u32  debug_level_get(void);
+void debug_stream_set(FILE *stream);
 void _printf debug(u32 level, bool timestamp,
                    u32 indent, const char *src,
                    u32 line, const char *fmt, ...);
 #else  /* DEBUG_DEBUG */
-static inline void debug_init(_unused u32 level) {}
-static inline void debug_level_set(_unused u32 level) {}
-static inline void _printf debug(_unused u32 level, _unused bool timestamp,
-                                 _unused u32 indent, _unused const char *src,
-                                 _unused u32 line, _unused const char *fmt, ...) {}
+
+static inline void debug_init(__unused u32 level, __unused FILE *stream) {}
+static inline void debug_level_set(__unused u32 level) {}
+static inline void debug_stream_set(__unused FILE *stream) {}
+static inline void _printf debug(__unused u32 level, __unused bool timestamp,
+                                 __unused u32 indent, __unused const char *src,
+                                 __unused u32 line, __unused const char *fmt, ...) {}
+
 #endif  /* DEBUG_DEBUG */
-#undef _unused
+
 #undef _printf
 
 /**

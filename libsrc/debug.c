@@ -26,19 +26,26 @@
 #define MILLISEC 1000000                          /* milli sec in sec */
 
 static long long timer_start;                     /* in nanosecond */
-static u32 debug_level=0;
+static u32 debug_level = 0;
+static FILE *stream = NULL;
 
 void debug_level_set(u32 level)
 {
     debug_level = level;
-
-    log(1, "debug level set to %u\n", level);
+    log(0, "debug level set to %u\n", level);
 }
 
-void debug_init(u32 level)
+void debug_stream_set(FILE *_stream)
+{
+    stream = _stream;
+    log(0, "stream set to %d\n", stream? fileno(stream): -1);
+}
+
+void debug_init(u32 level, FILE *_stream)
 {
     struct timespec timer;
 
+    debug_stream_set(_stream);
     debug_level_set(level);
     if (!clock_gettime(CLOCK_MONOTONIC, &timer)) {
         timer_start = timer.tv_sec * NANOSEC + timer.tv_nsec;
@@ -66,28 +73,28 @@ inline static long long timer_elapsed()
 void debug(u32 level, bool timestamp, u32 indent, const char *src,
            u32 line, const char *fmt, ...)
 {
-    if (level > debug_level)
+    if (!stream || level > debug_level)
         return;
 
     va_list ap;
 
     if (indent)
-        printf("%*s", 2*(indent-1), "");
+        fprintf(stream, "%*s", 2*(indent-1), "");
 
     if (timestamp) {
         long long diff = timer_elapsed();
-        printf("%lld.%03lld ", diff/NANOSEC, (diff/1000000)%1000);
-        printf("%010lld ", diff);
+        fprintf(stream, "%lld.%03lld ", diff/NANOSEC, (diff/1000000)%1000);
+        fprintf(stream, "%010lld ", diff);
     }
 
     if (src) {
         if (line)
-            printf("[%s:%u] ", src, line);
+            fprintf(stream, "[%s:%u] ", src, line);
         else
-            printf("[%s] ", src);
+            fprintf(stream, "[%s] ", src);
     }
     va_start(ap, fmt);
-    vprintf(fmt, ap);
+    vfprintf(stream, fmt, ap);
     va_end(ap);
 }
 

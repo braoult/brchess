@@ -119,7 +119,7 @@ int main(int ac, char**av)
 {
     pos_t *pos;
     printf("zobi\n");fflush(stdout);
-    debug_level_set(6);
+    debug_init(6, stderr);
     log_f(5, "kfsjdhg\n");
     pos_pool_init();
     pos = pos_get();

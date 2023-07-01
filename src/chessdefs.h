@@ -17,6 +17,9 @@
 #include <bits.h>
 
 /* piece_t bits structure
+ * MSB 8 7 6 5 4 3 2 1 LSB
+ * 1: color (0 for white)
+ * 2-7: bit set for pawn (2), knight, bishop, rook, queen, king (7)
  */
 typedef u8 piece_t;
 
