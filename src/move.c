@@ -14,6 +14,7 @@
 #include <malloc.h>
 #include <ctype.h>
 
+#include <br.h>
 #include <list.h>
 #include <debug.h>
 
@@ -138,8 +139,8 @@ void moves_print(pos_t *pos, move_flags_t flags)
 static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
                         square_t to)
 {
+    //pos_t *newpos;
     board_t *board = pos->board;
-    pos_t *newpos;
     move_t *move;
     int color = COLOR(piece);
 
@@ -172,29 +173,29 @@ static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
     move->taken = board[to].piece;
     move->flags = M_NORMAL;
     move->newpos = pos_dup(pos);
-    newpos = move->newpos;
-    SET_COLOR(newpos->turn, IS_BLACK(newpos->turn) ? WHITE : BLACK);
-    newpos->turn = OPPONENT(newpos->turn);
+    //newpos = move->newpos;
+    //SET_COLOR(newpos->turn, OPPONENT(move->piece));
+    //newpos->turn = OPPONENT(newpos->turn);
     if (move->taken) {
         move->flags |= M_CAPTURE;
         /* remove taken piece from new position piece list
          * this does not apply for en passant
          */
-        piece_del(&newpos->board[to].s_piece->list);
+        //piece_del(&newpos->board[to].s_piece->list);
         /* remove occupied bitboard */
-        newpos->occupied[OPPONENT(COLOR(piece))] ^= SQ88_2_BB(to);
+        //newpos->occupied[OPPONENT(COLOR(piece))] ^= SQ88_2_BB(to);
     }
     /* always make "to" the piece square in new position */
-    newpos->board[to] = newpos->board[from];
+    //newpos->board[to] = newpos->board[from];
     /* fix dest square */
-    newpos->board[to].s_piece->square = to;
+    //newpos->board[to].s_piece->square = to;
     /* replace old occupied bitboard by new one */
-    newpos->occupied[COLOR(piece)] ^= SQ88_2_BB(from);
-    newpos->occupied[COLOR(piece)] |= SQ88_2_BB(to);
+    //newpos->occupied[COLOR(piece)] ^= SQ88_2_BB(from);
+    //newpos->occupied[COLOR(piece)] |= SQ88_2_BB(to);
 
     /* always make "from" square empty */
-    newpos->board[from].piece = 0;
-    newpos->board[from].s_piece = NULL;
+    //newpos->board[from].piece = 0;
+    //newpos->board[from].s_piece = NULL;
 
 #   ifdef DEBUG_MOVE
     log_i(3, "added move from %c%c to %c%c\n",
@@ -621,14 +622,47 @@ int moves_gen(pos_t *pos, bool color, bool doit)
     return count;
 }
 
-int move_doit(pos_t *pos, move_t *move)
+/* note: for now, a new pos is generated */
+struct pos *move_do(pos_t *pos, move_t *move)
 {
-#   ifdef DEBUG_MOVE_TOTO
-    log_f(2, "color:%s doit:%d\n", color? "Black": "White", doit);
+#   ifdef DEBUG_MOVE
+    log_f(3, "++++++++++");
+    move_print(move, 0);
 #   endif
-    if (pos && move)
-        return 1;
+    pos_t *newpos = pos_dup(pos);
+    piece_t piece = move->piece;
+    int color = COLOR(piece);
+    square_t from = move->from, to = move->to;
+
+    /* todo: en passant
+     */
+    SET_COLOR(pos->turn, OPPONENT(color));        /* pos color */
+
+    if (move->taken || PIECE(piece) == PAWN)      /* 50 moves */
+        newpos->clock_50 = 0;
+    else
+        newpos->clock_50++;
+    if (move->taken) {                            /*  */
+        piece_del(&newpos->board[to].s_piece->list);
+        newpos->occupied[OPPONENT(color)] ^= SQ88_2_BB(to);
+    }
+    newpos->board[to] = newpos->board[from];
+    /* fix dest square */
+    newpos->board[to].s_piece->square = to;
+    /* replace old occupied bitboard by new one */
+    newpos->occupied[color] ^= SQ88_2_BB(from);
+    newpos->occupied[color] |= SQ88_2_BB(to);
+
+    /* always make "from" square empty */
+    newpos->board[from].piece = 0;
+    newpos->board[from].s_piece = NULL;
+
     return 0;
+}
+
+void move_undo(pos_t *pos, __unused move_t *move)
+{
+    pos_clear(pos);
 }
 
 #ifdef BIN_move
@@ -637,7 +671,7 @@ int main(int ac, char**av)
 {
     pos_t *pos;
 
-    debug_level_set(5);
+    debug_init(5, stderr);
     piece_pool_init();
     moves_pool_init();
     pos_pool_init();

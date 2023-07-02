@@ -60,6 +60,7 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *piece, bool doit);
 int pseudo_moves_pawn(pos_t *pos, piece_list_t *piece, bool doit);
 int moves_gen(pos_t *pos, bool color, bool doit);
 
-int move_doit(pos_t *pos, move_t *move);
+struct pos *move_do(pos_t *pos, move_t *move);
+void move_undo(pos_t *pos, move_t *move);
 
 #endif  /* MODE_H */

@@ -12,7 +12,6 @@
  */
 
 
-#include <stdio.h>
 #include <err.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,13 +22,13 @@
 #include <list.h>
 #include <debug.h>
 
+#include "brchess.h"
 #include "chessdefs.h"
 #include "board.h"
 #include "piece.h"
 #include "move.h"
 #include "fen.h"
 #include "eval.h"
-#include "brchess.h"
 
 typedef struct {
     char *name;                                   /* User printable name */
@@ -60,6 +59,7 @@ int do_prmovepos(pos_t *pos, char *arg);
 int do_prpieces(pos_t *pos, char *arg);
 int do_memstats(pos_t *, char*);
 int do_eval(pos_t *, char*);
+int do_move(pos_t *, char*);
 int do_quit(pos_t *, char*);
 int do_debug(pos_t *, char*);
 
@@ -76,6 +76,7 @@ COMMAND commands[] = {
     { "prpieces", do_prpieces, "Print Pieces (from pieces lists)" },
     { "memstats", do_memstats, "Generate next move list" },
     { "eval", do_eval, "Eval current position" },
+    { "do_move", do_move, "execute nth move on current position" },
     { "debug", do_debug, "Set log level to LEVEL" },
     { NULL, (int(*)()) NULL, NULL }
 };
@@ -328,8 +329,7 @@ int do_prpieces(pos_t *pos, __unused char *arg)
     return 1;
 }
 
-int do_memstats(__attribute__((unused)) pos_t *pos,
-               __attribute__((unused)) char *arg)
+int do_memstats(__unused pos_t *pos,__unused char *arg)
 {
     moves_pool_stats();
     piece_pool_stats();
@@ -337,14 +337,17 @@ int do_memstats(__attribute__((unused)) pos_t *pos,
     return 1;
 }
 
-int do_quit(__attribute__((unused)) pos_t *pos,
-            __attribute__((unused)) char *arg)
+int do_move(__unused pos_t *pos, __unused char *arg)
+{
+    return 1;
+}
+
+int do_quit(__unused pos_t *pos, __unused char *arg)
 {
     return done = 1;
 }
 
-int do_debug(__attribute__((unused)) pos_t *pos,
-            __attribute__((unused)) char *arg)
+int do_debug(__unused pos_t *pos, __unused char *arg)
 {
     debug_level_set(atoi(arg));
     return 1;
@@ -352,8 +355,7 @@ int do_debug(__attribute__((unused)) pos_t *pos,
 
 /* Print out help for ARG, or for all of the commands if ARG is
    not present. */
-int do_help(__attribute__((unused)) pos_t *pos,
-            __attribute__((unused)) char *arg)
+int do_help(__unused pos_t *pos, __unused char *arg)
 {
     register int i;
     int printed = 0;
@@ -404,11 +406,11 @@ int main(int ac, char **av)
     pos_t *pos;
     int opt;
 
-    debug_init(1);
     piece_pool_init();
     moves_pool_init();
     pos_pool_init();
     pos = pos_get();
+    debug_init(1, stderr);
 
     while ((opt = getopt(ac, av, "d:f:")) != -1) {
         switch (opt) {
