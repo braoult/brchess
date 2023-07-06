@@ -116,6 +116,16 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c $(DEPDIR)/%.d | $(OBJDIR) $(DEPDIR)
 	@echo compiling $<.
 	@$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEPFLAGS) -I $(INCDIR) -o $@ $<
 
+##################################### pre-processed (.i) and assembler (.s) output
+%.i: %.c
+	@echo generating $@
+	@$(CC) -E $(CFLAGS) -I $(INCDIR) $< -o $@
+
+%.s: %.c
+	@echo generating $@
+	@$(CC) -S -fverbose-asm $(CFLAGS) -I $(INCDIR) $< -o $@
+
+
 ##################################### br library
 .PHONY: cleanlib libs
 
