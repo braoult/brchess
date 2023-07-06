@@ -55,7 +55,7 @@ int do_init(pos_t *, char*);
 int do_pos(pos_t *, char*);
 int do_genmoves(pos_t *, char*);
 int do_prmoves(pos_t *, char*);
-int do_prmovepos(pos_t *pos, char *arg);
+//int do_prmovepos(pos_t *pos, char *arg);
 int do_prpieces(pos_t *pos, char *arg);
 int do_memstats(pos_t *, char*);
 int do_eval(pos_t *, char*);
@@ -72,7 +72,7 @@ COMMAND commands[] = {
     { "quit", do_quit, "Quit" },
     { "genmove", do_genmoves, "Generate move list for " },
     { "prmoves", do_prmoves, "Print position move list" },
-    { "prmovepos", do_prmovepos, "Print Nth move resulting position" },
+//    { "prmovepos", do_prmovepos, "Print Nth move resulting position" },
     { "prpieces", do_prpieces, "Print Pieces (from pieces lists)" },
     { "memstats", do_memstats, "Generate next move list" },
     { "eval", do_eval, "Eval current position" },
@@ -304,23 +304,25 @@ int do_prmoves(pos_t *pos, __unused char *arg)
     return 1;
 }
 
-int do_prmovepos(pos_t *pos, char *arg)
-{
-    struct list_head *p_cur, *tmp;
-    int movenum = atoi(arg), cur = 0;             /* starts with 0 */
-    move_t *move;
-
-    log_f(1, "%s\n", arg);
-    list_for_each_safe(p_cur, tmp, &pos->moves[pos->turn]) {
-        move = list_entry(p_cur, move_t, list);
-        if (cur++ == movenum) {
-            pos_print(move->newpos);
-            break;
-        }
-    }
-
-    return 1;
-}
+/*
+ * int do_prmovepos(pos_t *pos, char *arg)
+ * {
+ *     struct list_head *p_cur, *tmp;
+ *     int movenum = atoi(arg), cur = 0;             /\* starts with 0 *\/
+ *     move_t *move;
+ *
+ *     log_f(1, "%s\n", arg);
+ *     list_for_each_safe(p_cur, tmp, &pos->moves[pos->turn]) {
+ *         move = list_entry(p_cur, move_t, list);
+ *         if (cur++ == movenum) {
+ *             pos_print(move->newpos);
+ *             break;
+ *         }
+ *     }
+ *
+ *     return 1;
+ * }
+ */
 
 int do_prpieces(pos_t *pos, __unused char *arg)
 {
@@ -339,6 +341,25 @@ int do_memstats(__unused pos_t *pos,__unused char *arg)
 
 int do_move(__unused pos_t *pos, __unused char *arg)
 {
+    int i = 1, nmove = atoi(arg);
+    move_t *move;
+    pos_t *newpos;
+
+    if (list_empty(&pos->moves[pos->turn])) {
+        log_f(1, "No moves list.\n");
+        return 0;
+    }
+    list_for_each_entry(move, &pos->moves[pos->turn], list) {
+        if (i == nmove)
+            goto doit;
+        i++;
+    }
+    log_f(1, "Invalid <%d> move, should be <1-%d>.\n", nmove, i);
+    return 0;
+doit:
+    newpos = move_do(pos, move);
+    pos_print(newpos);
+
     return 1;
 }
 

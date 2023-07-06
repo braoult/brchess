@@ -185,10 +185,20 @@ pos_t *pos_get()
     return pos;
 }
 
-/* TODO: merge with pos_get - NULL for init, non null for duplicate */
+/**
+ * pos_dup() - duplicate a position.
+ * @pos: &position to duplicate.
+ *
+ * New position is the same as source one, with duplicated pieces list
+ * and empty moves list.
+ *
+ * @return: The new position.
+ *
+ * TODO: merge with pos_get - NULL for init, non null for duplicate
+ */
 pos_t *pos_dup(pos_t *pos)
 {
-    struct list_head *p_cur, *tmp, *piece_list;
+    struct list_head *p_cur, *piece_list;
     piece_list_t *oldpiece;
     board_t *board;
     pos_t *new = pool_get(pos_pool);
@@ -196,20 +206,17 @@ pos_t *pos_dup(pos_t *pos)
     if (new) {
         board = new->board;
         *new = *pos;
-        INIT_LIST_HEAD(&new->pieces[WHITE]);
-        INIT_LIST_HEAD(&new->pieces[BLACK]);
-        INIT_LIST_HEAD(&new->moves[WHITE]);
-        INIT_LIST_HEAD(&new->moves[BLACK]);
-
-        /* duplicate piece list */
         for (int color=0; color<2; ++color) {
+            INIT_LIST_HEAD(&new->pieces[color]);
+            INIT_LIST_HEAD(&new->moves[color]);
+
+            /* duplicate piece list */
             piece_list = &pos->pieces[color];     /* white/black piece list */
 
-            list_for_each_safe(p_cur, tmp, piece_list) {
+            list_for_each(p_cur, piece_list) {
                 oldpiece = list_entry(p_cur, piece_list_t, list);
                 board[oldpiece->square].s_piece =
                     piece_add(new, oldpiece->piece, oldpiece->square);
-
             }
         }
     }

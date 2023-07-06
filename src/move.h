@@ -40,11 +40,11 @@ typedef unsigned char move_flags_t;
 typedef struct move_s {
     piece_t piece;
     square_t from, to;
-    piece_t taken;                                /* removed piece */
+    piece_t taken;                                /* captured piece */
     piece_t promotion;                            /* promoted piece */
     move_flags_t flags;
     struct list_head list;                        /* next move */
-    struct pos_s *newpos;                         /* resulting position */
+    //struct pos_s *newpos;                         /* resulting position */
 } move_t;
 
 pool_t *moves_pool_init();
@@ -60,7 +60,7 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *piece, bool doit);
 int pseudo_moves_pawn(pos_t *pos, piece_list_t *piece, bool doit);
 int moves_gen(pos_t *pos, bool color, bool doit);
 
-struct pos *move_do(pos_t *pos, move_t *move);
+pos_t *move_do(pos_t *pos, move_t *move);
 void move_undo(pos_t *pos, move_t *move);
 
 #endif  /* MODE_H */

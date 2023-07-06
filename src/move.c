@@ -172,7 +172,7 @@ static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
     move->to = to;
     move->taken = board[to].piece;
     move->flags = M_NORMAL;
-    move->newpos = pos_dup(pos);
+    //move->newpos = pos_dup(pos);
     //newpos = move->newpos;
     //SET_COLOR(newpos->turn, OPPONENT(move->piece));
     //newpos->turn = OPPONENT(newpos->turn);
@@ -216,9 +216,9 @@ void move_del(struct list_head *ptr)
 #   endif
 
     /* TODO: remove move->pos if non null */
-    if (move->newpos) {
-        pos_clear(move->newpos);
-    }
+    //if (move->newpos) {
+    //    pos_clear(move->newpos);
+    // }
     list_del(ptr);
     pool_add(moves_pool, move);
     return;
@@ -250,7 +250,7 @@ static move_t *move_pawn_add(pos_t *pos, piece_t piece, square_t from,
     move_t *move;
     piece_t promote;
     unsigned char color = COLOR(piece);
-    pos_t *newpos;
+    //pos_t *newpos;
 
     //if (color != pos->turn)
     //    return NULL;
@@ -260,17 +260,17 @@ static move_t *move_pawn_add(pos_t *pos, piece_t piece, square_t from,
                 move->flags |= M_PROMOTION;
                 move->promotion = promote | color;
                 /* fix piece on board and piece list */
-                newpos = move->newpos;
-                newpos->board[to].piece = promote|color;
-                newpos->board[to].s_piece->piece = piece|color;
-                newpos->board[to].s_piece->value =  piece_details[PIECE(piece)].value;
+                //newpos = move->newpos;
+                //newpos->board[to].piece = promote|color;
+                //newpos->board[to].s_piece->piece = piece|color;
+                //newpos->board[to].s_piece->value =  piece_details[PIECE(piece)].value;
 
                 //piece_del(&newpos->board[from].s_piece);
             }
         }
     } else {
         move = move_add(pos, piece, from, to);
-        newpos = move->newpos;
+        //newpos = move->newpos;
 
     }
     return move;
@@ -362,9 +362,9 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece, bool doit)
             move->taken = taken;
 
             /* remove taken pawn from board */
-            piece_del(&move->newpos->board[t_square].s_piece->list);
-            move->newpos->board[t_square].piece = 0;
-            move->newpos->board[t_square].s_piece = NULL;
+            //piece_del(&move->newpos->board[t_square].s_piece->list);
+            //move->newpos->board[t_square].piece = 0;
+            //move->newpos->board[t_square].s_piece = NULL;
 
             pos->mobility[color]++;
             count++;
@@ -413,7 +413,7 @@ int pseudo_moves_castle(pos_t *pos, bool color, bool doit)
     struct can_castle *can_castle;
     bitboard_t controlled;
     bitboard_t occupied = pos->occupied[WHITE] | pos->occupied[BLACK];
-    pos_t *newpos;
+    //pos_t *newpos;
 
 #   ifdef DEBUG_MOVE
     log_f(2, "pos:%p turn:%s color:%s\n",
@@ -454,14 +454,14 @@ int pseudo_moves_castle(pos_t *pos, bool color, bool doit)
             move = move_add(pos, board[SQ88(4, rank1)].piece,
                             SQ88(4, rank1), SQ88(6, rank1));
             if (move) {
-                newpos = move->newpos;
+                //newpos = move->newpos;
                 move->flags |= M_CASTLE_K;
 
                 /* move King rook to column F */
-                newpos->board[SQ88(5, rank1)] = newpos->board[SQ88(7, rank1)];
-                SETF88(newpos->board[SQ88(5, rank1)].s_piece->square, 5);
-                newpos->board[SQ88(7, rank1)].piece =  0;
-                newpos->board[SQ88(7, rank1)].s_piece = NULL;
+                //newpos->board[SQ88(5, rank1)] = newpos->board[SQ88(7, rank1)];
+                //SETF88(newpos->board[SQ88(5, rank1)].s_piece->square, 5);
+                //newpos->board[SQ88(7, rank1)].piece =  0;
+                //newpos->board[SQ88(7, rank1)].s_piece = NULL;
 
             }
         }
@@ -487,13 +487,13 @@ next:
             move = move_add(pos, board[SQ88(4, rank1)].piece,
                             SQ88(4, rank1), SQ88(2, rank1));
             if (move) {
-                newpos = move->newpos;
+                //newpos = move->newpos;
                 move->flags |= M_CASTLE_Q;
                 /* move King rook to column F */
-                newpos->board[SQ88(3, rank1)] = newpos->board[SQ88(0, rank1)];
-                SETF88(newpos->board[SQ88(3, rank1)].s_piece->square, 3);
-                newpos->board[SQ88(0, rank1)].piece =  0;
-                newpos->board[SQ88(0, rank1)].s_piece = NULL;
+                //newpos->board[SQ88(3, rank1)] = newpos->board[SQ88(0, rank1)];
+                //SETF88(newpos->board[SQ88(3, rank1)].s_piece->square, 3);
+                //newpos->board[SQ88(0, rank1)].piece =  0;
+                //newpos->board[SQ88(0, rank1)].s_piece = NULL;
             }
         }
     }
@@ -622,42 +622,66 @@ int moves_gen(pos_t *pos, bool color, bool doit)
     return count;
 }
 
-/* note: for now, a new pos is generated */
-struct pos *move_do(pos_t *pos, move_t *move)
+/**
+ * move_do() - execute move in a duplicated position.
+ * @pos: &pos_t struct on which move will be applied
+ * @move: &move_t struct to apply
+ *
+ */
+pos_t *move_do(pos_t *pos, move_t *move)
 {
 #   ifdef DEBUG_MOVE
     log_f(3, "++++++++++");
     move_print(move, 0);
+    log(3, "\n");
 #   endif
-    pos_t *newpos = pos_dup(pos);
+
+    pos_t *new = pos_dup(pos);
     piece_t piece = move->piece;
     int color = COLOR(piece);
     square_t from = move->from, to = move->to;
 
-    /* todo: en passant
+    /* todo: en passant, castle
      */
-    SET_COLOR(pos->turn, OPPONENT(color));        /* pos color */
+    SET_COLOR(new->turn, OPPONENT(color));        /* pos color */
 
     if (move->taken || PIECE(piece) == PAWN)      /* 50 moves */
-        newpos->clock_50 = 0;
+        new->clock_50 = 0;
     else
-        newpos->clock_50++;
-    if (move->taken) {                            /*  */
-        piece_del(&newpos->board[to].s_piece->list);
-        newpos->occupied[OPPONENT(color)] ^= SQ88_2_BB(to);
+        new->clock_50++;
+
+    if (move->taken) {                            /* capture */
+        if (!(move->flags & M_EN_PASSANT)) {
+            piece_del(&new->board[to].s_piece->list);
+            new->board[to].piece = 0;
+            new->occupied[OPPONENT(color)] ^= SQ88_2_BB(to);
+            new->bb[OPPONENT(color)][PIECETOBB(piece)] ^= SQ88_2_BB(to);
+        } else {
+            unsigned char ep_file = F88(pos->en_passant);
+            square_t ep_grab = color == WHITE ? SQ88(ep_file, 4): SQ88(ep_file, 3);
+            log_f(1, "en-passant=%d,%d\n", ep_file, color == WHITE ? 4 : 3);
+            piece_del(&new->board[ep_grab].s_piece->list);
+            new->board[ep_grab].piece = 0;
+            new->occupied[OPPONENT(color)] ^= SQ88_2_BB(ep_grab);
+            new->bb[OPPONENT(color)][PIECETOBB(piece)] ^= SQ88_2_BB(ep_grab);
+        }
+
     }
-    newpos->board[to] = newpos->board[from];
+
+    new->board[to] = new->board[from];
     /* fix dest square */
-    newpos->board[to].s_piece->square = to;
+    new->board[to].s_piece->square = to;
     /* replace old occupied bitboard by new one */
-    newpos->occupied[color] ^= SQ88_2_BB(from);
-    newpos->occupied[color] |= SQ88_2_BB(to);
+    new->occupied[color] ^= SQ88_2_BB(from);
+    new->occupied[color] |= SQ88_2_BB(to);
+    new->bb[color][PIECETOBB(piece)] ^= SQ88_2_BB(from);
+    new->bb[color][PIECETOBB(piece)] |= SQ88_2_BB(to);
 
     /* always make "from" square empty */
-    newpos->board[from].piece = 0;
-    newpos->board[from].s_piece = NULL;
+    new->board[from].piece = 0;
+    new->board[from].s_piece = NULL;
 
-    return 0;
+    return new;
 }
 
 void move_undo(pos_t *pos, __unused move_t *move)
