@@ -72,6 +72,9 @@ void pos_print(pos_t *pos)
     int rank, file;
     piece_t piece;
     board_t *board = pos->board;
+    piece_list_t *wk = list_first_entry(&pos->pieces[WHITE], piece_list_t, list),
+        *bk = list_first_entry(&pos->pieces[BLACK], piece_list_t, list);
+
 
     printf("  +---+---+---+---+---+---+---+---+\n");
     for (rank = 7; rank >= 0; --rank) {
@@ -85,10 +88,10 @@ void pos_print(pos_t *pos)
     printf("    A   B   C   D   E   F   G   H\n\n");
     printf("Turn: %s.\n", IS_WHITE(pos->turn) ? "white" : "black");
     printf("Kings: W:%c%c B:%c%c\n",
-           FILE2C(F88(pos->king[WHITE])),
-           RANK2C(R88(pos->king[WHITE])),
-           FILE2C(F88(pos->king[BLACK])),
-           RANK2C(R88(pos->king[BLACK])));
+           FILE2C(F88(wk->square)),
+           RANK2C(R88(wk->square)),
+           FILE2C(F88(bk->square)),
+           RANK2C(R88(bk->square)));
     printf("Possible en-passant: [%#x] ", pos->en_passant);
     if (pos->en_passant == 0)
         printf("None.\n");
@@ -143,8 +146,6 @@ pos_t *pos_clear(pos_t *pos)
     pos->curmove = 0;
     pos->eval = 0;
     pos->en_passant = 0;
-    pos->king[WHITE] = 0;
-    pos->king[BLACK] = 0;
     pos->occupied[WHITE] = 0;
     pos->occupied[BLACK] = 0;
     for (int color=0; color<2; ++color)

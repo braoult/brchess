@@ -30,11 +30,11 @@
 #include "fen.h"
 #include "eval.h"
 
-typedef struct {
+struct command {
     char *name;                                   /* User printable name */
     int (*func)(pos_t *, char *);                 /* function doing the job */
     char *doc;                                    /* function doc */
-} COMMAND;
+};
 
 /* readline example inspired by :
  * - https://thoughtbot.com/blog/tab-completion-in-gnu-readline
@@ -45,7 +45,7 @@ char *commands_generator(const char *, int);
 char *escape(const char *);
 int quote_detector(char *, int);
 int execute_line (pos_t *, char *line);
-COMMAND *find_command (char *);
+struct command *find_command (char *);
 char *stripwhite (char *string);
 
 /* The names of functions that actually do the manipulation. */
@@ -63,7 +63,7 @@ int do_move(pos_t *, char*);
 int do_quit(pos_t *, char*);
 int do_debug(pos_t *, char*);
 
-COMMAND commands[] = {
+struct command commands[] = {
     { "help", do_help, "Display this text" },
     { "?", do_help, "Synonym for 'help'" },
     { "fen", do_fen, "Set position to FEN" },
@@ -190,7 +190,7 @@ int quote_detector(char *line, int index)
 int execute_line(pos_t *pos, char *line)
 {
     register int i;
-    COMMAND *command;
+    struct command *command;
     char *word;
 
     /* Isolate the command word. */
@@ -224,7 +224,7 @@ int execute_line(pos_t *pos, char *line)
 
 /* Look up NAME as the name of a command, and return a pointer to that
    command.  Return a NULL pointer if NAME isn't a command name. */
-COMMAND *find_command(char *name)
+struct command *find_command(char *name)
 {
     register int i;
 
@@ -232,7 +232,7 @@ COMMAND *find_command(char *name)
         if (strcmp(name, commands[i].name) == 0)
             return &commands[i];
 
-    return (COMMAND *)NULL;
+    return (struct command *)NULL;
 }
 
 /* Strip whitespace from the start and end of STRING.  Return a pointer
@@ -292,15 +292,14 @@ int do_pos(pos_t *pos, __unused char *arg)
 int do_genmoves(pos_t *pos, __unused char *arg)
 {
     log_f(1, "%s\n", arg);
-    moves_gen(pos, OPPONENT(pos->turn), false);
-    moves_gen(pos, pos->turn, true);
+    moves_gen_all(pos);
     return 1;
 }
 
 int do_prmoves(pos_t *pos, __unused char *arg)
 {
     log_f(1, "%s\n", arg);
-    moves_print(pos, M_PR_SEPARATE);
+    moves_print(pos, M_PR_SEPARATE | M_PR_NUM);
     return 1;
 }
 

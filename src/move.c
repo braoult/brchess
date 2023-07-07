@@ -62,7 +62,7 @@ void moves_pool_stats()
         pool_stats(moves_pool);
 }
 
-int move_print(move_t *move, move_flags_t flags)
+int move_print(int movenum, move_t *move, move_flags_t flags)
 {
     if (flags & M_PR_CAPT && !(move->flags & M_CAPTURE)) {
 #       ifdef DEBUG_MOVE
@@ -76,6 +76,8 @@ int move_print(move_t *move, move_flags_t flags)
 #       endif
         return 0;
     }
+    if (flags & M_PR_NUM)
+        printf("%d:", movenum);
     if (move->flags & M_CASTLE_K) {
         printf("O-O");
         goto end;
@@ -110,26 +112,30 @@ void moves_print(pos_t *pos, move_flags_t flags)
 {
     struct list_head *p_cur, *tmp;
     move_t *move;
-    move_flags_t details = flags & M_PR_LONG;
+    //move_flags_t details = flags & M_PR_LONG;
+    int movenum;
 
     for (int color=WHITE; color <= BLACK; ++color) {
         int verif = 0;
         printf("%s pseudo-moves:\n\t", color == WHITE? "White": "Black");
         if (! (flags & M_PR_SEPARATE)) {
+            movenum = 1;
             list_for_each_safe(p_cur, tmp, &pos->moves[color]) {
                 move = list_entry(p_cur, move_t, list);
-                verif += move_print(move, details);
+                verif += move_print(movenum++, move, flags);
             }
         } else {
             printf("captures: ");
+            movenum = 1;
             list_for_each_safe(p_cur, tmp, &pos->moves[color]) {
                 move = list_entry(p_cur, move_t, list);
-                verif += move_print(move, details | M_PR_CAPT);
+                verif += move_print(movenum++, move, flags | M_PR_CAPT);
             }
+            movenum = 1;
             printf("\n\tothers  : ");
             list_for_each_safe(p_cur, tmp, &pos->moves[color]) {
                 move = list_entry(p_cur, move_t, list);
-                verif += move_print(move, details | M_PR_NCAPT);
+                verif += move_print(movenum++, move, flags | M_PR_NCAPT);
             }
         }
         printf("\n\tTotal moves = %d mobility=%u\n", verif, pos->mobility[color]);
@@ -250,28 +256,16 @@ static move_t *move_pawn_add(pos_t *pos, piece_t piece, square_t from,
     move_t *move;
     piece_t promote;
     unsigned char color = COLOR(piece);
-    //pos_t *newpos;
 
-    //if (color != pos->turn)
-    //    return NULL;
     if (R88(from) == rank7) {                  /* promotion */
         for (promote = QUEEN; promote > PAWN; promote >>= 1) {
             if ((move = move_add(pos, piece, from, to))) {
                 move->flags |= M_PROMOTION;
                 move->promotion = promote | color;
-                /* fix piece on board and piece list */
-                //newpos = move->newpos;
-                //newpos->board[to].piece = promote|color;
-                //newpos->board[to].s_piece->piece = piece|color;
-                //newpos->board[to].s_piece->value =  piece_details[PIECE(piece)].value;
-
-                //piece_del(&newpos->board[from].s_piece);
             }
         }
     } else {
         move = move_add(pos, piece, from, to);
-        //newpos = move->newpos;
-
     }
     return move;
 }
@@ -360,12 +354,6 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece, bool doit)
             move = move_pawn_add(pos, piece | color , square, pos->en_passant, rank7);
             move->flags |= M_EN_PASSANT | M_CAPTURE;
             move->taken = taken;
-
-            /* remove taken pawn from board */
-            //piece_del(&move->newpos->board[t_square].s_piece->list);
-            //move->newpos->board[t_square].piece = 0;
-            //move->newpos->board[t_square].s_piece = NULL;
-
             pos->mobility[color]++;
             count++;
         }
@@ -403,9 +391,8 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece, bool doit)
     return count;
 }
 
-int pseudo_moves_castle(pos_t *pos, bool color, bool doit)
+int pseudo_moves_castle(pos_t *pos, bool color, bool doit, bool doking)
 {
-    //unsigned char color = pos->turn;
     board_t *board = pos->board;
     unsigned char rank1, castle_K, castle_Q;
     move_t *move = NULL;
@@ -448,22 +435,15 @@ int pseudo_moves_castle(pos_t *pos, bool color, bool doit)
 #           endif
             goto next;
         }
-        pos->mobility[color]++;
-        count++;
+        if (doking) {
+            pos->mobility[color]++;
+            count++;
+        }
         if (doit) {
             move = move_add(pos, board[SQ88(4, rank1)].piece,
                             SQ88(4, rank1), SQ88(6, rank1));
-            if (move) {
-                //newpos = move->newpos;
+            if (move)
                 move->flags |= M_CASTLE_K;
-
-                /* move King rook to column F */
-                //newpos->board[SQ88(5, rank1)] = newpos->board[SQ88(7, rank1)];
-                //SETF88(newpos->board[SQ88(5, rank1)].s_piece->square, 5);
-                //newpos->board[SQ88(7, rank1)].piece =  0;
-                //newpos->board[SQ88(7, rank1)].s_piece = NULL;
-
-            }
         }
     }
 
@@ -481,29 +461,33 @@ next:
 #           endif
             goto end;
         }
-        pos->mobility[color]++;
-        count++;
+        if (doking) {
+            pos->mobility[color]++;
+            count++;
+        }
         if (doit) {
             move = move_add(pos, board[SQ88(4, rank1)].piece,
                             SQ88(4, rank1), SQ88(2, rank1));
-            if (move) {
-                //newpos = move->newpos;
+            if (move)
                 move->flags |= M_CASTLE_Q;
-                /* move King rook to column F */
-                //newpos->board[SQ88(3, rank1)] = newpos->board[SQ88(0, rank1)];
-                //SETF88(newpos->board[SQ88(3, rank1)].s_piece->square, 3);
-                //newpos->board[SQ88(0, rank1)].piece =  0;
-                //newpos->board[SQ88(0, rank1)].s_piece = NULL;
-            }
         }
     }
 end:
     return count;
 }
 
-/* general rule moves for non pawn pieces
+/**
+ * pseudo_moves_gen() - general move generation for non pawn pieces
+ * @pos: &position
+ * @ppiece: &piece_list structure pointer
+ * @doit: add move to moves list
+ * @doking: count king moves
+ *
+ * Calculate all possible moves for @ppiece.
+ * If @doit is true, add moves to @pos' moves list.
+ * If @doking is true, account king moves (incl. castle) to mobility.
  */
-int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece, bool doit)
+int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece, bool doit, bool doking)
 {
     piece_t piece = PIECE(ppiece->piece);
     unsigned char color = COLOR(ppiece->piece);
@@ -569,9 +553,10 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece, bool doit)
             }
 
             /* we are sure the move is valid : we create move */
-            //log_f(2, "piece mobility\n");
-            pos->mobility[color]++;
-            count++;
+            if (piece != KING || doking) {
+                pos->mobility[color]++;
+                count++;
+            }
             if (doit) {
                 //move = move_add(pos, ppiece->piece, square, new);
                 move_add(pos, ppiece->piece, square, new);
@@ -596,7 +581,18 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece, bool doit)
     return count;
 }
 
-int moves_gen(pos_t *pos, bool color, bool doit)
+/**
+ * moves_gen() - move generation for one color
+ * @pos: &position
+ * @color: side
+ * @doit: add move to moves list
+ * @doking: count king moves
+ *
+ * Calculate all possible moves for @color.
+ * If @doit is true, add moves to @pos' moves list.
+ * If @doking is true, account king moves (incl. castle) to mobility.
+ */
+int moves_gen(pos_t *pos, bool color, bool doit, bool doking)
 {
     struct list_head *p_cur, *tmp, *piece_list;
     piece_list_t *piece;
@@ -609,17 +605,51 @@ int moves_gen(pos_t *pos, bool color, bool doit)
 
     pos->mobility[color] = 0;
     pos->controlled[color] = 0;
-    count += pseudo_moves_castle(pos, color, doit);
+    count += pseudo_moves_castle(pos, color, doit, doking);
     list_for_each_safe(p_cur, tmp, piece_list) {
         piece = list_entry(p_cur, piece_list_t, list);
         if (PIECE(piece->piece) != PAWN)
-            count += pseudo_moves_gen(pos, piece, doit);
+            count += pseudo_moves_gen(pos, piece, doit, doking);
         else
             count += pseudo_moves_pawn(pos, piece, doit);
 
         count++;
     }
     return count;
+}
+
+/**
+ * moves_gen_king_moves() - adjust king mobility
+ * @pos: &position
+ * @color: king color
+ * @doit: add move to moves list
+ *
+ * Compute the number of king moves (incl. castle), after opponent controlled
+ * are known.
+ * If @doit is true, add moves to @pos' moves list.
+ *
+ * @return: The number of possible king moves.
+ */
+int moves_gen_king_moves(pos_t *pos, bool color, bool doit)
+{
+    int count = 0;
+    piece_list_t *king = list_first_entry(&pos->pieces[color], piece_list_t, list);
+    count = pseudo_moves_castle(pos, king, doit, true);
+    count += pseudo_moves_gen(pos, king, doit, true);
+    return count;
+}
+
+/**
+ * moves_gen_all() - calculate all moves
+ * @pos: &position
+ *
+ * Compute pseudo moves for both sides.
+ */
+void moves_gen_all(pos_t *pos)
+{
+    moves_gen(pos, OPPONENT(pos->turn), false, false);
+    moves_gen(pos, pos->turn, false, true);
+    moves_gen_king_moves(pos, OPPONENT(pos->turn), true);
 }
 
 /**
@@ -632,7 +662,7 @@ pos_t *move_do(pos_t *pos, move_t *move)
 {
 #   ifdef DEBUG_MOVE
     log_f(3, "++++++++++");
-    move_print(move, 0);
+    move_print(0, move, 0);
     log(3, "\n");
 #   endif
 
@@ -650,14 +680,14 @@ pos_t *move_do(pos_t *pos, move_t *move)
     else
         new->clock_50++;
 
-    if (move->taken) {                            /* capture */
+    if (move->flags & M_CAPTURE) {                            /* capture */
         if (!(move->flags & M_EN_PASSANT)) {
             piece_del(&new->board[to].s_piece->list);
             new->board[to].piece = 0;
             new->occupied[OPPONENT(color)] ^= SQ88_2_BB(to);
             new->bb[OPPONENT(color)][PIECETOBB(piece)] ^= SQ88_2_BB(to);
         } else {
-            unsigned char ep_file = F88(pos->en_passant);
+            uchar ep_file = F88(pos->en_passant);
             square_t ep_grab = color == WHITE ? SQ88(ep_file, 4): SQ88(ep_file, 3);
             log_f(1, "en-passant=%d,%d\n", ep_file, color == WHITE ? 4 : 3);
             piece_del(&new->board[ep_grab].s_piece->list);
@@ -666,6 +696,30 @@ pos_t *move_do(pos_t *pos, move_t *move)
             new->bb[OPPONENT(color)][PIECETOBB(piece)] ^= SQ88_2_BB(ep_grab);
         }
 
+    } else if (move->flags & M_CASTLE_Q) {
+        uchar row = R88(from);
+        square_t rook_from = SQ88(0, row);
+        square_t rook_to = SQ88(3, row);
+        new->board[rook_to] = new->board[rook_from];
+        new->board[rook_to].s_piece->square = rook_to;
+        new->occupied[color] ^= SQ88_2_BB(rook_from);
+        new->occupied[color] |= SQ88_2_BB(rook_to);
+        new->bb[color][PIECETOBB(BB_ROOK)] ^= SQ88_2_BB(rook_from);
+        new->bb[color][PIECETOBB(BB_ROOK)] |= SQ88_2_BB(rook_to);
+        new->board[rook_from].piece = 0;
+        new->board[rook_from].s_piece = NULL;
+    } else if (move->flags & M_CASTLE_K) {
+        uchar row = R88(from);
+        square_t rook_from = SQ88(7, row);
+        square_t rook_to = SQ88(5, row);
+        new->board[rook_to] = new->board[rook_from];
+        new->board[rook_to].s_piece->square = rook_to;
+        new->occupied[color] ^= SQ88_2_BB(rook_from);
+        new->occupied[color] |= SQ88_2_BB(rook_to);
+        new->bb[color][PIECETOBB(BB_ROOK)] ^= SQ88_2_BB(rook_from);
+        new->bb[color][PIECETOBB(BB_ROOK)] |= SQ88_2_BB(rook_to);
+        new->board[rook_from].piece = 0;
+        new->board[rook_from].s_piece = NULL;
     }
 
     new->board[to] = new->board[from];
@@ -708,8 +762,7 @@ int main(int ac, char**av)
         fen2pos(pos, av[1]);
     }
     //printf("turn = %d opponent = %d\n", pos->turn, OPPONENT(pos->turn));
-    moves_gen(pos, WHITE, false);
-    moves_gen(pos, BLACK, false);
+    moves_gen_all(pos);
     pos_print(pos);
     pos_pieces_print(pos);
     moves_print(pos, M_PR_SEPARATE);

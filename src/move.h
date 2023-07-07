@@ -32,10 +32,11 @@ typedef unsigned char move_flags_t;
 
 /* moves_print flags
  */
-#define M_PR_SEPARATE  0x40                       /* separate capture/non capture */
-#define M_PR_LONG      0x80
 #define M_PR_CAPT      0x01
 #define M_PR_NCAPT     0x02
+#define M_PR_NUM       0x04
+#define M_PR_SEPARATE  0x40                       /* separate captures */
+#define M_PR_LONG      0x80
 
 typedef struct move_s {
     piece_t piece;
@@ -49,16 +50,18 @@ typedef struct move_s {
 
 pool_t *moves_pool_init();
 void moves_pool_stats();
-int move_print(move_t *move, move_flags_t flags);
+int move_print(int movenum, move_t *move, move_flags_t flags);
 void moves_print(pos_t *move, move_flags_t flags);
 
 void move_del(struct list_head *ptr);
 int moves_del(pos_t *pos);
 
-int pseudo_moves_castle(pos_t *pos, bool color, bool doit);
-int pseudo_moves_gen(pos_t *pos, piece_list_t *piece, bool doit);
+int pseudo_moves_castle(pos_t *pos, bool color, bool doit, bool doking);
+int pseudo_moves_gen(pos_t *pos, piece_list_t *piece, bool doit, bool doking);
 int pseudo_moves_pawn(pos_t *pos, piece_list_t *piece, bool doit);
-int moves_gen(pos_t *pos, bool color, bool doit);
+int moves_gen(pos_t *pos, bool color, bool doit, bool doking);
+int moves_gen_king_moves(pos_t *pos, bool color, bool doit);
+void moves_gen_all(pos_t *pos);
 
 pos_t *move_do(pos_t *pos, move_t *move);
 void move_undo(pos_t *pos, move_t *move);

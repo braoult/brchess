@@ -40,12 +40,12 @@ inline eval_t eval_material(pos_t *pos, bool color)
 
 inline eval_t eval_mobility(pos_t *pos, bool color)
 {
-    return popcount64(pos->controlled[color]);
+    return pos->mobility[color];
 }
 
 inline eval_t eval_square_control(pos_t *pos, bool color)
 {
-    return pos->mobility[color];
+    return popcount64(pos->controlled[color]);
 }
 
 eval_t eval(pos_t *pos)
@@ -114,11 +114,8 @@ int main(int ac, char**av)
     pos_print(pos);
     pos_pieces_print(pos);
 
-    moves_gen(pos, OPPONENT(pos->turn), false);
-    //moves_print(pos, M_PR_SEPARATE);
-    //pos_print(pos);
-    //pos_pieces_print(pos);
-    moves_gen(pos, pos->turn, true);
+    moves_gen_all(pos);
+
     pos_print(pos);
     moves_print(pos, M_PR_SEPARATE);
     res = eval(pos);

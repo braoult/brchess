@@ -15,11 +15,11 @@
 #define POSITION_H
 
 #include <stdint.h>
-#include "board.h"
 #include <pool.h>
 #include <list.h>
 #include <bits.h>
 
+#include "board.h"
 #include "chessdefs.h"
 
 typedef struct pos_s {
@@ -31,13 +31,12 @@ typedef struct pos_s {
     board_t board[BOARDSIZE];
 
     square_t en_passant;
-    square_t king[2];                             /* obsolete by bb array */
 
     bitboard_t bb[2][BB_END];                     /* use: pieces[BLACK][BB_PAWN] */
     bitboard_t occupied[2];                       /* OR of bb[COLOR][x] */
     bitboard_t controlled[2];
     u16 mobility[2];
-    struct list_head pieces[2];
+    struct list_head pieces[2];                   /* pieces list, King is first */
     struct list_head moves[2];
 } pos_t;
 

@@ -74,8 +74,11 @@ piece_list_t *piece_add(pos_t *pos, piece_t piece, square_t square)
           P_NAME(piece), FILE2C(F88(square)), RANK2C(R88(square)));
 #   endif
     if ((new = pool_get(pieces_pool))) {
-        list_add_tail(&new->list, &pos->pieces[color]);
-        //color? &pos->pieces_black: &pos->pieces_white);
+        /* first piece is always king */
+        if (PIECE(piece) == KING)
+            list_add(&new->list, &pos->pieces[color]);
+        else
+            list_add_tail(&new->list, &pos->pieces[color]);
         new->piece = piece;
         new->square = square;
         new->castle = 0;
