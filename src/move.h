@@ -45,7 +45,6 @@ typedef struct move_s {
     piece_t promotion;                            /* promoted piece */
     move_flags_t flags;
     struct list_head list;                        /* next move */
-    //struct pos_s *newpos;                         /* resulting position */
 } move_t;
 
 pool_t *moves_pool_init();
@@ -56,10 +55,10 @@ void moves_print(pos_t *move, move_flags_t flags);
 void move_del(struct list_head *ptr);
 int moves_del(pos_t *pos);
 
-int pseudo_moves_castle(pos_t *pos, bool color, bool doit, bool doking);
-int pseudo_moves_gen(pos_t *pos, piece_list_t *piece, bool doit, bool doking);
+int pseudo_moves_castle(pos_t *pos, bool color, bool doit, bool do_king);
+int pseudo_moves_gen(pos_t *pos, piece_list_t *piece, bool doit, bool do_king);
 int pseudo_moves_pawn(pos_t *pos, piece_list_t *piece, bool doit);
-int moves_gen(pos_t *pos, bool color, bool doit, bool doking);
+int moves_gen(pos_t *pos, bool color, bool doit, bool do_king);
 int moves_gen_king_moves(pos_t *pos, bool color, bool doit);
 void moves_gen_all(pos_t *pos);
 

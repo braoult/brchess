@@ -112,7 +112,6 @@ void moves_print(pos_t *pos, move_flags_t flags)
 {
     struct list_head *p_cur, *tmp;
     move_t *move;
-    //move_flags_t details = flags & M_PR_LONG;
     int movenum;
 
     for (int color=WHITE; color <= BLACK; ++color) {
@@ -145,7 +144,6 @@ void moves_print(pos_t *pos, move_flags_t flags)
 static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
                         square_t to)
 {
-    //pos_t *newpos;
     board_t *board = pos->board;
     move_t *move;
     int color = COLOR(piece);
@@ -158,8 +156,6 @@ static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
           FILE2C(F88(to)),
           RANK2C(R88(to)));
 #   endif
-    //if (COLOR(piece) != pos->turn)
-    //    return NULL;
     /* invalid position if opponent king is attacked
      */
     if (board[to].piece & KING) {
@@ -178,31 +174,8 @@ static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
     move->to = to;
     move->taken = board[to].piece;
     move->flags = M_NORMAL;
-    //move->newpos = pos_dup(pos);
-    //newpos = move->newpos;
-    //SET_COLOR(newpos->turn, OPPONENT(move->piece));
-    //newpos->turn = OPPONENT(newpos->turn);
-    if (move->taken) {
+    if (move->taken)
         move->flags |= M_CAPTURE;
-        /* remove taken piece from new position piece list
-         * this does not apply for en passant
-         */
-        //piece_del(&newpos->board[to].s_piece->list);
-        /* remove occupied bitboard */
-        //newpos->occupied[OPPONENT(COLOR(piece))] ^= SQ88_2_BB(to);
-    }
-    /* always make "to" the piece square in new position */
-    //newpos->board[to] = newpos->board[from];
-    /* fix dest square */
-    //newpos->board[to].s_piece->square = to;
-    /* replace old occupied bitboard by new one */
-    //newpos->occupied[COLOR(piece)] ^= SQ88_2_BB(from);
-    //newpos->occupied[COLOR(piece)] |= SQ88_2_BB(to);
-
-    /* always make "from" square empty */
-    //newpos->board[from].piece = 0;
-    //newpos->board[from].s_piece = NULL;
-
 #   ifdef DEBUG_MOVE
     log_i(3, "added move from %c%c to %c%c\n",
           FILE2C(F88(move->from)), RANK2C(R88(move->from)),
@@ -211,6 +184,12 @@ static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
     return move;
 }
 
+/**
+ * move_del() - delete a move from list.
+ * @ptr: move &list_head
+ *
+ * Remove the move whose 'list' element address is @ptr.
+ */
 void move_del(struct list_head *ptr)
 {
     move_t *move = list_entry(ptr, move_t, list);
@@ -221,15 +200,17 @@ void move_del(struct list_head *ptr)
           FILE2C(F88(move->to)), RANK2C(R88(move->to)));
 #   endif
 
-    /* TODO: remove move->pos if non null */
-    //if (move->newpos) {
-    //    pos_clear(move->newpos);
-    // }
     list_del(ptr);
     pool_add(moves_pool, move);
     return;
 }
 
+/**
+ * move_del() - delete all position moves.
+ * @ppos: &position.
+ *
+ * Remove all generated moves from @pos structure.
+ */
 int moves_del(pos_t *pos)
 {
     struct list_head *p_cur, *tmp, *head;
@@ -244,7 +225,7 @@ int moves_del(pos_t *pos)
         }
     }
 #   ifdef DEBUG_PIECE
-    log_f(3, "removed=%d\n", count);
+    log_f(3, "%d moves removed\n", count);
 #   endif
     return count;
 }
@@ -270,8 +251,14 @@ static move_t *move_pawn_add(pos_t *pos, piece_t piece, square_t from,
     return move;
 }
 
-/* pawn moves. We do not test for valid destination square here,
- * assuming position is valid. Is that correct ?
+/**
+ * pseudo_moves_pawn() - generate moves for pawn.
+ * @pos: &position
+ * @ppiece: &piece_list pawn structure pointer
+ * @doit: add move to moves list
+ *
+ * Calculate all possible moves for @ppiece pawn.
+ * If @doit is true, add moves to @pos' moves list.
  */
 int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece, bool doit)
 {
@@ -317,7 +304,6 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece, bool doit)
 #       ifdef DEBUG_MOVE
         log_i(4, "pushing pawn %#04x\n", square);
 #       endif
-        //log_f(4, "pawn move mobility\n");
         pos->mobility[color]++;
         count++;
         if (doit)
@@ -391,7 +377,20 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece, bool doit)
     return count;
 }
 
-int pseudo_moves_castle(pos_t *pos, bool color, bool doit, bool doking)
+/**
+ * pseudo_moves_castle() - generate castle moves.
+ * @pos: &position
+ * @color: side for which to generate moves
+ * @doit: add move to moves list
+ * @do_king: count king moves in mobility
+ *
+ * Calculate the possible castle moves for @color side.
+ * If @doit is true, add moves to @pos' moves list.
+ * If @do_king is true, account king moves (incl. castle) to mobility.
+ *
+ * @return: The number of possible king moves.
+ */
+int pseudo_moves_castle(pos_t *pos, bool color, bool doit, bool do_king)
 {
     board_t *board = pos->board;
     unsigned char rank1, castle_K, castle_Q;
@@ -435,7 +434,7 @@ int pseudo_moves_castle(pos_t *pos, bool color, bool doit, bool doking)
 #           endif
             goto next;
         }
-        if (doking) {
+        if (do_king) {
             pos->mobility[color]++;
             count++;
         }
@@ -461,7 +460,7 @@ next:
 #           endif
             goto end;
         }
-        if (doking) {
+        if (do_king) {
             pos->mobility[color]++;
             count++;
         }
@@ -481,13 +480,13 @@ end:
  * @pos: &position
  * @ppiece: &piece_list structure pointer
  * @doit: add move to moves list
- * @doking: count king moves
+ * @do_king: count king moves
  *
  * Calculate all possible moves for @ppiece.
  * If @doit is true, add moves to @pos' moves list.
- * If @doking is true, account king moves (incl. castle) to mobility.
+ * If @do_king is true, account king moves (incl. castle) to mobility.
  */
-int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece, bool doit, bool doking)
+int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece, bool doit, bool do_king)
 {
     piece_t piece = PIECE(ppiece->piece);
     unsigned char color = COLOR(ppiece->piece);
@@ -553,14 +552,12 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece, bool doit, bool doking)
             }
 
             /* we are sure the move is valid : we create move */
-            if (piece != KING || doking) {
+            if (piece != KING || do_king) {
                 pos->mobility[color]++;
                 count++;
             }
-            if (doit) {
-                //move = move_add(pos, ppiece->piece, square, new);
+            if (doit)
                 move_add(pos, ppiece->piece, square, new);
-            }
             if (board[new].piece) {               /* stopper move */
                 break;
             }
@@ -586,13 +583,13 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *ppiece, bool doit, bool doking)
  * @pos: &position
  * @color: side
  * @doit: add move to moves list
- * @doking: count king moves
+ * @do_king: count king moves
  *
  * Calculate all possible moves for @color.
  * If @doit is true, add moves to @pos' moves list.
- * If @doking is true, account king moves (incl. castle) to mobility.
+ * If @do_king is true, account king moves (incl. castle) to mobility.
  */
-int moves_gen(pos_t *pos, bool color, bool doit, bool doking)
+int moves_gen(pos_t *pos, bool color, bool doit, bool do_king)
 {
     struct list_head *p_cur, *tmp, *piece_list;
     piece_list_t *piece;
@@ -605,11 +602,11 @@ int moves_gen(pos_t *pos, bool color, bool doit, bool doking)
 
     pos->mobility[color] = 0;
     pos->controlled[color] = 0;
-    count += pseudo_moves_castle(pos, color, doit, doking);
+    count += pseudo_moves_castle(pos, color, doit, do_king);
     list_for_each_safe(p_cur, tmp, piece_list) {
         piece = list_entry(p_cur, piece_list_t, list);
         if (PIECE(piece->piece) != PAWN)
-            count += pseudo_moves_gen(pos, piece, doit, doking);
+            count += pseudo_moves_gen(pos, piece, doit, do_king);
         else
             count += pseudo_moves_pawn(pos, piece, doit);
 
@@ -648,7 +645,7 @@ int moves_gen_king_moves(pos_t *pos, bool color, bool doit)
 void moves_gen_all(pos_t *pos)
 {
     moves_gen(pos, OPPONENT(pos->turn), false, false);
-    moves_gen(pos, pos->turn, false, true);
+    moves_gen(pos, pos->turn, true, true);
     moves_gen_king_moves(pos, OPPONENT(pos->turn), true);
 }
 
@@ -722,9 +719,16 @@ pos_t *move_do(pos_t *pos, move_t *move)
         new->board[rook_from].s_piece = NULL;
     }
 
-    new->board[to] = new->board[from];
-    /* fix dest square */
-    new->board[to].s_piece->square = to;
+    if (move->flags & M_PROMOTION) {
+        log(2, "promotion to %s\n", P_SYM(move->piece));
+        new->board[to].piece = move->promotion;
+        new->board[to].s_piece->square = to;
+        new->board[to].s_piece->piece = move->promotion;
+    } else {
+        new->board[to] = new->board[from];
+        /* fix dest square */
+        new->board[to].s_piece->square = to;
+    }
     /* replace old occupied bitboard by new one */
     new->occupied[color] ^= SQ88_2_BB(from);
     new->occupied[color] |= SQ88_2_BB(to);
