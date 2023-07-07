@@ -62,6 +62,20 @@ void moves_pool_stats()
         pool_stats(moves_pool);
 }
 
+/**
+ * move_print() - print a move
+ * @movenum: move number
+ * @move: &move to display
+ * @flags: options to display
+ *
+ * Possible flags are:
+ * M_PR_CAPT:  print move if capture
+ * M_PR_NCAPT: print move if non capture
+ * M_PR_NUM:   print also move number
+ * M_PR_LONG:  print long notation
+ *
+ * @return: 0 if nothing printed, 1 otherwise
+ */
 int move_print(int movenum, move_t *move, move_flags_t flags)
 {
     if (flags & M_PR_CAPT && !(move->flags & M_CAPTURE)) {
@@ -88,10 +102,10 @@ int move_print(int movenum, move_t *move, move_flags_t flags)
         printf("%s%c%c", P_SYM(move->piece),
                FILE2C(F88(move->from)),
                RANK2C(R88(move->from)));
-        if (move->taken) {
+        if (move->flags & M_CAPTURE) {
             printf("x");
             if (flags & M_PR_LONG)
-                printf("%s", P_SYM(move->taken));
+                printf("%s", P_SYM(move->capture));
         } else {
             printf("-");
         }
@@ -172,9 +186,9 @@ static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
     move->piece = piece;
     move->from = from;
     move->to = to;
-    move->taken = board[to].piece;
+    move->capture = board[to].piece;
     move->flags = M_NORMAL;
-    if (move->taken)
+    if (move->capture)
         move->flags |= M_CAPTURE;
 #   ifdef DEBUG_MOVE
     log_i(3, "added move from %c%c to %c%c\n",
@@ -336,10 +350,10 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece, bool doit)
 #       endif
         if (sq_file == ep_file - 1 || sq_file == ep_file + 1) {
             square_t t_square = SQ88(ep_file, rank5); /* taken pawn square */
-            piece_t taken = board[t_square].piece;
+            piece_t captured = board[t_square].piece;
             move = move_pawn_add(pos, piece | color , square, pos->en_passant, rank7);
             move->flags |= M_EN_PASSANT | M_CAPTURE;
-            move->taken = taken;
+            move->capture = captured;
             pos->mobility[color]++;
             count++;
         }
@@ -668,11 +682,7 @@ pos_t *move_do(pos_t *pos, move_t *move)
     int color = COLOR(piece);
     square_t from = move->from, to = move->to;
 
-    /* todo: en passant, castle
-     */
-    SET_COLOR(new->turn, OPPONENT(color));        /* pos color */
-
-    if (move->taken || PIECE(piece) == PAWN)      /* 50 moves */
+    if (move->capture || PIECE(piece) == PAWN)    /* 50 moves */
         new->clock_50 = 0;
     else
         new->clock_50++;
@@ -739,12 +749,14 @@ pos_t *move_do(pos_t *pos, move_t *move)
     new->board[from].piece = 0;
     new->board[from].s_piece = NULL;
 
+    SET_COLOR(new->turn, OPPONENT(color));        /* pos color */
+
     return new;
 }
 
 void move_undo(pos_t *pos, __unused move_t *move)
 {
-    pos_clear(pos);
+    pos_del(pos);
 }
 
 #ifdef BIN_move

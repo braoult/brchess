@@ -61,6 +61,7 @@ CPPFLAGS  += -DDEBUG_FEN                     # FEN decoding
 CPPFLAGS  += -DDEBUG_MOVE                    # move generation
 CPPFLAGS  += -DDEBUG_EVAL                    # eval functions
 CPPFLAGS  += -DDEBUG_PIECE                   # piece list management
+CPPFLAGS  += -DDEBUG_SEARCH                  # move search
 
 ##################################### General targets
 .PHONY: compile cflags all clean cleanall

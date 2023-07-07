@@ -41,7 +41,7 @@ typedef unsigned char move_flags_t;
 typedef struct move_s {
     piece_t piece;
     square_t from, to;
-    piece_t taken;                                /* captured piece */
+    piece_t capture;                              /* captured piece */
     piece_t promotion;                            /* promoted piece */
     move_flags_t flags;
     struct list_head list;                        /* next move */
