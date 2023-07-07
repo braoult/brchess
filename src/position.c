@@ -163,6 +163,18 @@ pos_t *pos_clear(pos_t *pos)
     return pos;
 }
 
+/**
+ * pos_del() - delete a position.
+ * @pos: &position.
+ */
+void pos_del(pos_t *pos)
+{
+    pieces_del(pos, WHITE);
+    pieces_del(pos, BLACK);
+    moves_del(pos);
+    pool_add(pos_pool, pos);
+}
+
 pos_t *pos_startpos(pos_t *pos)
 {
     static char *startfen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";

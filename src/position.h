@@ -45,6 +45,7 @@ void bitboard_print2(bitboard_t bb1, bitboard_t bb2);
 void pos_pieces_print(pos_t *pos);
 void pos_print(pos_t *pos);
 pos_t *pos_clear(pos_t *pos);
+void pos_del(pos_t *pos);
 pos_t *pos_startpos(pos_t *pos);
 pos_t *pos_create();
 pool_t *pos_pool_init();
