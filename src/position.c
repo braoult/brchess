@@ -146,8 +146,6 @@ void pos_check(pos_t *pos)
     int rank, file;
     piece_t piece;
     board_t *board = pos->board;
-    piece_list_t *wk = list_first_entry(&pos->pieces[WHITE], piece_list_t, list),
-        *bk = list_first_entry(&pos->pieces[BLACK], piece_list_t, list);
 
     /* check that board and bitboard reflect same information */
     for (rank = 7; rank >= 0; --rank) {

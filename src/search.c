@@ -26,7 +26,7 @@
  */
 eval_t negamax(pos_t *pos, int depth, int color)
 {
-    move_t *move, bestmove;
+    move_t *move;
     pos_t *newpos;
     eval_t best = EVAL_MIN, score;
 
@@ -35,9 +35,9 @@ eval_t negamax(pos_t *pos, int depth, int color)
     //pos_check(pos);
     if (depth == 0) {
         score = eval(pos);
-        printf("evalnega=%d turn=%d color=%d", score, pos->turn, color);
+        //printf("evalnega=%d turn=%d color=%d", score, pos->turn, color);
         score *= color;
-        printf(" --> evalnega=%d\n", score);
+        //printf(" --> evalnega=%d\n", score);
         return score;
     }
     moves_print(pos, 0);
@@ -45,17 +45,17 @@ eval_t negamax(pos_t *pos, int depth, int color)
         newpos = move_do(pos, move);
         score = -negamax(newpos, depth - 1, -color);
         move->negamax = score;
-        printf("move=");
-        move_print(0, move, 0);
-        printf("score=%d\n", score);
+        //printf("move=");
+        //move_print(0, move, 0);
+        //printf("score=%d\n", score);
 
         if (score > best) {
             best = score;
             pos->bestmove = move;
 #           ifdef DEBUG_SEARCH
-            printf("depth=%d best move=", depth);
-            move_print(0, &bestmove, 0);
-            printf(" eval=%d\n", best);
+            //printf("depth=%d best move=", depth);
+            //move_print(0, &bestmove, 0);
+            //printf(" eval=%d\n", best);
 #           endif
         }
         move_undo(newpos, move);
