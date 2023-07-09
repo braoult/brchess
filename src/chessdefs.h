@@ -112,5 +112,6 @@ typedef s32 eval_t;
 typedef struct piece_list_s piece_list_t;
 typedef struct board_s board_t;
 typedef struct pos_s pos_t;
+typedef struct move_s move_t;
 
 #endif
