@@ -24,28 +24,41 @@
  * negamax() - the negamax tree.
  *
  */
-eval_t negamax(pos_t *pos, int depth)
+eval_t negamax(pos_t *pos, int depth, int color)
 {
-    move_t *move, *bestmove;
+    move_t *move, bestmove;
     pos_t *newpos;
     eval_t best = EVAL_MIN, score;
 
+    printf("depth=%d\n", depth);
     moves_gen_all(pos);
-    if (depth == 0)
-        return eval(pos) * pos->turn == WHITE? 1: -1;
-
+    //pos_check(pos);
+    if (depth == 0) {
+        score = eval(pos);
+        printf("evalnega=%d turn=%d color=%d", score, pos->turn, color);
+        score *= color;
+        printf(" --> evalnega=%d\n", score);
+        return score;
+    }
+    moves_print(pos, 0);
     list_for_each_entry(move, &pos->moves[pos->turn], list) {
         newpos = move_do(pos, move);
-        score = -negamax(newpos, depth - 1 );
-        if(score > best) {
+        score = -negamax(newpos, depth - 1, -color);
+        move->negamax = score;
+        printf("move=");
+        move_print(0, move, 0);
+        printf("score=%d\n", score);
+
+        if (score > best) {
             best = score;
-            bestmove = move;
+            pos->bestmove = move;
 #           ifdef DEBUG_SEARCH
-            log_f(2, "depth=%d best move=", best);
-            move_print(0, bestmove, M_PR_LONG);
-            log_f(2, " eval=%d\n", best);
+            printf("depth=%d best move=", depth);
+            move_print(0, &bestmove, 0);
+            printf(" eval=%d\n", best);
 #           endif
         }
+        move_undo(newpos, move);
     }
     return best;
 }

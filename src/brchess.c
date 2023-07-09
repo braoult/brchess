@@ -29,6 +29,7 @@
 #include "move.h"
 #include "fen.h"
 #include "eval.h"
+#include "search.h"
 
 struct command {
     char *name;                                   /* User printable name */
@@ -62,6 +63,8 @@ int do_eval(pos_t *, char*);
 int do_move(pos_t *, char*);
 int do_quit(pos_t *, char*);
 int do_debug(pos_t *, char*);
+int do_depth(pos_t *, char*);
+int do_search(pos_t *, char*);
 
 struct command commands[] = {
     { "help", do_help, "Display this text" },
@@ -78,10 +81,13 @@ struct command commands[] = {
     { "eval", do_eval, "Eval current position" },
     { "do_move", do_move, "execute nth move on current position" },
     { "debug", do_debug, "Set log level to LEVEL" },
+    { "depth", do_depth, "Set search depth to N" },
+    { "search", do_search, "Search best move" },
     { NULL, (int(*)()) NULL, NULL }
 };
 
 static int done=0;
+static int depth=1;
 
 int brchess(pos_t *pos)
 {
@@ -377,7 +383,7 @@ int do_debug(__unused pos_t *pos, __unused char *arg)
    not present. */
 int do_help(__unused pos_t *pos, __unused char *arg)
 {
-    register int i;
+    int i;
     int printed = 0;
 
     for (i = 0; commands[i].name; i++) {
@@ -407,6 +413,23 @@ int do_help(__unused pos_t *pos, __unused char *arg)
     return 0;
 }
 
+int do_depth(__unused pos_t *pos, char *arg)
+{
+    depth = atoi(arg);
+    printf("depth = %d\n", depth);
+    return 1;
+
+}
+
+int do_search(pos_t *pos, __unused char *arg)
+{
+    printf("++++++++\nnegamax=%d\n", negamax(pos, depth, pos->turn==WHITE? 1:-1));
+    printf("best=");
+    move_print(0, pos->bestmove, 0);
+    printf("score=%d\n", pos->bestmove->negamax);
+    return 1;
+}
+
 #ifdef BIN_brchess
 /** main()
  * options:
@@ -430,7 +453,7 @@ int main(int ac, char **av)
     moves_pool_init();
     pos_pool_init();
     pos = pos_get();
-    debug_init(1, stderr);
+    debug_init(1, stderr, true);
 
     while ((opt = getopt(ac, av, "d:f:")) != -1) {
         switch (opt) {

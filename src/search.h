@@ -20,6 +20,6 @@
 #define EVAL_MIN INT_MIN
 #define EVAL_MAX INT_MAX
 
-eval_t negamax(pos_t *pos, int depth);
+eval_t negamax(pos_t *pos, int depth, int color);
 
 #endif  /* SEARCH_H */
