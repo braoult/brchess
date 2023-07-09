@@ -28,6 +28,7 @@ typedef struct pos_s {
     u16 clock_50;
     u16 curmove;
     eval_t eval;
+    move_t *bestmove;
     board_t board[BOARDSIZE];
 
     square_t en_passant;
@@ -43,6 +44,7 @@ typedef struct pos_s {
 void bitboard_print(bitboard_t bb);
 void bitboard_print2(bitboard_t bb1, bitboard_t bb2);
 void pos_pieces_print(pos_t *pos);
+void pos_bitboards_print(pos_t *pos);
 void pos_print(pos_t *pos);
 pos_t *pos_clear(pos_t *pos);
 void pos_del(pos_t *pos);
@@ -52,5 +54,6 @@ pool_t *pos_pool_init();
 void pos_pool_stats();
 pos_t *pos_get();
 pos_t *pos_dup(pos_t *pos);
+void pos_check(pos_t *pos);
 
 #endif  /* POSITION_H */

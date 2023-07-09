@@ -54,6 +54,10 @@ inline void bitboard_print2(bitboard_t bb1, bitboard_t bb2)
                BYTE2BIN(bb2>>i));
 }
 
+/**
+ * pos_pieces_print() - Print position pieces
+ * @pos:  &position
+ */
 void pos_pieces_print(pos_t *pos)
 {
     printf("White pieces (%d): \t", popcount64(pos->occupied[WHITE]));
@@ -62,10 +66,22 @@ void pos_pieces_print(pos_t *pos)
     piece_list_print(&pos->pieces[BLACK]);
 }
 
-/* void pos_print - Print position on stdout.
- * @pos:   Position address (pos_t * )
- *
- * Return: None.
+/**
+ * pos_bitboards_print() - Print position bitboards
+ * @pos:  &position
+ */
+void pos_bitboards_print(pos_t *pos)
+{
+    printf("Bitboards occupied :\n");
+    bitboard_print2(pos->occupied[WHITE], pos->occupied[BLACK]);
+    printf("Bitboards controlled :\n");
+    bitboard_print2(pos->controlled[WHITE], pos->controlled[BLACK]);
+
+}
+
+/**
+ * pos_print() - Print position on stdout.
+ * @pos:  &position
  */
 void pos_print(pos_t *pos)
 {
@@ -119,10 +135,54 @@ void pos_print(pos_t *pos)
            popcount64(pos->controlled[BLACK]));
     printf("Mobility: W:%u B:%u\n", pos->mobility[WHITE],
            pos->mobility[BLACK]);
-    printf("Bitboards occupied :\n");
-    bitboard_print2(pos->occupied[WHITE], pos->occupied[BLACK]);
-    printf("Bitboards controlled :\n");
-    bitboard_print2(pos->controlled[WHITE], pos->controlled[BLACK]);
+}
+
+/**
+ * pos_check() - extensive position consistenci check.
+ * @pos:  &position
+ */
+void pos_check(pos_t *pos)
+{
+    int rank, file;
+    piece_t piece;
+    board_t *board = pos->board;
+    piece_list_t *wk = list_first_entry(&pos->pieces[WHITE], piece_list_t, list),
+        *bk = list_first_entry(&pos->pieces[BLACK], piece_list_t, list);
+
+    /* check that board and bitboard reflect same information */
+    for (rank = 7; rank >= 0; --rank) {
+        for (file = 0; file < 8; ++file) {
+            piece_list_t *ppiece;
+            printf("checking %c%c ", file+'a', rank+'1');
+
+            piece = board[SQ88(file, rank)].piece;
+            ppiece= board[SQ88(file, rank)].s_piece;
+            printf("piece=%s ", P_CSYM(piece));
+            if (ppiece)
+                printf("ppiece=%s/sq=%#x ", P_CSYM(ppiece->piece), ppiece->square);
+            switch(PIECE(piece)) {
+                case PAWN:
+                    printf("pawn" );
+                    break;
+                case KNIGHT:
+                    printf("knight ");
+                    break;
+                case BISHOP:
+                    printf("bishop ");
+                    break;
+                case ROOK:
+                    printf("rook ");
+                    break;
+                case QUEEN:
+                    printf("queen ");
+                    break;
+                case KING:
+                    printf("king ");
+                    break;
+            }
+            printf("\n");
+        }
+    }
 }
 
 pos_t *pos_clear(pos_t *pos)
@@ -203,7 +263,7 @@ pos_t *pos_get()
  * @pos: &position to duplicate.
  *
  * New position is the same as source one, with duplicated pieces list
- * and empty moves list.
+ * and empty moves list and NULL bestmove.
  *
  * @return: The new position.
  *
@@ -219,10 +279,10 @@ pos_t *pos_dup(pos_t *pos)
     if (new) {
         board = new->board;
         *new = *pos;
-        for (int color=0; color<2; ++color) {
+        for (int color = 0; color < 2; ++color) {
             INIT_LIST_HEAD(&new->pieces[color]);
             INIT_LIST_HEAD(&new->moves[color]);
-
+            new->bestmove = NULL;
             /* duplicate piece list */
             piece_list = &pos->pieces[color];     /* white/black piece list */
 
