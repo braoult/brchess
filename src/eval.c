@@ -98,7 +98,7 @@ int main(int ac, char**av)
     pos_t *pos;
     eval_t res;
 
-    debug_init(5, stderr);
+    debug_init(5, stderr, true);
 
     piece_pool_init();
     moves_pool_init();

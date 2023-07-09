@@ -35,6 +35,7 @@ typedef unsigned char move_flags_t;
 #define M_PR_CAPT      0x01
 #define M_PR_NCAPT     0x02
 #define M_PR_NUM       0x04
+#define M_PR_NL        0x08
 #define M_PR_SEPARATE  0x40                       /* separate captures */
 #define M_PR_LONG      0x80
 
@@ -44,6 +45,7 @@ typedef struct move_s {
     piece_t capture;                              /* captured piece */
     piece_t promotion;                            /* promoted piece */
     move_flags_t flags;
+    eval_t negamax;
     struct list_head list;                        /* next move */
 } move_t;
 
@@ -65,4 +67,4 @@ void moves_gen_all(pos_t *pos);
 pos_t *move_do(pos_t *pos, move_t *move);
 void move_undo(pos_t *pos, move_t *move);
 
-#endif  /* MODE_H */
+#endif  /* MOVE_H */

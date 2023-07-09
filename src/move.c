@@ -73,18 +73,19 @@ void moves_pool_stats()
  * M_PR_NCAPT: print move if non capture
  * M_PR_NUM:   print also move number
  * M_PR_LONG:  print long notation
+ * M_PR_NL:    print a newline after move
  *
  * @return: 0 if nothing printed, 1 otherwise
  */
 int move_print(int movenum, move_t *move, move_flags_t flags)
 {
-    if (flags & M_PR_CAPT && !(move->flags & M_CAPTURE)) {
+    if ((flags & M_PR_CAPT) && !(move->flags & M_CAPTURE)) {
 #       ifdef DEBUG_MOVE
         log_i(9, "skipping capture & %#04x\n", move->flags);
 #       endif
         return 0;
     }
-    if (flags & M_PR_NCAPT && move->flags & M_CAPTURE) {
+    if ((flags & M_PR_NCAPT) && (move->flags & M_CAPTURE)) {
 #       ifdef DEBUG_MOVE
         log_i(9, "skipping !capture & %#04x\n", move->flags);
 #       endif
@@ -119,6 +120,8 @@ int move_print(int movenum, move_t *move, move_flags_t flags)
     end:
         printf(" ");
     }
+    if (flags & M_PR_NL)
+        printf("\n");
     return 1;
 }
 
@@ -660,8 +663,9 @@ void moves_gen_all(pos_t *pos)
 {
     moves_gen(pos, OPPONENT(pos->turn), false, false);
     moves_gen(pos, pos->turn, true, true);
-    moves_gen_king_moves(pos, OPPONENT(pos->turn), true);
+    moves_gen_king_moves(pos, OPPONENT(pos->turn), false);
 }
+
 
 /**
  * move_do() - execute move in a duplicated position.
@@ -672,13 +676,12 @@ void moves_gen_all(pos_t *pos)
 pos_t *move_do(pos_t *pos, move_t *move)
 {
 #   ifdef DEBUG_MOVE
-    log_f(3, "++++++++++");
-    move_print(0, move, 0);
-    log(3, "\n");
+    printf("++++++++++ ");
+    move_print(0, move, M_PR_NL | M_PR_LONG | M_PR_NUM);
 #   endif
 
     pos_t *new = pos_dup(pos);
-    piece_t piece = move->piece;
+    piece_t piece = PIECE(move->piece), newpiece = piece, captured = move->capture;
     int color = COLOR(piece);
     square_t from = move->from, to = move->to;
 
@@ -692,7 +695,7 @@ pos_t *move_do(pos_t *pos, move_t *move)
             piece_del(&new->board[to].s_piece->list);
             new->board[to].piece = 0;
             new->occupied[OPPONENT(color)] ^= SQ88_2_BB(to);
-            new->bb[OPPONENT(color)][PIECETOBB(piece)] ^= SQ88_2_BB(to);
+            new->bb[OPPONENT(color)][PIECETOBB(captured)] ^= SQ88_2_BB(to);
         } else {
             uchar ep_file = F88(pos->en_passant);
             square_t ep_grab = color == WHITE ? SQ88(ep_file, 4): SQ88(ep_file, 3);
@@ -700,7 +703,7 @@ pos_t *move_do(pos_t *pos, move_t *move)
             piece_del(&new->board[ep_grab].s_piece->list);
             new->board[ep_grab].piece = 0;
             new->occupied[OPPONENT(color)] ^= SQ88_2_BB(ep_grab);
-            new->bb[OPPONENT(color)][PIECETOBB(piece)] ^= SQ88_2_BB(ep_grab);
+            new->bb[OPPONENT(color)][BB_PAWN] ^= SQ88_2_BB(ep_grab);
         }
 
     } else if (move->flags & M_CASTLE_Q) {
@@ -729,21 +732,25 @@ pos_t *move_do(pos_t *pos, move_t *move)
         new->board[rook_from].s_piece = NULL;
     }
 
+    new->board[to] = new->board[from];
+    /* fix dest square */
+    new->board[to].s_piece->square = to;
     if (move->flags & M_PROMOTION) {
-        log(2, "promotion to %s\n", P_SYM(move->piece));
+        log(2, "promotion to %s\n", P_SYM(move->promotion));
+        printf("newpiece=%#x p=%#x\n", move->promotion, PIECE(move->promotion));
+        newpiece = PIECE(move->promotion);
         new->board[to].piece = move->promotion;
-        new->board[to].s_piece->square = to;
         new->board[to].s_piece->piece = move->promotion;
-    } else {
-        new->board[to] = new->board[from];
-        /* fix dest square */
-        new->board[to].s_piece->square = to;
     }
     /* replace old occupied bitboard by new one */
     new->occupied[color] ^= SQ88_2_BB(from);
     new->occupied[color] |= SQ88_2_BB(to);
     new->bb[color][PIECETOBB(piece)] ^= SQ88_2_BB(from);
-    new->bb[color][PIECETOBB(piece)] |= SQ88_2_BB(to);
+    new->bb[color][PIECETOBB(newpiece)] |= SQ88_2_BB(to);
+    if (move->flags & M_PROMOTION) {
+        printf("color=%d bbpiece=%d\n", color, PIECETOBB(newpiece));
+        bitboard_print(new->bb[color][PIECETOBB(newpiece)]);
+    }
 
     /* always make "from" square empty */
     new->board[from].piece = 0;
@@ -765,7 +772,7 @@ int main(int ac, char**av)
 {
     pos_t *pos;
 
-    debug_init(5, stderr);
+    debug_init(5, stderr, true);
     piece_pool_init();
     moves_pool_init();
     pos_pool_init();

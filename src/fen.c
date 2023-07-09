@@ -179,7 +179,7 @@ int main(int ac, char**av)
 {
     pos_t *pos;
 
-    debug_init(5, stderr);
+    debug_init(5, stderr, true);
     piece_pool_init();
     pos_pool_init();
     pos = pos_get();
