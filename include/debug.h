@@ -25,20 +25,24 @@
 
 #ifdef DEBUG_DEBUG
 
-void debug_init(u32 level, FILE *stream);
-void debug_level_set(u32 level);
+void debug_init(uint level, FILE *stream, bool flush);
+void debug_level_set(uint level);
 void debug_stream_set(FILE *stream);
-void _printf debug(u32 level, bool timestamp,
-                   u32 indent, const char *src,
-                   u32 line, const char *fmt, ...);
+void debug_flush_set(bool flush);
+void _printf debug(uint level, bool timestamp,
+                   uint indent, const char *src,
+                   uint line, const char *fmt, ...);
 #else  /* DEBUG_DEBUG */
 
-static inline void debug_init(__unused u32 level, __unused FILE *stream) {}
-static inline void debug_level_set(__unused u32 level) {}
+static inline void debug_init(__unused uint level,
+                              __unused FILE *stream,
+                              _unused bool flush) {}
+static inline void debug_level_set(__unused uint level) {}
 static inline void debug_stream_set(__unused FILE *stream) {}
-static inline void _printf debug(__unused u32 level, __unused bool timestamp,
-                                 __unused u32 indent, __unused const char *src,
-                                 __unused u32 line, __unused const char *fmt, ...) {}
+static inline void debug_flush_set(__unused bool level) {}
+static inline void _printf debug(__unused uint level, __unused bool timestamp,
+                                 __unused uint indent, __unused const char *src,
+                                 __unused uint line, __unused const char *fmt, ...) {}
 
 #endif  /* DEBUG_DEBUG */
 

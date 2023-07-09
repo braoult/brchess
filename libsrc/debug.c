@@ -26,10 +26,15 @@
 #define MILLISEC 1000000                          /* milli sec in sec */
 
 static long long timer_start;                     /* in nanosecond */
-static u32 debug_level = 0;
+static uint debug_level = 0;
+static bool debug_flush = false;
 static FILE *stream = NULL;
 
-void debug_level_set(u32 level)
+/**
+ * debug_level_set() - set debug level.
+ * @level: unsigned debug level.
+ */
+void debug_level_set(uint level)
 {
     debug_level = level;
     log(0, "debug level set to %u\n", level);
@@ -41,12 +46,19 @@ void debug_stream_set(FILE *_stream)
     log(0, "stream set to %d\n", stream? fileno(stream): -1);
 }
 
-void debug_init(u32 level, FILE *_stream)
+void debug_flush_set(bool flush)
+{
+    debug_flush = flush;
+    log(0, "debug flush set to %d\n", flush);
+}
+
+void debug_init(uint level, FILE *_stream, bool flush)
 {
     struct timespec timer;
 
     debug_stream_set(_stream);
     debug_level_set(level);
+    debug_flush_set(flush);
     if (!clock_gettime(CLOCK_MONOTONIC, &timer)) {
         timer_start = timer.tv_sec * NANOSEC + timer.tv_nsec;
     }
@@ -64,14 +76,16 @@ inline static long long timer_elapsed()
     return (timer.tv_sec * NANOSEC + timer.tv_nsec) - timer_start;
 }
 
-/* void debug - log function
- * @timestamp : boolean
- * @indent    : indent level (2 spaces each)
- * @src       : source file/func name (or NULL)
- * @line      : line number
+/**
+ * debug() - log function
+ * @level: log level
+ * @timestamp: boolean, print timestamp if true
+ * @indent: indent level (2 spaces each)
+ * @src: source file/func name (or NULL)
+ * @line: line number
  */
-void debug(u32 level, bool timestamp, u32 indent, const char *src,
-           u32 line, const char *fmt, ...)
+void debug(uint level, bool timestamp, uint indent, const char *src,
+           uint line, const char *fmt, ...)
 {
     if (!stream || level > debug_level)
         return;
@@ -96,6 +110,8 @@ void debug(u32 level, bool timestamp, u32 indent, const char *src,
     va_start(ap, fmt);
     vfprintf(stream, fmt, ap);
     va_end(ap);
+    if (debug_flush)
+        fflush(stream);
 }
 
 #ifdef BIN_debug
