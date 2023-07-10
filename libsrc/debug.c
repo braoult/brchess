@@ -37,19 +37,34 @@ static FILE *stream = NULL;
 void debug_level_set(uint level)
 {
     debug_level = level;
+#   ifdef DEBUG_DEBUG_C
     log(0, "debug level set to %u\n", level);
+#   endif
+}
+
+/**
+ * debug_level_get() - get debug level.
+ * @return: current level debug (unsigned integer).
+ */
+uint debug_level_get(void)
+{
+    return debug_level;
 }
 
 void debug_stream_set(FILE *_stream)
 {
     stream = _stream;
+#   ifdef DEBUG_DEBUG_C
     log(0, "stream set to %d\n", stream? fileno(stream): -1);
+#   endif
 }
 
 void debug_flush_set(bool flush)
 {
     debug_flush = flush;
-    log(0, "debug flush set to %d\n", flush);
+#   ifdef DEBUG_DEBUG_C
+    log(0, "debug flush %s.\n", flush? "set": "unset");
+#   endif
 }
 
 void debug_init(uint level, FILE *_stream, bool flush)

@@ -7,12 +7,15 @@ r3k2r/8/3B4/8/8/3b4/8/R3K2R w KQkq - 0 1
 r3k2r/8/3BB3/8/8/3bb3/8/R3K2R w KQkq - 0 1
 r2bkb1r/8/8/8/8/3bb3/8/R2BKB1R w KQkq - 0 1
 
+# 4 castle possible, only K+R
+r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1
+
 # illegal positions
 4k3/8/8/8/7b/8/8/4K3 b - - 0 1
 2r1k3/3P4/8/8/8/8/8/4K3 w - - 0 1
 
-# only kings on A1/H8
-k7/8/8/8/8/8/8/K7 b - - 0 1
+# only kings on A1/A8, white to play
+k7/8/8/8/8/8/8/K7 w - - 0 1
 
 # only one move possible (Pf2xBg3)
 k7/8/8/1p1p4/pPpPp3/P1PpPpb1/NBNP1P2/KBB1B3 w - - 0 1

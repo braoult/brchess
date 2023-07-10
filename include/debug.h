@@ -27,6 +27,7 @@
 
 void debug_init(uint level, FILE *stream, bool flush);
 void debug_level_set(uint level);
+uint debug_level_get(void);
 void debug_stream_set(FILE *stream);
 void debug_flush_set(bool flush);
 void _printf debug(uint level, bool timestamp,
@@ -38,6 +39,7 @@ static inline void debug_init(__unused uint level,
                               __unused FILE *stream,
                               _unused bool flush) {}
 static inline void debug_level_set(__unused uint level) {}
+static inline uint debug_level_get(void) {return 0;}
 static inline void debug_stream_set(__unused FILE *stream) {}
 static inline void debug_flush_set(__unused bool level) {}
 static inline void _printf debug(__unused uint level, __unused bool timestamp,
