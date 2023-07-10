@@ -21,6 +21,9 @@
 #include <br.h>
 #include <bits.h>
 
+#define NANOSEC  1000000000                       /* nano sec in sec */
+#define MILLISEC 1000000                          /* milli sec in sec */
+
 #define _printf __attribute__ ((format (printf, 6, 7)))
 
 #ifdef DEBUG_DEBUG
@@ -29,6 +32,7 @@ void debug_init(uint level, FILE *stream, bool flush);
 void debug_level_set(uint level);
 uint debug_level_get(void);
 void debug_stream_set(FILE *stream);
+long long debug_timer_elapsed(void);
 void debug_flush_set(bool flush);
 void _printf debug(uint level, bool timestamp,
                    uint indent, const char *src,
@@ -41,6 +45,7 @@ static inline void debug_init(__unused uint level,
 static inline void debug_level_set(__unused uint level) {}
 static inline uint debug_level_get(void) {return 0;}
 static inline void debug_stream_set(__unused FILE *stream) {}
+static inline long long debug_timer_elapsed(void) {return 0LL};
 static inline void debug_flush_set(__unused bool level) {}
 static inline void _printf debug(__unused uint level, __unused bool timestamp,
                                  __unused uint indent, __unused const char *src,

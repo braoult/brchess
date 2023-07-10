@@ -22,9 +22,6 @@
 #include "bits.h"
 #include "debug.h"
 
-#define NANOSEC  1000000000                       /* nano sec in sec */
-#define MILLISEC 1000000                          /* milli sec in sec */
-
 static long long timer_start;                     /* in nanosecond */
 static uint debug_level = 0;
 static bool debug_flush = false;
@@ -83,7 +80,7 @@ void debug_init(uint level, FILE *_stream, bool flush)
     log(0, "timer started.\n");
 }
 
-inline static long long timer_elapsed()
+long long debug_timer_elapsed(void)
 {
     struct timespec timer;
 
@@ -111,7 +108,7 @@ void debug(uint level, bool timestamp, uint indent, const char *src,
         fprintf(stream, "%*s", 2*(indent-1), "");
 
     if (timestamp) {
-        long long diff = timer_elapsed();
+        long long diff = debug_timer_elapsed();
         fprintf(stream, "%lld.%03lld ", diff/NANOSEC, (diff/1000000)%1000);
         fprintf(stream, "%010lld ", diff);
     }
