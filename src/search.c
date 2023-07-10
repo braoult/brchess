@@ -30,7 +30,7 @@ eval_t negamax(pos_t *pos, int depth, int color)
     pos_t *newpos;
     eval_t best = EVAL_MIN, score;
 
-    printf("depth=%d\n", depth);
+    //printf("depth=%d\n", depth);
     moves_gen_all(pos);
     //pos_check(pos);
     if (depth == 0) {
@@ -40,9 +40,14 @@ eval_t negamax(pos_t *pos, int depth, int color)
         //printf(" --> evalnega=%d\n", score);
         return score;
     }
-    moves_print(pos, 0);
+    //moves_print(pos, 0);
     list_for_each_entry(move, &pos->moves[pos->turn], list) {
+        log(1, "%.*s", 5 - depth, "                ");
         newpos = move_do(pos, move);
+        //move_print(0, move, 0);
+        //printf("color piece = %d\n", COLOR(move->piece));
+        //printf("turns=%d/%d\n", pos->turn, newpos->turn);
+        //fflush(stdout);
         score = -negamax(newpos, depth - 1, -color);
         move->negamax = score;
         //printf("move=");

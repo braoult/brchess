@@ -297,15 +297,16 @@ int do_pos(pos_t *pos, __unused char *arg)
 
 int do_genmoves(pos_t *pos, __unused char *arg)
 {
-    log_f(1, "%s\n", arg);
     moves_gen_all(pos);
     return 1;
 }
 
 int do_prmoves(pos_t *pos, __unused char *arg)
 {
-    log_f(1, "%s\n", arg);
-    moves_print(pos, M_PR_SEPARATE | M_PR_NUM);
+    uint debug_level = debug_level_get();
+    debug_level_set(1);
+    moves_print(pos, M_PR_SEPARATE | M_PR_NUM | M_PR_LONG);
+    debug_level_set(debug_level);
     return 1;
 }
 
@@ -423,10 +424,14 @@ int do_depth(__unused pos_t *pos, char *arg)
 
 int do_search(pos_t *pos, __unused char *arg)
 {
-    printf("++++++++\nnegamax=%d\n", negamax(pos, depth, pos->turn==WHITE? 1:-1));
-    printf("best=");
+    int debug_level = debug_level_get();
+
+    negamax(pos, depth, pos->turn == WHITE ? 1 : -1);
+    debug_level_set(1);
+    log(1, "best=");
     move_print(0, pos->bestmove, 0);
-    printf("score=%d\n", pos->bestmove->negamax);
+    log(1, " negamax=%d\n", pos->bestmove->negamax);
+    debug_level_set(debug_level);
     return 1;
 }
 

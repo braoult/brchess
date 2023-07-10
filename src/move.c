@@ -92,36 +92,36 @@ int move_print(int movenum, move_t *move, move_flags_t flags)
         return 0;
     }
     if (flags & M_PR_NUM)
-        printf("%d:", movenum);
+        log(1, "%d:", movenum);
     if (move->flags & M_CASTLE_K) {
-        printf("O-O");
+        log(1, "O-O");
         goto end;
     } else if (move->flags & M_CASTLE_Q) {
-        printf("O-O-O");
+        log(1, "O-O-O");
         goto end;
     } else {
-        printf("%s%c%c", P_SYM(move->piece),
+        log(1, "%s%c%c", P_SYM(move->piece),
                FILE2C(F88(move->from)),
                RANK2C(R88(move->from)));
         if (move->flags & M_CAPTURE) {
-            printf("x");
+            log(1, "x");
             if (flags & M_PR_LONG)
-                printf("%s", P_SYM(move->capture));
+                log(1, "%s", P_SYM(move->capture));
         } else {
-            printf("-");
+            log(1, "-");
         }
-        printf("%c%c",
+        log(1, "%c%c",
                FILE2C(F88(move->to)),
                RANK2C(R88(move->to)));
         if (flags & M_PR_LONG && move->flags & M_EN_PASSANT)
-            printf("e.p.");
+            log(1, "e.p.");
         if (move->promotion)
-            printf("=%s", P_SYM(move->promotion));
+            log(1, "=%s", P_SYM(move->promotion));
     end:
-        printf(" ");
+        log(1, " ");
     }
     if (flags & M_PR_NL)
-        printf("\n");
+        log(1, "\n");
     return 1;
 }
 
@@ -133,7 +133,7 @@ void moves_print(pos_t *pos, move_flags_t flags)
 
     for (int color=WHITE; color <= BLACK; ++color) {
         int verif = 0;
-        printf("%s pseudo-moves:\n\t", color == WHITE? "White": "Black");
+        log(1, "%s pseudo-moves:\n\t", color == WHITE? "White": "Black");
         if (! (flags & M_PR_SEPARATE)) {
             movenum = 1;
             list_for_each_safe(p_cur, tmp, &pos->moves[color]) {
@@ -141,20 +141,20 @@ void moves_print(pos_t *pos, move_flags_t flags)
                 verif += move_print(movenum++, move, flags);
             }
         } else {
-            printf("captures: ");
+            log(1, "captures: ");
             movenum = 1;
             list_for_each_safe(p_cur, tmp, &pos->moves[color]) {
                 move = list_entry(p_cur, move_t, list);
                 verif += move_print(movenum++, move, flags | M_PR_CAPT);
             }
             movenum = 1;
-            printf("\n\tothers  : ");
+            log(1, "\n\tothers  : ");
             list_for_each_safe(p_cur, tmp, &pos->moves[color]) {
                 move = list_entry(p_cur, move_t, list);
                 verif += move_print(movenum++, move, flags | M_PR_NCAPT);
             }
         }
-        printf("\n\tTotal moves = %d mobility=%u\n", verif, pos->mobility[color]);
+        log(1, "\n\tTotal moves = %d mobility=%u\n", verif, pos->mobility[color]);
     }
 }
 
@@ -163,7 +163,7 @@ static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
 {
     board_t *board = pos->board;
     move_t *move;
-    int color = COLOR(piece);
+    int color = COLOR(pos->board[from].piece);
 
 #   ifdef DEBUG_MOVE
     log_i(3, "piece_color=%d turn=%d from=%c%c to=%c%c\n",
@@ -186,7 +186,7 @@ static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
         return NULL;
     list_add(&move->list, &pos->moves[color]);
 
-    move->piece = piece;
+    move->piece = piece | color;
     move->from = from;
     move->to = to;
     move->capture = board[to].piece;
@@ -194,7 +194,9 @@ static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
     if (move->capture)
         move->flags |= M_CAPTURE;
 #   ifdef DEBUG_MOVE
-    log_i(3, "added move from %c%c to %c%c\n",
+    log_i(3, "added %s %s move from %c%c to %c%c\n",
+          COLOR(move->piece)? "black": "white",
+          P_NAME(PIECE(move->piece)),
           FILE2C(F88(move->from)), RANK2C(R88(move->from)),
           FILE2C(F88(move->to)), RANK2C(R88(move->to)));
 #   endif
@@ -615,8 +617,12 @@ int moves_gen(pos_t *pos, bool color, bool doit, bool do_king)
 #   ifdef DEBUG_MOVE
     log_f(2, "color:%s doit:%d\n", color? "Black": "White", doit);
 #   endif
-    piece_list = &pos->pieces[color];
 
+    /* do not generate moves if already done for color */
+    if (!list_empty(&pos->moves[color]))
+        doit = false;
+
+    piece_list = &pos->pieces[color];
     pos->mobility[color] = 0;
     pos->controlled[color] = 0;
     count += pseudo_moves_castle(pos, color, doit, do_king);
@@ -661,6 +667,7 @@ int moves_gen_king_moves(pos_t *pos, bool color, bool doit)
  */
 void moves_gen_all(pos_t *pos)
 {
+    //log_f(1, "turn=%d opponent=%d\n", pos->turn, OPPONENT(pos->turn));
     moves_gen(pos, OPPONENT(pos->turn), false, false);
     moves_gen(pos, pos->turn, true, true);
     moves_gen_king_moves(pos, OPPONENT(pos->turn), false);
@@ -676,88 +683,122 @@ void moves_gen_all(pos_t *pos)
 pos_t *move_do(pos_t *pos, move_t *move)
 {
 #   ifdef DEBUG_MOVE
-    printf("++++++++++ ");
-    move_print(0, move, M_PR_NL | M_PR_LONG | M_PR_NUM);
+    //log(1, "new move: ");
+    move_print(0, move, M_PR_NL | M_PR_LONG);
 #   endif
 
     pos_t *new = pos_dup(pos);
     piece_t piece = PIECE(move->piece), newpiece = piece, captured = move->capture;
-    int color = COLOR(piece);
+    int color = COLOR(move->piece);
     square_t from = move->from, to = move->to;
+    u64 bb_from = SQ88_2_BB(from), bb_to = SQ88_2_BB(to);
 
-    if (move->capture || PIECE(piece) == PAWN)    /* 50 moves */
+    //printf("Piece color=%d\n", color);
+
+    if (move->capture || piece == PAWN)    /* 50 moves */
         new->clock_50 = 0;
     else
         new->clock_50++;
 
     if (move->flags & M_CAPTURE) {                            /* capture */
-        if (!(move->flags & M_EN_PASSANT)) {
-            piece_del(&new->board[to].s_piece->list);
-            new->board[to].piece = 0;
-            new->occupied[OPPONENT(color)] ^= SQ88_2_BB(to);
-            new->bb[OPPONENT(color)][PIECETOBB(captured)] ^= SQ88_2_BB(to);
-        } else {
+        if (move->flags & M_EN_PASSANT) {
             uchar ep_file = F88(pos->en_passant);
             square_t ep_grab = color == WHITE ? SQ88(ep_file, 4): SQ88(ep_file, 3);
-            log_f(1, "en-passant=%d,%d\n", ep_file, color == WHITE ? 4 : 3);
+            u64 bb_ep_grab = SQ88_2_BB(ep_grab);
+
+            log_f(5, "en-passant=%d,%d\n", ep_file, color == WHITE ? 4 : 3);
             piece_del(&new->board[ep_grab].s_piece->list);
             new->board[ep_grab].piece = 0;
-            new->occupied[OPPONENT(color)] ^= SQ88_2_BB(ep_grab);
-            new->bb[OPPONENT(color)][BB_PAWN] ^= SQ88_2_BB(ep_grab);
+            new->occupied[OPPONENT(color)] &= ~bb_ep_grab;
+            new->bb[OPPONENT(color)][BB_PAWN] &= ~bb_ep_grab;
+
+        } else {
+            piece_del(&new->board[to].s_piece->list);
+            new->board[to].piece = 0;
+            new->occupied[OPPONENT(color)] &= ~bb_to;
+            new->bb[OPPONENT(color)][PIECETOBB(captured)] &= ~bb_to;
         }
 
     } else if (move->flags & M_CASTLE_Q) {
         uchar row = R88(from);
         square_t rook_from = SQ88(0, row);
         square_t rook_to = SQ88(3, row);
+        u64 bb_rook_from = SQ88_2_BB(rook_from);
+        u64 bb_rook_to = SQ88_2_BB(rook_to);
+
         new->board[rook_to] = new->board[rook_from];
         new->board[rook_to].s_piece->square = rook_to;
-        new->occupied[color] ^= SQ88_2_BB(rook_from);
-        new->occupied[color] |= SQ88_2_BB(rook_to);
-        new->bb[color][PIECETOBB(BB_ROOK)] ^= SQ88_2_BB(rook_from);
-        new->bb[color][PIECETOBB(BB_ROOK)] |= SQ88_2_BB(rook_to);
+        new->occupied[color] &= ~bb_rook_from;
+        new->occupied[color] |= bb_rook_to;
+        new->bb[color][PIECETOBB(BB_ROOK)] &= ~bb_rook_from;
+        new->bb[color][PIECETOBB(BB_ROOK)] |= bb_rook_to;
         new->board[rook_from].piece = 0;
         new->board[rook_from].s_piece = NULL;
+        //new->castle &= color == WHITE? ~CASTLE_W: ~CASTLE_B;
+
     } else if (move->flags & M_CASTLE_K) {
         uchar row = R88(from);
         square_t rook_from = SQ88(7, row);
         square_t rook_to = SQ88(5, row);
+        u64 bb_rook_from = SQ88_2_BB(rook_from);
+        u64 bb_rook_to = SQ88_2_BB(rook_to);
+
         new->board[rook_to] = new->board[rook_from];
         new->board[rook_to].s_piece->square = rook_to;
-        new->occupied[color] ^= SQ88_2_BB(rook_from);
-        new->occupied[color] |= SQ88_2_BB(rook_to);
-        new->bb[color][PIECETOBB(BB_ROOK)] ^= SQ88_2_BB(rook_from);
-        new->bb[color][PIECETOBB(BB_ROOK)] |= SQ88_2_BB(rook_to);
+        new->occupied[color] &= ~bb_rook_from;
+        new->occupied[color] |= bb_rook_to;
+        new->bb[color][PIECETOBB(BB_ROOK)] &= ~bb_rook_from;
+        new->bb[color][PIECETOBB(BB_ROOK)] |= bb_rook_to;
         new->board[rook_from].piece = 0;
         new->board[rook_from].s_piece = NULL;
+        // new->castle &= color == WHITE? ~CASTLE_W: ~CASTLE_B;
     }
 
     new->board[to] = new->board[from];
     /* fix dest square */
     new->board[to].s_piece->square = to;
     if (move->flags & M_PROMOTION) {
-        log(2, "promotion to %s\n", P_SYM(move->promotion));
-        printf("newpiece=%#x p=%#x\n", move->promotion, PIECE(move->promotion));
+        log_f(5, "promotion to %s\n", P_SYM(move->promotion));
+        log_f(5, "newpiece=%#x p=%#x\n", move->promotion, PIECE(move->promotion));
         newpiece = PIECE(move->promotion);
         new->board[to].piece = move->promotion;
         new->board[to].s_piece->piece = move->promotion;
     }
     /* replace old occupied bitboard by new one */
-    new->occupied[color] ^= SQ88_2_BB(from);
-    new->occupied[color] |= SQ88_2_BB(to);
-    new->bb[color][PIECETOBB(piece)] ^= SQ88_2_BB(from);
-    new->bb[color][PIECETOBB(newpiece)] |= SQ88_2_BB(to);
+    new->occupied[color] &= ~bb_from;
+    new->occupied[color] |= bb_to;
+    new->bb[color][PIECETOBB(piece)] &= ~bb_from;
+    new->bb[color][PIECETOBB(newpiece)] |= bb_to;
     if (move->flags & M_PROMOTION) {
-        printf("color=%d bbpiece=%d\n", color, PIECETOBB(newpiece));
-        bitboard_print(new->bb[color][PIECETOBB(newpiece)]);
+        log_f(5, "promotion color=%d bbpiece=%d\n", color, PIECETOBB(newpiece));
+        //bitboard_print(new->bb[color][PIECETOBB(newpiece)]);
+    }
+    /* set en_passant */
+    new->en_passant = 0;
+    if (piece == PAWN) {
+        if (R88(from) == 1 && R88(to) == 3)
+            pos->en_passant = SQ88(F88(from), 2);
+        else if  (R88(from) == 6 && R88(to) == 4)
+            pos->en_passant = SQ88(F88(from), 5);
     }
 
     /* always make "from" square empty */
     new->board[from].piece = 0;
     new->board[from].s_piece = NULL;
 
+    //printf("old turn=%d ", color);
     SET_COLOR(new->turn, OPPONENT(color));        /* pos color */
-
+    //printf("new turn=%d\n", new->turn);
+    //fflush(stdout);
+    /* adjust castling flags */
+    if ((bb_from | bb_to) & (A1 | E1))
+        new->castle &= ~CASTLE_WQ;
+    else if ((bb_from | bb_to) & (E1 | H1))
+        new->castle &= ~CASTLE_WK;
+    else if ((bb_from | bb_to) & (A8 | E8))
+        new->castle &= ~CASTLE_BQ;
+    else if ((bb_from | bb_to) & (E8 | H8))
+        new->castle &= ~CASTLE_BK;
     return new;
 }
 

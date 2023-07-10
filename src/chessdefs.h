@@ -90,13 +90,13 @@ typedef unsigned char square_t;
  */
 typedef unsigned char castle_t;
 
-#define CASTLE_WK       1                         /* 0x01 00000001 */
+#define CASTLE_WK       (1 << 0)                  /* 0x01 00000001 */
 #define CASTLE_WQ       (1 << 1)                  /* 0x02 00000010 */
 #define CASTLE_BK       (1 << 2)                  /* 0x04 00000100 */
 #define CASTLE_BQ       (1 << 3)                  /* 0x08 00001000 */
 
-#define CASTLE_W        0x03                      /* 00000011 W castle mask */
-#define CASTLE_B        0x0C                      /* 00001100 B castle mask */
+#define CASTLE_W        (CASTLE_WK | CASTLE_WQ)   /* 00000011 W castle mask */
+#define CASTLE_B        (CASTLE_BK | CASTLE_BQ)   /* 00001100 B castle mask */
 
 /* bitboard
  */
