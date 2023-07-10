@@ -56,6 +56,7 @@ CFLAGS    += -Wmissing-declarations
 CPPFLAGS  := -I$(INCDIR)
 CPPFLAGS  += -DDEBUG                         # global
 CPPFLAGS  += -DDEBUG_DEBUG                   # enable log() functions
+#CPPFLAGS  += -DDEBUG_DEBUG_C                # enable verbose log() settings
 CPPFLAGS  += -DDEBUG_POOL                    # memory pools management
 CPPFLAGS  += -DDEBUG_FEN                     # FEN decoding
 CPPFLAGS  += -DDEBUG_MOVE                    # move generation
