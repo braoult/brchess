@@ -80,6 +80,12 @@ enum {
 #define SET_BLACK(p)    ((p) |= MASK_COLOR)
 #define SET_COLOR(p, c) (!(c)? SET_WHITE(p): SET_BLACK(p))
 
+/* flip a 0-63 square:
+ * Vertical:   G8 (62) becomes G1 (6)
+ * Horizontal: G8 (62) becomes B8 (57)
+ */
+#define FLIP_V(sq)      ((sq) ^ 56)
+#define FLIP_H(sq)      ((sq) ^ 7)
 /* square_t bits structure : rrrrffff
  * ffff: file
  * rrrr: rank
@@ -97,6 +103,12 @@ typedef unsigned char castle_t;
 
 #define CASTLE_W        (CASTLE_WK | CASTLE_WQ)   /* 00000011 W castle mask */
 #define CASTLE_B        (CASTLE_BK | CASTLE_BQ)   /* 00001100 B castle mask */
+
+/* game phases
+ */
+#define OPENING    0
+#define MIDDLEGAME 1
+#define ENDGAME    2
 
 /* bitboard
  */
