@@ -14,7 +14,20 @@
 #ifndef EVAL_H
 #define EVAL_H
 
-#include "position.h"
+#include <limits.h>
+
+#include "chessdefs.h"
+#include "piece.h"
+
+#define EVAL_MAX       \
+    KING_VALUE     +   \
+    QUEEN_VALUE  * 9 + \
+    ROOK_VALUE   * 2 + \
+    BISHOP_VALUE * 2 + \
+    KNIGHT_VALUE * 2
+
+#define EVAL_MIN     (-EVAL_MAX)
+#define EVAL_INVALID INT_MIN
 
 eval_t eval_material(pos_t *pos, bool color);
 eval_t eval_mobility(pos_t *pos, bool color);

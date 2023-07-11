@@ -1,6 +1,6 @@
 /* eval.c - static position evaluation.
  *
- * Copyright (C) 2021 Bruno Raoult ("br")
+ * Copyright (C) 2021-2023 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
  * Some rights reserved. See COPYING.
  *
@@ -16,6 +16,7 @@
 #include <list.h>
 #include <debug.h>
 
+#include "position.h"
 #include "eval.h"
 
 inline eval_t eval_material(pos_t *pos, bool color)
@@ -52,6 +53,9 @@ eval_t eval(pos_t *pos)
 {
     eval_t material[2] = {0}, control[2] = {0};
 
+    if (pos->eval != EVAL_INVALID)
+        return pos->eval;
+
     /* 1) pieces value */
     material[WHITE] = eval_material(pos, WHITE);
     material[BLACK] = eval_material(pos, BLACK);
@@ -85,7 +89,7 @@ eval_t eval(pos_t *pos)
 #   ifdef DEBUG_EVAL
     log_f(2, "eval: %d\n", res);
 #   endif
-
+    pos->eval = res;
     return res;
 }
 

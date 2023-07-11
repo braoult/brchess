@@ -14,12 +14,9 @@
 #ifndef SEARCH_H
 #define SEARCH_H
 
-#include <limits.h>
 #include "position.h"
 
-#define EVAL_MIN INT_MIN
-#define EVAL_MAX INT_MAX
-
 eval_t negamax(pos_t *pos, int depth, int color);
+eval_t pvs(pos_t *pos, int depth, int alpha, int beta, int color);
 
 #endif  /* SEARCH_H */
