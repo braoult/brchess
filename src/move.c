@@ -16,12 +16,14 @@
 
 #include <br.h>
 #include <list.h>
+#include <list_sort.h>
 #include <debug.h>
 
 #include "chessdefs.h"
 #include "board.h"
 #include "piece.h"
 #include "move.h"
+#include "eval.h"
 
 static pool_t *moves_pool;
 
@@ -36,6 +38,7 @@ static struct vector {
     [QUEEN]  = { 8, 1, { -1,  -16, 1,   16,  -15, -17, 15, 17 }},
     [KING]   = { 8, 0, { -1,  -16, 1,   16,  -15, -17, 15, 17 }}
 };
+
 
 /* squares needed to be empty & not controlled by opponent for castle.
  * For black castle, same values 7 rows higher (>> 7*8)
@@ -74,6 +77,7 @@ void moves_pool_stats()
  * M_PR_NUM:   print also move number
  * M_PR_LONG:  print long notation
  * M_PR_NL:    print a newline after move
+ * M_PR_EVAL:  print move eval
  *
  * @return: 0 if nothing printed, 1 otherwise
  */
@@ -117,6 +121,8 @@ int move_print(int movenum, move_t *move, move_flags_t flags)
             log(1, "e.p.");
         if (move->promotion)
             log(1, "=%s", P_SYM(move->promotion));
+        if (flags & M_PR_EVAL)
+            log(1, "[ev:%d] ", move->eval);
     end:
         log(1, " ");
     }
@@ -193,6 +199,7 @@ static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
     move->flags = M_NORMAL;
     if (move->capture)
         move->flags |= M_CAPTURE;
+    move->pos = NULL;
 #   ifdef DEBUG_MOVE
     log_i(3, "added %s %s move from %c%c to %c%c\n",
           COLOR(move->piece)? "black": "white",
@@ -659,32 +666,93 @@ int moves_gen_king_moves(pos_t *pos, bool color, bool doit)
     return count;
 }
 
+static int moves_cmp_eval(__unused void *data, const struct list_head *h1, const struct list_head *h2)
+{
+    move_t *m1 = list_entry(h1, move_t, list);
+    move_t *m2 = list_entry(h2, move_t, list);
+    return m1->eval > m2->eval ? -1: m1->eval < m2->eval? 1: 0;
+}
+
 /**
- * moves_gen_all() - calculate all moves
+ * moves_sort() sort - sort moves list, best eval first.
+ * @pos: &position.
+ */
+void moves_sort(pos_t *pos)
+{
+    list_sort(NULL, &pos->moves[pos->turn], moves_cmp_eval);
+}
+
+/**
+ * moves_gen_all_eval_sort() - calculate/generate/sort moves for side to play.
  * @pos: &position
  *
- * Compute pseudo moves for both sides.
+ * Generate positions for each move for player to move.
+ * For each of them generate opponents moves, calculate eval, and sort the moves list.
+ */
+void moves_gen_eval_sort(pos_t *pos)
+{
+    move_t *move;
+    pos_t *newpos;
+
+    moves_gen_all(pos);
+
+    list_for_each_entry(move, &pos->moves[pos->turn], list) {
+        newpos = move_do(pos, move);
+        moves_gen_all(newpos);
+        move->pos = newpos;
+        move->eval = eval(newpos);
+        //log(1, "eval=%d\n", move->eval);
+    }
+    moves_sort(pos);
+}
+
+/**
+ * moves_gen_all() - calculate all moves, and generate moves for side to play.
+ * @pos: &position
+ *
+ * Compute pseudo moves for both sides, and generate moves for player to move.
  */
 void moves_gen_all(pos_t *pos)
 {
     //log_f(1, "turn=%d opponent=%d\n", pos->turn, OPPONENT(pos->turn));
-    moves_gen(pos, OPPONENT(pos->turn), false, false);
-    moves_gen(pos, pos->turn, true, true);
-    moves_gen_king_moves(pos, OPPONENT(pos->turn), false);
+    if (!pos->moves_generated) {
+        if (!pos->moves_counted)
+            moves_gen(pos, OPPONENT(pos->turn), false, false);
+        moves_gen(pos, pos->turn, true, true);
+        if (!pos->moves_counted)
+            moves_gen_king_moves(pos, OPPONENT(pos->turn), false);
+        pos->moves_counted = true;
+        pos->moves_generated = true;
+    }
 }
 
+/**
+ * moves_gen_all_nomoves() - calculate number of moves for each player.
+ * @pos: &position
+ */
+void moves_gen_all_nomoves(pos_t *pos)
+{
+    //log_f(1, "turn=%d opponent=%d\n", pos->turn, OPPONENT(pos->turn));
+    if (!pos->moves_counted) {
+        moves_gen(pos, OPPONENT(pos->turn), false, false);
+        moves_gen(pos, pos->turn, false, true);
+        moves_gen_king_moves(pos, OPPONENT(pos->turn), false);
+        pos->moves_counted = true;
+    }
+}
 
 /**
  * move_do() - execute move in a duplicated position.
  * @pos: &pos_t struct on which move will be applied
  * @move: &move_t struct to apply
  *
+ * @return: &new position
  */
 pos_t *move_do(pos_t *pos, move_t *move)
 {
 #   ifdef DEBUG_MOVE
     //log(1, "new move: ");
-    move_print(0, move, M_PR_NL | M_PR_LONG);
+    //move_print(0, move, M_PR_NL | M_PR_LONG);
 #   endif
 
     pos_t *new = pos_dup(pos);
@@ -693,7 +761,7 @@ pos_t *move_do(pos_t *pos, move_t *move)
     square_t from = move->from, to = move->to;
     u64 bb_from = SQ88_2_BB(from), bb_to = SQ88_2_BB(to);
 
-    //printf("Piece color=%d\n", color);
+    pos->node_count++;
 
     if (move->capture || piece == PAWN)    /* 50 moves */
         new->clock_50 = 0;

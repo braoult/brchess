@@ -36,6 +36,7 @@ typedef unsigned char move_flags_t;
 #define M_PR_NCAPT     0x02
 #define M_PR_NUM       0x04
 #define M_PR_NL        0x08
+#define M_PR_EVAL      0x20                       /* separate captures */
 #define M_PR_SEPARATE  0x40                       /* separate captures */
 #define M_PR_LONG      0x80
 
@@ -46,6 +47,8 @@ typedef struct move_s {
     piece_t promotion;                            /* promoted piece */
     move_flags_t flags;
     eval_t negamax;
+    eval_t eval;
+    pos_t *pos;
     struct list_head list;                        /* next move */
 } move_t;
 
@@ -62,7 +65,12 @@ int pseudo_moves_gen(pos_t *pos, piece_list_t *piece, bool doit, bool do_king);
 int pseudo_moves_pawn(pos_t *pos, piece_list_t *piece, bool doit);
 int moves_gen(pos_t *pos, bool color, bool doit, bool do_king);
 int moves_gen_king_moves(pos_t *pos, bool color, bool doit);
+
+void moves_sort(pos_t *pos);
+void moves_gen_eval_sort(pos_t *pos);
+
 void moves_gen_all(pos_t *pos);
+void moves_gen_all_nomoves(pos_t *pos);
 
 pos_t *move_do(pos_t *pos, move_t *move);
 void move_undo(pos_t *pos, move_t *move);
