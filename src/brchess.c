@@ -29,6 +29,7 @@
 #include "move.h"
 #include "fen.h"
 #include "eval.h"
+#include "eval-simple.h"
 #include "search.h"
 
 struct command {
@@ -60,11 +61,13 @@ int do_prmoves(pos_t *, char*);
 int do_prpieces(pos_t *pos, char *arg);
 int do_memstats(pos_t *, char*);
 int do_eval(pos_t *, char*);
+int do_simple_eval(pos_t *, char*);
 int do_move(pos_t *, char*);
 int do_quit(pos_t *, char*);
 int do_debug(pos_t *, char*);
 int do_depth(pos_t *, char*);
 int do_search(pos_t *, char*);
+int do_pvs(pos_t *, char*);
 
 struct command commands[] = {
     { "help", do_help, "Display this text" },
@@ -79,10 +82,12 @@ struct command commands[] = {
     { "prpieces", do_prpieces, "Print Pieces (from pieces lists)" },
     { "memstats", do_memstats, "Generate next move list" },
     { "eval", do_eval, "Eval current position" },
+    { "simple-eval", do_simple_eval, "Simple eval current position" },
     { "do_move", do_move, "execute nth move on current position" },
     { "debug", do_debug, "Set log level to LEVEL" },
     { "depth", do_depth, "Set search depth to N" },
-    { "search", do_search, "Search best move" },
+    { "search", do_search, "Search best move (negamax)" },
+    { "pvs", do_pvs, "Search best move (Principal Variation Search)" },
     { NULL, (int(*)()) NULL, NULL }
 };
 
@@ -277,6 +282,13 @@ int do_eval(__unused pos_t *pos, __unused char *arg)
     return 1;
 }
 
+int do_simple_eval(__unused pos_t *pos, __unused char *arg)
+{
+    eval_t eval = eval_simple(pos);
+    printf("eval = %d centipawns\n", eval);
+    return 1;
+}
+
 int do_fen(pos_t *pos, char *arg)
 {
     fen2pos(pos, arg);
@@ -425,13 +437,40 @@ int do_depth(__unused pos_t *pos, char *arg)
 int do_search(pos_t *pos, __unused char *arg)
 {
     int debug_level = debug_level_get();
+    long long timer1, timer2;
+    float nodes_sec;
 
+    timer1 = debug_timer_elapsed();
     negamax(pos, depth, pos->turn == WHITE ? 1 : -1);
+    timer2 = debug_timer_elapsed();
+    nodes_sec = (float) pos->node_count / ((float) (timer2 - timer1) / (float)NANOSEC);
     debug_level_set(1);
     log(1, "best=");
     move_print(0, pos->bestmove, 0);
     log(1, " negamax=%d\n", pos->bestmove->negamax);
     debug_level_set(debug_level);
+    printf("Total nodes: %lu time=%lld %.0f nodes/sec\n",
+           pos->node_count, timer2 - timer1, nodes_sec);
+    return 1;
+}
+
+int do_pvs(pos_t *pos, __unused char *arg)
+{
+    int debug_level = debug_level_get();
+    long long timer1, timer2;
+    float nodes_sec;
+
+    timer1 = debug_timer_elapsed();
+    pvs(pos, depth, EVAL_MIN, EVAL_MAX, pos->turn == WHITE ? 1 : -1);
+    timer2 = debug_timer_elapsed();
+    nodes_sec = (float) pos->node_count / ((float) (timer2 - timer1) / (float)NANOSEC);
+    debug_level_set(1);
+    log(1, "best=");
+    move_print(0, pos->bestmove, 0);
+    log(1, " negamax=%d\n", pos->bestmove->negamax);
+    debug_level_set(debug_level);
+    printf("Total nodes: %lu time=%lld %.0f nodes/sec\n",
+           pos->node_count, timer2 - timer1, nodes_sec);
     return 1;
 }
 
@@ -459,6 +498,7 @@ int main(int ac, char **av)
     pos_pool_init();
     pos = pos_get();
     debug_init(1, stderr, true);
+    eval_simple_init();
 
     while ((opt = getopt(ac, av, "d:f:")) != -1) {
         switch (opt) {
