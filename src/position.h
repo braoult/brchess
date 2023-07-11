@@ -23,12 +23,17 @@
 #include "chessdefs.h"
 
 typedef struct pos_s {
+    u64 node_count;                               /* evaluated nodes */
     piece_t turn;                                 /* we use only color bit */
     castle_t castle;
     u16 clock_50;
     u16 curmove;
     eval_t eval;
+    int eval_simple_phase;
+    eval_t eval_simple;
     move_t *bestmove;
+    bool moves_generated;
+    bool moves_counted;
     board_t board[BOARDSIZE];
 
     square_t en_passant;

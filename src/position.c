@@ -22,6 +22,7 @@
 #include "move.h"
 #include "fen.h"
 #include "piece.h"
+#include "eval.h"
 
 static pool_t *pos_pool;
 
@@ -199,6 +200,7 @@ pos_t *pos_clear(pos_t *pos)
     }
 
     SET_WHITE(pos->turn);
+    pos->node_count = 0;
     pos->castle = 0;
     pos->clock_50 = 0;
     pos->curmove = 0;
@@ -213,6 +215,8 @@ pos_t *pos_clear(pos_t *pos)
     pos->controlled[BLACK] = 0;
     pos->mobility[WHITE] = 0;
     pos->mobility[BLACK] = 0;
+    pos->moves_generated = false;
+    pos->moves_counted = false;
     /* remove pieces / moves */
     pieces_del(pos, WHITE);
     pieces_del(pos, BLACK);
@@ -260,8 +264,13 @@ pos_t *pos_get()
  * pos_dup() - duplicate a position.
  * @pos: &position to duplicate.
  *
- * New position is the same as source one, with duplicated pieces list
- * and empty moves list and NULL bestmove.
+ * New position is the same as source one (with duplicated pieces list),
+ * except:
+ * - moves list is empty
+ * - bestmove is NULL
+ * - nodecount is set to zero
+ * - eval is set to EVAL_INVALID
+ * - moves_generated ans moves_counted are unset
  *
  * @return: The new position.
  *
@@ -280,7 +289,6 @@ pos_t *pos_dup(pos_t *pos)
         for (int color = 0; color < 2; ++color) {
             INIT_LIST_HEAD(&new->pieces[color]);
             INIT_LIST_HEAD(&new->moves[color]);
-            new->bestmove = NULL;
             /* duplicate piece list */
             piece_list = &pos->pieces[color];     /* white/black piece list */
 
@@ -290,6 +298,11 @@ pos_t *pos_dup(pos_t *pos)
                     piece_add(new, oldpiece->piece, oldpiece->square);
             }
         }
+        new->bestmove = NULL;
+        new->node_count = 0;
+        new->eval = EVAL_INVALID;
+        pos->moves_generated = false;
+        pos->moves_counted = false;
     }
     return new;
 }
