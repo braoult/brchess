@@ -164,7 +164,7 @@ eval_t eval_simple(pos_t *pos)
 
     pos->eval_simple_phase = ENDGAME;
 #   ifdef DEBUG_EVAL
-    log_f(1, "phase = %s.\n", eg? "endgame": "midgame");
+    log_f(5, "phase = %s.\n", eg? "endgame": "midgame");
 #   endif
 
     for (int color = WHITE; color <= BLACK; ++color) {
@@ -173,25 +173,26 @@ eval_t eval_simple(pos_t *pos)
             u64 _t;
 
 #           ifdef DEBUG_EVAL
-            log_f(1, "p=%u bb=%d %s %s: count=%d val=%ld ", piece, bb, color? "black": "white",
+            log_f(5, "p=%u bb=%d %s %s: count=%d val=%ld ", piece, bb, color? "black": "white",
                   P_SYM(piece), popcount64(pos->bb[color][bb]),
                   popcount64(pos->bb[color][bb]) * P_VALUE(piece));
 #           endif
 
             eval[color] += popcount64(pos->bb[color][bb]) * P_LETTER(piece);
-            bit_for_each64_2(cur, _t, pos->bb[color][piece]) {
+            bit_for_each64_2(cur, _t, pos->bb[color][bb]) {
 #               ifdef DEBUG_EVAL
-                log(1, "sq=%d:%d ", cur, gg[color][bb][cur]);
+                log(5, "sq=%d:%d ", cur, gg[color][bb][cur]);
 #               endif
                 eval[color] += gg[color][bb][cur];
             }
 #           ifdef DEBUG_EVAL
-            log(1, "\n");
+            log(5, "\n");
 #           endif
         }
     }
 #   ifdef DEBUG_EVAL
-    log_f(1, "white: %d black:%d\n", eval[WHITE], eval[BLACK]);
+    log_f(2, "eval:%d white:%d black:%d\n", eval[WHITE] - eval[BLACK],
+          eval[WHITE], eval[BLACK]);
 #   endif
 
     return eval[WHITE] - eval[BLACK];

@@ -459,15 +459,21 @@ int do_pvs(pos_t *pos, __unused char *arg)
     int debug_level = debug_level_get();
     long long timer1, timer2;
     float nodes_sec;
+    eval_t _pvs;
 
     timer1 = debug_timer_elapsed();
-    pvs(pos, depth, EVAL_MIN, EVAL_MAX, pos->turn == WHITE ? 1 : -1);
+    moves_gen_eval_sort(pos);
+    _pvs = pvs(pos, depth, EVAL_MIN, EVAL_MAX, pos->turn == WHITE ? 1 : -1);
     timer2 = debug_timer_elapsed();
     nodes_sec = (float) pos->node_count / ((float) (timer2 - timer1) / (float)NANOSEC);
     debug_level_set(1);
     log(1, "best=");
-    move_print(0, pos->bestmove, 0);
-    log(1, " negamax=%d\n", pos->bestmove->negamax);
+    if (pos->bestmove) {
+        move_print(0, pos->bestmove, 0);
+        log(1, " pvs=%d stored=%d\n", _pvs, pos->bestmove->negamax);
+    } else {
+        log(1, "<no-best-move>");
+    }
     debug_level_set(debug_level);
     printf("Total nodes: %lu time=%lld %.0f nodes/sec\n",
            pos->node_count, timer2 - timer1, nodes_sec);
