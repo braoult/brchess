@@ -18,6 +18,7 @@
 
 #include "position.h"
 #include "eval.h"
+#include "eval-simple.h"
 
 inline eval_t eval_material(pos_t *pos, bool color)
 {
@@ -51,18 +52,18 @@ inline eval_t eval_square_control(pos_t *pos, bool color)
 
 eval_t eval(pos_t *pos)
 {
-    eval_t material[2] = {0}, control[2] = {0};
+    eval_t simple = 0, control[2] = {0};
 
     if (pos->eval != EVAL_INVALID)
         return pos->eval;
 
     /* 1) pieces value */
-    material[WHITE] = eval_material(pos, WHITE);
-    material[BLACK] = eval_material(pos, BLACK);
+    //material[WHITE] = eval_material(pos, WHITE);
+    //material[BLACK] = eval_material(pos, BLACK);
+    simple = eval_simple(pos);
 
 #   ifdef DEBUG_EVAL
-    log_f(2, "material: W:%d B:%d diff=%d\n",
-          material[WHITE], material[BLACK], material[WHITE] - material[BLACK]);
+    log_f(2, "eval_simple=%d\n", simple);
 #   endif
 
     /* 2) square control: 10 square controls diff = 1 pawn */
@@ -83,7 +84,7 @@ eval_t eval(pos_t *pos)
           (pos->mobility[WHITE] - pos->mobility[BLACK]) * 10);
 #   endif
 
-    eval_t res = material[WHITE] - material[BLACK] +
+    eval_t res = simple +
         (control[WHITE] - control[BLACK]) * 10 +
         (pos->mobility[WHITE] - pos->mobility[BLACK]) * 10;
 #   ifdef DEBUG_EVAL
