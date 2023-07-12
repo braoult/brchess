@@ -37,6 +37,7 @@ eval_t negamax(pos_t *pos, int depth, int color)
     pos_t *newpos;
     eval_t best = EVAL_MIN, score;
 
+    pos->node_count++;
     if (depth == 0) {
         moves_gen_all_nomoves(pos);
         score = eval(pos) * color;
@@ -70,53 +71,74 @@ eval_t negamax(pos_t *pos, int depth, int color)
  * Calculate the PVS value of @pos.
  * See https://en.wikipedia.org/wiki/Principal_variation_search
  *
+ * Moves list should be first generated and evaluated/sorted.
+ *
  * @return: The @pos PVS evaluation.
  */
 eval_t pvs(pos_t *pos, int depth, int alpha, int beta, int color)
 {
     move_t *move;
     pos_t *newpos;
-    eval_t score;
-    int n = 0;
+    eval_t score = EVAL_INVALID;
+    bool firstchild = true;
+
+    pos->node_count++;
 
     if (depth == 0) {
         //return quiesce(p, alpha, beta);           /* leaf node */
-        moves_gen_all_nomoves(pos);
+        moves_gen_all(pos);
         score = eval(pos) * color;
+        log_f(2, "Terminal: depth=%d ", depth);
+        log_f(2, "score=%d alpha=%d beta=%d\n", score, alpha, beta);
         return score;
     }
 
-    moves_gen_eval_sort(pos);
-
+    moves_gen_all(pos);
     //moves_print(pos, M_PR_EVAL);
+    /* do the full search for first child */
+    //move = list_first_entry_or_null(&pos->moves[pos->turn], move_t, list);
+
     list_for_each_entry(move, &pos->moves[pos->turn], list) {
-        log(1, "%.*s", 5 - depth, "                ");
-        newpos = move->pos;
-        log_f(1, "depth=%d eval=%d move=", depth, move->eval);
-        move_print(0, move, M_PR_EVAL);
-        log(1, "\n");
-        if (!n++) {                               /* first child */
+        newpos = move_do(pos, move);
+        log(2, "%.*s", 5 - depth, "                ");
+        if (firstchild) {                               /* first child */
             score = -pvs(newpos, depth - 1, -beta, -alpha, -color);
+            log_f(2, "First child depth=%d move=", depth);
+            //move_print(0, move, 0);
+            log(2, "score=%d alpha=%d beta=%d\n", score, alpha, beta);
+            pos->bestmove = move;
         } else {
             /* search with a null window */
             score = -pvs(newpos, depth - 1, -alpha - 1, -alpha, -color);
-            if (score > alpha && score < beta) {
+            log_f(2, "Other child depth=%d move=", depth);
+            //move_print(0, move, 0);
+            log_f(2, "score=%d alpha=%d beta=%d ", score, alpha, beta);
+            /* for fail-soft:  if (score > alpha && score < beta) */
+            if (score > alpha) {
                 /* if failed high, do a full re-search */
-                score = -pvs(newpos, depth - 1, -beta, -score, -color);
+                log_f(2, "doing full search.");
+                score = -pvs(newpos, depth - 1, -beta, -alpha, -color);
             }
+            log(2, "\n");
+        }
+        pos->node_count += newpos->node_count;
+        move_undo(newpos, move);
+        if (score >= beta) {                      /* fail-hard hard beta cut-off */
+            log(2, "%.*s", 5 - depth, "                ");
+            log_f(2, "depth=%d score=%d alpha=%d beta=%d beta cut-off.\n",
+                  depth, score, alpha, beta);
+            return beta;
         }
         if (score > alpha) {
+            log(2, "%.*s", 5 - depth, "                ");
+            log_f(2, "depth=%d setting new alpha from %d to %d\n",
+                  depth, alpha, score);
             alpha = score;
             pos->bestmove = move;
         }
-        move_undo(newpos, move);
         move->pos = NULL;
-        pos->node_count += newpos->node_count;
         move->negamax = score;
-        // alpha = max(alpha, score);
-        if (alpha > beta) {                       /* beta cut-off */
-            break;
-        }
+        firstchild = false;
     }
 
     return alpha;
