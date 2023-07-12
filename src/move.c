@@ -24,6 +24,7 @@
 #include "piece.h"
 #include "move.h"
 #include "eval.h"
+#include "eval-simple.h"
 
 static pool_t *moves_pool;
 
@@ -226,6 +227,8 @@ void move_del(struct list_head *ptr)
           FILE2C(F88(move->to)), RANK2C(R88(move->to)));
 #   endif
 
+    if (move->pos)
+        pos_del(move->pos);
     list_del(ptr);
     pool_add(moves_pool, move);
     return;
@@ -670,7 +673,7 @@ static int moves_cmp_eval(__unused void *data, const struct list_head *h1, const
 {
     move_t *m1 = list_entry(h1, move_t, list);
     move_t *m2 = list_entry(h2, move_t, list);
-    return m1->eval > m2->eval ? -1: m1->eval < m2->eval? 1: 0;
+    return m2->eval_simple - m1->eval_simple;
 }
 
 /**
@@ -698,12 +701,13 @@ void moves_gen_eval_sort(pos_t *pos)
 
     list_for_each_entry(move, &pos->moves[pos->turn], list) {
         newpos = move_do(pos, move);
-        moves_gen_all(newpos);
         move->pos = newpos;
-        move->eval = eval(newpos);
-        //log(1, "eval=%d\n", move->eval);
+        //move_print(0, move, 0);
+        move->eval_simple = eval_simple(newpos);
+        newpos->eval_simple = move->eval_simple;
     }
     moves_sort(pos);
+    //moves_print(pos, 0);
 }
 
 /**
@@ -716,7 +720,7 @@ void moves_gen_all(pos_t *pos)
 {
     //log_f(1, "turn=%d opponent=%d\n", pos->turn, OPPONENT(pos->turn));
     if (!pos->moves_generated) {
-        if (!pos->moves_counted)
+        if (!pos->moves_counted) {}
             moves_gen(pos, OPPONENT(pos->turn), false, false);
         moves_gen(pos, pos->turn, true, true);
         if (!pos->moves_counted)
@@ -760,8 +764,6 @@ pos_t *move_do(pos_t *pos, move_t *move)
     int color = COLOR(move->piece);
     square_t from = move->from, to = move->to;
     u64 bb_from = SQ88_2_BB(from), bb_to = SQ88_2_BB(to);
-
-    pos->node_count++;
 
     if (move->capture || piece == PAWN)    /* 50 moves */
         new->clock_50 = 0;

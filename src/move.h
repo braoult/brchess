@@ -48,6 +48,7 @@ typedef struct move_s {
     move_flags_t flags;
     eval_t negamax;
     eval_t eval;
+    eval_t eval_simple;
     pos_t *pos;
     struct list_head list;                        /* next move */
 } move_t;
