@@ -301,8 +301,8 @@ pos_t *pos_dup(pos_t *pos)
         new->bestmove = NULL;
         new->node_count = 0;
         new->eval = EVAL_INVALID;
-        pos->moves_generated = false;
-        pos->moves_counted = false;
+        new->moves_generated = false;
+        new->moves_counted = false;
     }
     return new;
 }
