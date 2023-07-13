@@ -45,7 +45,6 @@ eval_t negamax(pos_t *pos, int depth, int color)
     }
     moves_gen_all(pos);
     list_for_each_entry(move, &pos->moves[pos->turn], list) {
-        log(1, "%.*s", 5 - depth, "                ");
         newpos = move_do(pos, move);
         score = -negamax(newpos, depth - 1, -color);
         pos->node_count += newpos->node_count;
@@ -86,7 +85,7 @@ eval_t pvs(pos_t *pos, int depth, int alpha, int beta, int color)
 
     if (depth == 0) {
         //return quiesce(p, alpha, beta);           /* leaf node */
-        moves_gen_all(pos);
+        moves_gen_all_nomoves(pos);
         score = eval(pos) * color;
         log_f(2, "Terminal: depth=%d ", depth);
         log_f(2, "score=%d alpha=%d beta=%d\n", score, alpha, beta);
