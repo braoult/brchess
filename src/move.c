@@ -21,6 +21,7 @@
 
 #include "chessdefs.h"
 #include "board.h"
+#include "bitboard.h"
 #include "piece.h"
 #include "move.h"
 #include "eval.h"

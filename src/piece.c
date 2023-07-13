@@ -21,6 +21,7 @@
 #include "chessdefs.h"
 #include "piece.h"
 #include "board.h"
+#include "bitboard.h"
 #include "position.h"
 
 static pool_t *pieces_pool;
