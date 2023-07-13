@@ -437,28 +437,26 @@ int do_depth(__unused pos_t *pos, char *arg)
 int do_search(pos_t *pos, __unused char *arg)
 {
     int debug_level = debug_level_get();
-    long long timer1, timer2;
-    float nodes_sec;
+    float timer1, timer2, nodes_sec;
 
     timer1 = debug_timer_elapsed();
     negamax(pos, depth, pos->turn == WHITE ? 1 : -1);
     timer2 = debug_timer_elapsed();
     nodes_sec = (float) pos->node_count / ((float) (timer2 - timer1) / (float)NANOSEC);
-    debug_level_set(1);
     log(1, "best=");
+    debug_level_set(1);
     move_print(0, pos->bestmove, 0);
-    log(1, " negamax=%d\n", pos->bestmove->negamax);
     debug_level_set(debug_level);
-    printf("Total nodes: %lu time=%lld %.0f nodes/sec\n",
-           pos->node_count, timer2 - timer1, nodes_sec);
+    log(1, " negamax=%d\n", pos->bestmove->negamax);
+    printf("Depth:%d Nodes:%luK time:%.02fs (%.0f kn/s)\n", depth,
+           pos->node_count / 1000, (timer2 - timer1)/NANOSEC, nodes_sec/1000);
     return 1;
 }
 
 int do_pvs(pos_t *pos, __unused char *arg)
 {
     int debug_level = debug_level_get();
-    long long timer1, timer2;
-    float nodes_sec;
+    float timer1, timer2, nodes_sec;
     eval_t _pvs;
 
     timer1 = debug_timer_elapsed();
@@ -466,17 +464,17 @@ int do_pvs(pos_t *pos, __unused char *arg)
     _pvs = pvs(pos, depth, EVAL_MIN, EVAL_MAX, pos->turn == WHITE ? 1 : -1);
     timer2 = debug_timer_elapsed();
     nodes_sec = (float) pos->node_count / ((float) (timer2 - timer1) / (float)NANOSEC);
-    debug_level_set(1);
     log(1, "best=");
     if (pos->bestmove) {
+        debug_level_set(1);
         move_print(0, pos->bestmove, 0);
+        debug_level_set(debug_level);
         log(1, " pvs=%d stored=%d\n", _pvs, pos->bestmove->negamax);
     } else {
         log(1, "<no-best-move>");
     }
-    debug_level_set(debug_level);
-    printf("Total nodes: %lu time=%lld %.0f nodes/sec\n",
-           pos->node_count, timer2 - timer1, nodes_sec);
+    printf("Depth:%d Nodes:%luK time:%.02fs (%.0f kn/s)\n", depth,
+           pos->node_count / 1000, (timer2 - timer1)/NANOSEC, nodes_sec/1000);
     return 1;
 }
 
