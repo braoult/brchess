@@ -1,0 +1,51 @@
+Is there any C developer here ? I started to make a chess program. The goal is not to make it good, but at least to be able to play a full game.
+
+* Misc
+- Code is in C (gnu11 = C11 + some GNU extensions), tested only on Linux x86-64.
+- URL: [[https://git.raoult.com/bruno/brchess][https://git.raoult.com/bruno/brchess]]
+
+* Done or partially done
+*** Text interface
+- basic commands like "init", "fen xxxx", "depth n", "search", "pvs", etc...
+*** Dual  [[https://en.wikipedia.org/wiki/0x88][0x88]] / [[https://en.wikipedia.org/wiki/Bitboard#Chess_bitboards][bitboard]] representations
+- I started with a [[https://en.wikipedia.org/wiki/0x88][0x88 board representation]]
+- But... wanted to switch to [[https://en.wikipedia.org/wiki/Bitboard#Chess_bitboards][bitboard]] lately
+- Today there is a messy mix of the two representations.
+*** A [[https://www.chessprogramming.org/Pseudo-Legal_Move][pseudo-legal move]] generator
+- Does not check for some invalid moves (especially king-pinned pieces moves, which could be very expensive).
+  I believe some programs do not do it too, and prefer to see invalid positions at next ply (TODO).
+- Still with 0x88 board (needs to be rewritten with bitboards).
+*** *Very expensive* pieces and moves list
+- They should be converted into arrays, to allow fast duplication for move_do(), the function which actually makes a move.
+*** A basic eval function
+- preferred squares for pieces
+- mobility
+*** "Move Search" funstions
+**** Basic [[https://en.wikipedia.org/wiki/Negamax][negamax]] search function
+- No [[https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning][alpha-beta pruning]]
+**** [[https://en.wikipedia.org/wiki/Principal_variation_search][Principal Variation Search]] (PVS) function
+- Alpha-beta pruning
+- Basic moves [[https://www.chessprogramming.org/Move_Ordering][pre-ordering]]
+  It makes the PVS/alpha-beta pruning quite decent (for depth 6 on start pos, 1,196 secs/125,799 Knodes vs 14 secs/ 1,575 Knodes)
+- Both make search at a fixed depth (still no [[https://www.chessprogramming.org/Quiescence_Search][quiescence search]] at terminal nodes).
+
+* Missing
+*** All Chess rules
+- Mate/Pat detection (!)
+  Not trivial, as using pseudo-valid moves implies mate/pat detection is late
+- Special rules like 50 moves/position repetition
+*** Actual game management
+- Play a move, ask engine to play a move
+- A standard interface for usual software (like SCID)
+  Probably [[https://www.gnu.org/software/xboard/engine-intf.html][xboard]] first, as it looks simpler than [[https://en.wikipedia.org/wiki/Universal_Chess_Interface][UCI]].
+*** Search improvement
+- Book-keeping of moves during search (did not decide the method).
+- [[https://en.wikipedia.org/wiki/Zobrist_hashing][Positions hashing]] / transposition detection
+
+* Next steps planned
+*** Replace the current interface with a basic xboard one
+1. Check which commands are necessary/mandatory.
+1. This will allow easy testing with common software
+*** Mate/Pat detection
+*** In Search, detect King capture
+*** In Search, do something when no move available

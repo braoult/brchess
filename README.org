@@ -1,0 +1,1 @@
+A basic chess program. The goal is not to make it good, but at least to be able to play a full game - Far to be the case !
