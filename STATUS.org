@@ -1,8 +1,9 @@
 #+OPTIONS: toc:nil
 
 * Misc
+- License: [[https://www.gnu.org/licenses/gpl-3.0-standalone.html][GNU General Public License v3.0 or later]].
 - Code is in C (gnu11 = C11 + some GNU extensions), tested only on Linux x86-64.
-- URL: [[https://git.raoult.com/bruno/brchess][https://git.raoult.com/bruno/brchess]]
+- [[https://git.raoult.com/bruno/brchess][Source Code]].
 
 * Done or partially done
 *** Text interface
