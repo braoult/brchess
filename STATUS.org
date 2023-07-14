@@ -21,13 +21,15 @@
 *** A basic eval function
 - preferred squares for pieces
 - mobility
-*** "Move Search" funstions
+*** "Move Search" functions
 **** Basic [[https://en.wikipedia.org/wiki/Negamax][negamax]] search function
 - No [[https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning][alpha-beta pruning]]
 **** [[https://en.wikipedia.org/wiki/Principal_variation_search][Principal Variation Search]] (PVS) function
 - Alpha-beta pruning
 - Basic moves [[https://www.chessprogramming.org/Move_Ordering][pre-ordering]]
-  It makes the PVS/alpha-beta pruning quite decent (for depth 6 on start pos, 1,196 secs/125,799 Knodes vs 14 secs/ 1,575 Knodes)
+  It makes the PVS/alpha-beta pruning quite decent. For example, a 6 ply depth search gives:
+  - negamax: 1,196 secs for 125,799 Knodes
+  - PVS: 14 secs for 1,575 Knodes
 - Both make search at a fixed depth (still no [[https://www.chessprogramming.org/Quiescence_Search][quiescence search]] at terminal nodes).
 
 * Missing
@@ -43,7 +45,10 @@
 - Book-keeping of moves during search (did not decide the method).
 - [[https://en.wikipedia.org/wiki/Zobrist_hashing][Positions hashing]] / transposition detection
 
-* Next steps planned
+* Next steps planned (no specific order)
+*** Memory cleanup
+- proper recusive position/moves cleanup in search() and pvs()
+- use valgrind to find possible other unfreed memory
 *** Replace the current interface with a basic xboard one
 1. Check which commands are necessary/mandatory.
 1. This will allow easy testing with common software
