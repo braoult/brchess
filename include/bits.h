@@ -214,7 +214,7 @@ static __always_inline int clz32(u32 n)
 }
 
 /* fls - find last set : 00101000 -> 6
- *                           ^
+ *                         ^
  */
 static __always_inline int fls64(u64 n)
 {
