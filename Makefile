@@ -201,12 +201,17 @@ bear: clean $(CCLSROOT)
 	@touch .ccls-root
 	@$(BEAR) -- make compile
 
-##################################### LSP (ccls)
+##################################### valgrind (mem check)
 .PHONY: memcheck
 
 VALGRIND       = valgrind
 VALGRINDFLAGS  = --leak-check=full --show-leak-kinds=all
 VALGRINDFLAGS += --track-origins=yes --sigill-diagnostics=yes
 VALGRINDFLAGS += --quiet --show-error-list=yes
+VALGRINDFLAGS += --log-file=valgrind.out
+# We need to suppress libreadline leaks here. See :
+# https://stackoverflow.com/questions/72840015
+VALGRINDFLAGS += --suppressions=etc/libreadline.supp
 
-memcheck: brchess
+memcheck: bin
+	@$(VALGRIND) $(VALGRINDFLAGS) ./brchess
