@@ -20,3 +20,4 @@ brchess
 /lib/
 /.deps/
 /notused/
+valgrind.out
