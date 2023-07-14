@@ -1,4 +1,4 @@
-Is there any C developer here ? I started to make a chess program. The goal is not to make it good, but at least to be able to play a full game.
+#+OPTIONS: toc:nil
 
 * Misc
 - Code is in C (gnu11 = C11 + some GNU extensions), tested only on Linux x86-64.
