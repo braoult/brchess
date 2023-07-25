@@ -29,6 +29,7 @@ typedef struct pos_s {
     u16 clock_50;
     u16 curmove;
     eval_t eval;
+    int check[2];
     int eval_simple_phase;
     eval_t eval_simple;
     move_t *bestmove;

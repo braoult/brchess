@@ -198,6 +198,9 @@ static move_t *move_add(pos_t *pos, piece_t piece, square_t from,
     move->from = from;
     move->to = to;
     move->capture = board[to].piece;
+    if (PIECE(move->capture) == KING)
+        pos->check[color]++;
+
     move->flags = M_NORMAL;
     if (move->capture)
         move->flags |= M_CAPTURE;
@@ -386,6 +389,8 @@ int pseudo_moves_pawn(pos_t *pos, piece_list_t *ppiece, bool doit)
             continue;
         pos->controlled[color] |= SQ88_2_BB(new);
         if (board[new].piece && COLOR(board[new].piece) != color) {
+            if (PIECE(board[new].piece) == KING)
+                pos->check[color]++;
             //log_f(2, "pawn capture mobility\n");
             pos->mobility[color]++;
             count++;

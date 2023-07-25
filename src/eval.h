@@ -21,12 +21,12 @@
 
 /* max pieces eval is KING_VALUE + 9*QUEEN_VALUE + 2*ROOK_VALUE + 2*BISHOP_VALUE
  *  + 2*KNIGHT_VALUE which around 30000.
- * We are on secure sire with -50000/+50000
+ * We are on secure side with -50000/+50000
  */
-
 #define EVAL_MAX     (50000)
 #define EVAL_MIN     (-EVAL_MAX)
 #define EVAL_INVALID INT_MIN
+#define EVAL_MATE    EVAL_MAX
 
 eval_t eval_material(pos_t *pos, bool color);
 eval_t eval_mobility(pos_t *pos, bool color);

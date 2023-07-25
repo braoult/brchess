@@ -271,6 +271,7 @@ pos_t *pos_get()
  * - nodecount is set to zero
  * - eval is set to EVAL_INVALID
  * - moves_generated ans moves_counted are unset
+ * - check is set to zero
  *
  * @return: The new position.
  *
@@ -303,6 +304,7 @@ pos_t *pos_dup(pos_t *pos)
         new->eval = EVAL_INVALID;
         new->moves_generated = false;
         new->moves_counted = false;
+        new->check[WHITE] = new->check[BLACK] = 0;
     }
     return new;
 }
