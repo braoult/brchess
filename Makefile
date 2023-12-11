@@ -37,7 +37,8 @@ DLIB      := $(addsuffix .so, $(LIBDIR)/lib$(LIB))          # dynamic lib
 
 BIN       := fen piece move eval brchess
 
-LIBS      := -l$(LIB) -lreadline -lncurses
+LIBSEXT   := -lreadline -lncurses
+LIBS      := -l$(LIB) $(LIBSEXT)
 
 CFLAGS    := -std=gnu11
 
@@ -174,10 +175,10 @@ cleanbin:
 	$(RM) -f $(BIN) core
 
 # TODO: find a better dependancy graph
-$(BIN): $(SRCDIR)/$$@.c $(DLIB) $$(subst $(OBJDIR)/$$@.o,,$(OBJ))
+$(BIN): $(SRCDIR)/$$@.c libs $$(subst $(OBJDIR)/$$@.o,,$(OBJ))
 	@[[ -f $(BINMARK) ]] || echo -n "generating binaries: "
 	@echo -n "$@... "
-	@$(CC) -DBIN_$@ $(CPPFLAGS) $(CFLAGS) -I $(INCDIR) $(subst libs,,$^) $(LDFLAGS) $(LIBS) -o $@
+	@$(CC) -DBIN_$@ $(CPPFLAGS) $(CFLAGS) $(subst libs,,$^) $(LDFLAGS) $(LIBS) -o $@
 	@$(TOUCH) $(BINMARK)
 
 ##################################### ccls
