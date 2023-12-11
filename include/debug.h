@@ -19,7 +19,6 @@
 #include <stdint.h>
 
 #include <br.h>
-#include <bits.h>
 
 #define NANOSEC  1000000000                       /* nano sec in sec */
 #define MILLISEC 1000000                          /* milli sec in sec */
@@ -28,28 +27,29 @@
 
 #ifdef DEBUG_DEBUG
 
-void debug_init(uint level, FILE *stream, bool flush);
-void debug_level_set(uint level);
-uint debug_level_get(void);
+void debug_init(int level, FILE *stream, bool flush);
+void debug_level_set(int level);
+int debug_level_get(void);
 void debug_stream_set(FILE *stream);
 long long debug_timer_elapsed(void);
 void debug_flush_set(bool flush);
-void _printf debug(uint level, bool timestamp,
-                   uint indent, const char *src,
-                   uint line, const char *fmt, ...);
+void _printf debug(int level, bool timestamp,
+                   int indent, const char *src,
+                   int line, const char *fmt, ...);
+
 #else  /* DEBUG_DEBUG */
 
-static inline void debug_init(__unused uint level,
+static inline void debug_init(__unused int level,
                               __unused FILE *stream,
-                              _unused bool flush) {}
-static inline void debug_level_set(__unused uint level) {}
-static inline uint debug_level_get(void) {return 0;}
+                              __unused bool flush) {}
+static inline void debug_level_set(__unused int level) {}
+static inline int debug_level_get(void) {return 0;}
 static inline void debug_stream_set(__unused FILE *stream) {}
-static inline long long debug_timer_elapsed(void) {return 0LL};
+static inline long long debug_timer_elapsed(void) {return 0LL;}
 static inline void debug_flush_set(__unused bool level) {}
-static inline void _printf debug(__unused uint level, __unused bool timestamp,
-                                 __unused uint indent, __unused const char *src,
-                                 __unused uint line, __unused const char *fmt, ...) {}
+static inline void _printf debug(__unused int level, __unused bool timestamp,
+                                 __unused int indent, __unused const char *src,
+                                 __unused int line, __unused const char *fmt, ...) {}
 
 #endif  /* DEBUG_DEBUG */
 

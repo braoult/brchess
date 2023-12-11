@@ -19,21 +19,20 @@
 #define DEBUG_DEBUG
 #endif
 
-#include "bits.h"
 #include "debug.h"
 
 static long long timer_start;                     /* in nanosecond */
-static uint debug_level = 0;
-static bool debug_flush = false;
-static FILE *stream = NULL;
+static int level = 0;                             /* output log when < level */
+static int flush = false;                         /* force flush after logs */
+static FILE *stream = NULL;                       /* stream to use */
 
 /**
  * debug_level_set() - set debug level.
- * @level: unsigned debug level.
+ * @_level: debug level (integer).
  */
-void debug_level_set(uint level)
+void debug_level_set(int _level)
 {
-    debug_level = level;
+    level = _level;
 #   ifdef DEBUG_DEBUG_C
     log(0, "debug level set to %u\n", level);
 #   endif
@@ -41,11 +40,11 @@ void debug_level_set(uint level)
 
 /**
  * debug_level_get() - get debug level.
- * @return: current level debug (unsigned integer).
+ * @return: current level debug (integer).
  */
-uint debug_level_get(void)
+int debug_level_get(void)
 {
-    return debug_level;
+    return level;
 }
 
 void debug_stream_set(FILE *_stream)
@@ -56,21 +55,21 @@ void debug_stream_set(FILE *_stream)
 #   endif
 }
 
-void debug_flush_set(bool flush)
+void debug_flush_set(bool _flush)
 {
-    debug_flush = flush;
+    flush = _flush;
 #   ifdef DEBUG_DEBUG_C
     log(0, "debug flush %s.\n", flush? "set": "unset");
 #   endif
 }
 
-void debug_init(uint level, FILE *_stream, bool flush)
+void debug_init(int _level, FILE *_stream, bool _flush)
 {
     struct timespec timer;
 
     debug_stream_set(_stream);
-    debug_level_set(level);
-    debug_flush_set(flush);
+    debug_level_set(_level);
+    debug_flush_set(_flush);
     if (!clock_gettime(CLOCK_MONOTONIC, &timer)) {
         timer_start = timer.tv_sec * NANOSEC + timer.tv_nsec;
     }
@@ -90,16 +89,16 @@ long long debug_timer_elapsed(void)
 
 /**
  * debug() - log function
- * @level: log level
+ * @lev: log level
  * @timestamp: boolean, print timestamp if true
  * @indent: indent level (2 spaces each)
  * @src: source file/func name (or NULL)
  * @line: line number
  */
-void debug(uint level, bool timestamp, uint indent, const char *src,
-           uint line, const char *fmt, ...)
+void debug(int lev, bool timestamp, int indent, const char *src,
+           int line, const char *fmt, ...)
 {
-    if (!stream || level > debug_level)
+    if (!stream || lev > level)
         return;
 
     va_list ap;
@@ -122,7 +121,7 @@ void debug(uint level, bool timestamp, uint indent, const char *src,
     va_start(ap, fmt);
     vfprintf(stream, fmt, ap);
     va_end(ap);
-    if (debug_flush)
+    if (flush)
         fflush(stream);
 }
 
