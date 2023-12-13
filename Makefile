@@ -12,48 +12,50 @@
 
 SHELL     := /bin/bash
 CC        := gcc
+LD        := ld
 BEAR      := bear
 TOUCH     := touch
 RM        := rm
+RMDIR     := rmdir
+
+CCLSROOT  := .ccls-root
 CCLSFILE  := compile_commands.json
 
 SRCDIR    := ./src
 INCDIR    := ./include
-LIBSRCDIR := ./libsrc
-BINDIR    := ./bin
 OBJDIR    := ./obj
+
+LIBSRCDIR := ./libsrc
+LIBOBJDIR := ./libobj
+
+BINDIR    := ./bin
 LIBDIR    := ./lib
-LDFLAGS   := -L$(LIBDIR)
+DEPDIR    := ./deps
 
 SRC       := $(wildcard $(SRCDIR)/*.c)                      # project sources
 SRC_FN    := $(notdir $(SRC))                               # source basename
+OBJ       := $(addprefix $(OBJDIR)/,$(SRC_FN:.c=.o))
 
 LIBSRC    := $(wildcard $(LIBSRCDIR)/*.c)                   # lib sources
-LIBOBJ    := $(patsubst %.c,%.o,$(LIBSRC))                  # and objects
+LIBSRC_FN := $(notdir $(LIBSRC))	                    # lib sources basename
+LIBOBJ    := $(addprefix $(LIBOBJDIR)/,$(LIBSRC_FN:.c=.o))  # and lib obj ones
+#LIBOBJ    := $(patsubst %.c,%.o,$(LIBSRC))
 
 LIB       := br_$(shell uname -m)                           # library name
 SLIB      := $(addsuffix .a, $(LIBDIR)/lib$(LIB))           # static lib
 DLIB      := $(addsuffix .so, $(LIBDIR)/lib$(LIB))          # dynamic lib
 
-BIN       := fen piece move eval brchess
+DEP_FN    := $(SRC_FN) $(LIBSRC_FN)
+DEP       := $(addprefix $(DEPDIR)/,$(DEP_FN:.c=.d))
 
-LIBSEXT   := -lreadline -lncurses
-LIBS      := -l$(LIB) $(LIBSEXT)
+#TARGETS       := fen piece move eval brchess
+TARGET_FN := brchess
+TARGET    := $(addprefix $(BINDIR)/,$(TARGET_FN))
 
-CFLAGS    := -std=gnu11
+LDFLAGS   := -L$(LIBDIR)
+LIBS      := -l$(LIB) -lreadline -lncurses
 
-#CFLAGS += -O2
-CFLAGS    += -g
-CFLAGS    += -Wall
-CFLAGS    += -Wextra
-CFLAGS    += -march=native
-CFLAGS    += -Wmissing-declarations
-# for gprof
-# CFLAGS += -pg
-# Next one may be useful for valgrind (when invalid instructions)
-# CFLAGS += -mno-tbm
-
-##################################### DEBUG flags
+##################################### pre-processor flags
 CPPFLAGS  := -I$(INCDIR)
 CPPFLAGS  += -DDEBUG                         # global
 CPPFLAGS  += -DDEBUG_DEBUG                   # enable log() functions
@@ -65,142 +67,210 @@ CPPFLAGS  += -DDEBUG_EVAL                    # eval functions
 CPPFLAGS  += -DDEBUG_PIECE                   # piece list management
 CPPFLAGS  += -DDEBUG_SEARCH                  # move search
 
+CPPFLAGS  := $(strip $(CPPFLAGS))
+
+##################################### compiler flags
+CFLAGS    := -std=gnu11
+#CFLAGS += -O2
+CFLAGS    += -g
+CFLAGS    += -Wall
+CFLAGS    += -Wextra
+CFLAGS    += -march=native
+CFLAGS    += -Wmissing-declarations
+# for gprof
+# CFLAGS += -pg
+# Next one may be useful for valgrind (when invalid instructions)
+# CFLAGS += -mno-tbm
+
+CFLAGS    := $(strip $(CFLAGS))
+
+##################################### archiver/linker/dependency flags
+ARFLAGS   := rcs
+LDFLAGS   := -L$(LIBDIR)
+DEPFLAGS  := -MMD -MP -MF $(DEPDIR)/$*.d
+
 ##################################### General targets
-.PHONY: compile cflags all clean cleanall
+.PHONY: all clean cleanall
 
-compile: objects bin
+all: $(TARGET)
 
-cflags:
-	@echo CFLAGS: "$(CFLAGS)"
-	@echo CPPFLAGS: $(CPPFLAGS)
-	@echo DEPFLAGS: $(DEPFLAGS)
-	@echo LDFLAGS: $(LDFLAGS)
+compile: libobjs objs
 
-all: clean compile
+clean: cleandep cleanobj cleanlib cleanlibobj cleanbin
 
-clean: cleanobj cleanbin
+cleanall: clean cleandepdir cleanobjdir cleanlibdir cleanlibobjdir cleanbindir
 
-cleanall: clean cleandeps cleanlib
+##################################### cleaning functions
+# rmfiles - deletes a list of files in a directory if they exist.
+# $(1): the directory
+# $(2): the list of files to delete
+# $(3): The string to include in action output - "cleaning X files."
+# see: https://stackoverflow.com/questions/6783243/functions-in-makefiles
+#
+# Don't use wildcard like "$(DIR)/*.o", so we can control mismatches between
+# list and actual files in directory.
+# See rmdir below.
+define rmfiles
+	@#echo "rmfiles=+$(1)+"
+	$(eval $@_EXIST = $(wildcard $(1)))
+	@#echo "existfile=+${$@_EXIST}+"
+	@if [[ -n "${$@_EXIST}" ]]; then         \
+		echo "cleaning $(2) files." ;    \
+		$(RM) ${$@_EXIST} ;              \
+	fi
+endef
+
+# rmdir - deletes a directory if it exists.
+# $(1): the directory
+# $(2): The string to include in action output - "removing X dir."
+#
+# Don't use $(RM) -rf, to control unexpected dep files.
+# See rmfile above.
+define rmdir
+	@#echo "rmdir +$(1)+"
+	$(eval $@_EXIST = $(wildcard $(1)))
+	@#echo "existdir=+${$@_EXIST}+"
+	@if [[ -n "${$@_EXIST}" ]]; then        \
+		echo "removing $(2) dir." ;    \
+		$(RMDIR) ${$@_EXIST} ;         \
+	fi
+endef
+
+##################################### dirs creation
+.PHONY: alldirs
+
+ALLDIRS   := $(DEPDIR) $(OBJDIR) $(LIBDIR) $(LIBOBJDIR) $(BINDIR)
+
+alldirs: $(ALLDIRS)
+
+# Here, we have something like:
+# a: a
+# a will be built if older than a, or does not exist.
+$(ALLDIRS): $@
+	@echo creating $@ directory.
+	@mkdir -p $@
 
 ##################################### Dependencies files
-.PHONY: deps cleandeps
+.PHONY: cleandeps cleandepsdir
 
-DEPDIR := ./.deps
-DEPFILES := $(addprefix $(DEPDIR)/,$(SRC_FN:.c=.d))
-DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.d
+-include $(wildcard $(DEP))
 
-$(DEPFILES):
+# Don't use $(DEPDIR)/*.d, to control mismatches between dep and src files.
+# See second rule below.
+cleandep:
+	$(call rmfiles,$(DEP),depend)
+	@#echo cleaning dependency files.
+	@#$(RM) -f $(DEP)
 
-include $(wildcard $(DEPFILES))
+cleandepdir:
+	$(call rmdir,$(DEPDIR),depend)
+	@#[ -d $(DEPDIR) ] && echo cleaning depend files && $(RM) -f $(DEP) || true
 
-$(DEPDIR):
-	@echo creating $@ directory.
-	@mkdir -p $@
+##################################### brchess objects
+.PHONY: objs cleanobj cleanobjdir
 
-cleandeps:
-	$(RM) -rf $(DEPDIR)
-
-##################################### objects
-.SECONDEXPANSION:
-OBJ = $(addprefix $(OBJDIR)/,$(SRC_FN:.c=.o))
-
-.PHONY: cleanobj
-
-objects: $(OBJ)
+objs: $(OBJ)
 
 cleanobj:
-	$(RM) -rf $(OBJDIR)
+	$(call rmfiles,$(OBJ),object)
 
-$(OBJDIR):
-	@echo creating $@ directory.
-	@mkdir -p $@
+cleanobjdir: cleanobj
+	$(call rmdir,$(OBJDIR),objects)
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.c $(DEPDIR)/%.d | $(OBJDIR) $(DEPDIR)
+# The part right of '|' are "order-only prerequisites": They are build as
+# "normal" ones, but do not imply to rebuild target.
+$(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR) $(DEPDIR)
+	@echo compiling brchess $< "->" $@.
+	@$(CC) -c $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $< -o $@
+
+##################################### brlib objects
+.PHONY: libobjs cleanlibobj cleanlibobjdir
+
+libobjs: $(LIBOBJ)
+
+cleanlibobj:
+	$(call rmfiles,$(LIBOBJ),brlib object)
+
+cleanlibobjdir:
+	$(call rmdir,$(LIBOBJDIR),brlib objects)
+
+$(LIBOBJDIR)/%.o: $(LIBSRCDIR)/%.c | $(LIBOBJDIR) $(DEPDIR)
 	@echo compiling $<.
-	@$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEPFLAGS) -I $(INCDIR) -o $@ $<
+	@$(CC) -c $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $< -o $@
 
-##################################### pre-processed (.i) and assembler (.s) output
-%.i: %.c
-	@echo generating $@
-	@$(CC) -E $(CFLAGS) -I $(INCDIR) $< -o $@
-
-%.s: %.c
-	@echo generating $@
-	@$(CC) -S -fverbose-asm $(CFLAGS) -I $(INCDIR) $< -o $@
-
-
-##################################### br library
-.PHONY: cleanlib libs
-
-ARFLAGS = r
+##################################### libraries
+.PHONY: libs cleanlib cleanlibdir
 
 cleanlib:
-	$(RM) -rf $(LIBDIR) $(LIBOBJ)
+	$(call rmfiles,$(DLIB) $(SLIB),library)
+
+cleanlibdir:
+	$(call rmdir,$(LIBDIR),libraries)
 
 libs: $(DLIB) $(SLIB)
-
-$(LIBDIR):
-	@echo creating $@ directory.
-	@mkdir -p $@
 
 # remove default rule
 %.o: %.c
 
-$(LIBSRCDIR)/%.o: $(LIBSRCDIR)/%.c
+$(LIBOBJDIR)/%.o: $(LIBSRCDIR)/%.c | $(LIBOBJDIR) $(DEPDIR)
 	@echo compiling library $< "->" $@.
-	@$(CC) -c $(CPPFLAGS) $(CFLAGS) -I $(INCDIR) -o $@ $<
-
-$(SLIB): $(LIBOBJ) | $(LIBDIR)
-	@echo building $@ static library.
-	@$(AR) $(ARFLAGS) -o $@ $^
+	@$(CC) -c $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $< -o $@
 
 $(DLIB): CFLAGS += -fPIC
 $(DLIB): LDFLAGS += -shared
 $(DLIB): $(LIBOBJ) | $(LIBDIR)
 	@echo building $@ shared library.
-	@$(CC) $(LDFLAGS) $^ -o $@
+	@$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
-##################################### binaries
-.PHONY: bin prebin cleanbin
+$(SLIB): $(LIBOBJ) | $(LIBDIR)
+	@echo building $@ static library.
+	$(AR) $(ARFLAGS) $@ $^
 
-BINMARK := .bindone
+##################################### brchess binaries
+.PHONY: targets cleanbin cleanbindir
 
-bin: $(BIN) postbin
-
-postbin:
-	@[[ ! -f $(BINMARK) ]] || echo done.
-	@$(RM) -f $(BINMARK)
+targets: $(TARGET)
 
 cleanbin:
-	$(RM) -f $(BIN) core
+	$(call rmfiles,$(TARGET),binary)
 
-# TODO: find a better dependancy graph
-$(BIN): $(SRCDIR)/$$@.c libs $$(subst $(OBJDIR)/$$@.o,,$(OBJ))
-	@[[ -f $(BINMARK) ]] || echo -n "generating binaries: "
-	@echo -n "$@... "
-	@$(CC) -DBIN_$@ $(CPPFLAGS) $(CFLAGS) $(subst libs,,$^) $(LDFLAGS) $(LIBS) -o $@
-	@$(TOUCH) $(BINMARK)
+cleanbindir:
+	$(call rmdir,$(BINDIR),binaries)
 
-##################################### ccls
+$(TARGET): $(DLIB) $(OBJ) | $(BINDIR)
+	@echo generating $@ executable.
+	@$(CC) $(LDFLAGS) $(OBJ) $(LIBS) -o $@
+
+##################################### pre-processed (.i) and assembler (.s) output
+%.i: %.c
+	@echo generating $@
+	@$(CC) -E $(CPPFLAGS) $(CFLAGS) $< -o $@
+
+%.s: %.c
+	@echo generating $@
+	@$(CC) -S -fverbose-asm $(CPPFLAGS) $(CFLAGS) $< -o $@
+
+##################################### LSP (ccls)
 .PHONY: ccls
 
 ccls: $(CCLSFILE)
 
-# generate compile_commands.json
-$(CCLSFILE): brchess Makefile
-	$(BEAR) -- make clean bin
-
-##################################### LSP (ccls)
-.PHONY: bear
-ROOTDIR = .ccls-root
-
 $(CCLSROOT):
-	@echo creating root marker file.
+	@echo creating project root file.
 	@$(TOUCH) $@
 
-bear: clean $(CCLSROOT)
-	@touch .ccls-root
+# generate compile_commands.json.
+# Need to add includes and Makefile dependencies.
+# also, if cclsfile is newer than sources, no need to clean objects file
+# (and to run bear).
+# maybe run cleanobj cleanlibobj in commands ?
+$(CCLSFILE): cleanobj cleanlibobj $(SRC) $(LIBSRC) | $(CCLSROOT)
+	@echo "Generating ccls compile commands file ($@)."
 	@$(BEAR) -- make compile
+
+#.PHONY: bear
+#bear: cleanobj cleanlibobj Makefile | $(CCLSROOT)
+#	@$(BEAR) -- make compile
 
 ##################################### valgrind (mem check)
 .PHONY: memcheck
@@ -214,5 +284,29 @@ VALGRINDFLAGS += --log-file=valgrind.out
 # https://stackoverflow.com/questions/72840015
 VALGRINDFLAGS += --suppressions=etc/libreadline.supp
 
-memcheck: bin
-	@$(VALGRIND) $(VALGRINDFLAGS) ./brchess
+memcheck: targets
+	@$(VALGRIND) $(VALGRINDFLAGS) $(BINDIR)/brchess
+
+##################################### Makefile debug
+.PHONY: showflags wft
+
+showflags:
+	@echo CFLAGS: "$(CFLAGS)"
+	@echo CPPFLAGS: $(CPPFLAGS)
+	@echo DEPFLAGS: $(DEPFLAGS)
+	@echo LDFLAGS: $(LDFLAGS)
+	@echo DEPFLAGS: $(DEPFLAGS)
+
+wtf:
+	@printf "LIBOBJDIR=%s\n\n" "$(LIBOBJDIR)"
+	@printf "LIBOBJ=%s\n\n" "$(LIBOBJ)"
+
+	@printf "OBJDIR=%s\n\n" "$(OBJDIR)"
+	@printf "OBJ=%s\n\n" "$(OBJ)"
+
+	@#echo LIBOBJ=$(LIBOBJ)
+	@#echo DEPS=$(DEPS)
+	@#echo LIBSRC=$(LIBSRC)
+	@#echo LIBOBJ=$(LIBOBJ)
+	@#echo DEPS=$(DEPS)
+	@#echo LIBSRC=$(LIBSRC)
