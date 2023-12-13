@@ -478,7 +478,6 @@ int do_pvs(pos_t *pos, __unused char *arg)
     return 1;
 }
 
-#ifdef BIN_brchess
 /** main()
  * options:
  int brchess(pos_t *pos)
@@ -521,4 +520,3 @@ int main(int ac, char **av)
 
     return brchess(pos);
 }
-#endif /* BIN_brchess */

@@ -14,7 +14,7 @@
 
 #include <br.h>
 #include <list.h>
-#include <debug.h>
+#include "debug.h"
 
 #include "move.h"
 #include "eval.h"

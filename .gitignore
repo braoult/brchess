@@ -15,9 +15,9 @@ brchess
 *.s
 *.old
 *.save
-/test/
+# /test/
 /obj/
 /lib/
-/.deps/
+/deps/
 /notused/
 valgrind.out
