@@ -18,9 +18,6 @@ TOUCH     := touch
 RM        := rm
 RMDIR     := rmdir
 
-CCLSROOT  := .ccls-root
-CCLSFILE  := compile_commands.json
-
 SRCDIR    := ./src
 INCDIR    := ./include
 OBJDIR    := ./obj
@@ -30,16 +27,18 @@ LIBOBJDIR := ./libobj
 
 BINDIR    := ./bin
 LIBDIR    := ./lib
-DEPDIR    := ./deps
+DEPDIR    := ./dep
+
+CCLSROOT  := .ccls-root
+CCLSFILE  := compile_commands.json
 
 SRC       := $(wildcard $(SRCDIR)/*.c)                      # project sources
 SRC_FN    := $(notdir $(SRC))                               # source basename
 OBJ       := $(addprefix $(OBJDIR)/,$(SRC_FN:.c=.o))
 
 LIBSRC    := $(wildcard $(LIBSRCDIR)/*.c)                   # lib sources
-LIBSRC_FN := $(notdir $(LIBSRC))	                    # lib sources basename
+LIBSRC_FN := $(notdir $(LIBSRC))                            # lib sources basename
 LIBOBJ    := $(addprefix $(LIBOBJDIR)/,$(LIBSRC_FN:.c=.o))  # and lib obj ones
-#LIBOBJ    := $(patsubst %.c,%.o,$(LIBSRC))
 
 LIB       := br_$(shell uname -m)                           # library name
 SLIB      := $(addsuffix .a, $(LIBDIR)/lib$(LIB))           # static lib
@@ -48,7 +47,6 @@ DLIB      := $(addsuffix .so, $(LIBDIR)/lib$(LIB))          # dynamic lib
 DEP_FN    := $(SRC_FN) $(LIBSRC_FN)
 DEP       := $(addprefix $(DEPDIR)/,$(DEP_FN:.c=.d))
 
-#TARGETS       := fen piece move eval brchess
 TARGET_FN := brchess
 TARGET    := $(addprefix $(BINDIR)/,$(TARGET_FN))
 
@@ -67,6 +65,7 @@ CPPFLAGS  += -DDEBUG_EVAL                    # eval functions
 CPPFLAGS  += -DDEBUG_PIECE                   # piece list management
 CPPFLAGS  += -DDEBUG_SEARCH                  # move search
 
+# remove extraneous spaces (due to spaces before comments)
 CPPFLAGS  := $(strip $(CPPFLAGS))
 
 ##################################### compiler flags
@@ -87,7 +86,7 @@ CFLAGS    := $(strip $(CFLAGS))
 ##################################### archiver/linker/dependency flags
 ARFLAGS   := rcs
 LDFLAGS   := -L$(LIBDIR)
-DEPFLAGS  := -MMD -MP -MF $(DEPDIR)/$*.d
+DEPFLAGS  = -MMD -MP -MF $(DEPDIR)/$*.d
 
 ##################################### General targets
 .PHONY: all clean cleanall
@@ -130,9 +129,9 @@ define rmdir
 	@#echo "rmdir +$(1)+"
 	$(eval $@_EXIST = $(wildcard $(1)))
 	@#echo "existdir=+${$@_EXIST}+"
-	@if [[ -n "${$@_EXIST}" ]]; then        \
-		echo "removing $(2) dir." ;    \
-		$(RMDIR) ${$@_EXIST} ;         \
+	@if [[ -n "${$@_EXIST}" ]]; then         \
+		echo "removing $(2) dir." ;      \
+		$(RMDIR) ${$@_EXIST} ;           \
 	fi
 endef
 
@@ -145,13 +144,13 @@ alldirs: $(ALLDIRS)
 
 # Here, we have something like:
 # a: a
-# a will be built if older than a, or does not exist.
+# a will be built if (1) older than a, or (2) does not exist. Here only (2).
 $(ALLDIRS): $@
 	@echo creating $@ directory.
 	@mkdir -p $@
 
 ##################################### Dependencies files
-.PHONY: cleandeps cleandepsdir
+.PHONY: cleandep cleandepdir
 
 -include $(wildcard $(DEP))
 
@@ -195,10 +194,10 @@ cleanlibobjdir:
 	$(call rmdir,$(LIBOBJDIR),brlib objects)
 
 $(LIBOBJDIR)/%.o: $(LIBSRCDIR)/%.c | $(LIBOBJDIR) $(DEPDIR)
-	@echo compiling $<.
-	@$(CC) -c $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $< -o $@
+	@echo compiling library $< "->" $@.
+	$(CC) -c $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $< -o $@
 
-##################################### libraries
+##################################### brlib libraries
 .PHONY: libs cleanlib cleanlibdir
 
 cleanlib:
@@ -208,13 +207,6 @@ cleanlibdir:
 	$(call rmdir,$(LIBDIR),libraries)
 
 libs: $(DLIB) $(SLIB)
-
-# remove default rule
-%.o: %.c
-
-$(LIBOBJDIR)/%.o: $(LIBSRCDIR)/%.c | $(LIBOBJDIR) $(DEPDIR)
-	@echo compiling library $< "->" $@.
-	@$(CC) -c $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $< -o $@
 
 $(DLIB): CFLAGS += -fPIC
 $(DLIB): LDFLAGS += -shared
@@ -237,7 +229,8 @@ cleanbin:
 cleanbindir:
 	$(call rmdir,$(BINDIR),binaries)
 
-$(TARGET): $(DLIB) $(OBJ) | $(BINDIR)
+# We don't use static lib, but we could build it here
+$(TARGET): $(DLIB) $(OBJ) | $(BINDIR) $(SLIB)
 	@echo generating $@ executable.
 	@$(CC) $(LDFLAGS) $(OBJ) $(LIBS) -o $@
 
@@ -270,7 +263,7 @@ $(CCLSFILE): cleanobj cleanlibobj $(SRC) $(LIBSRC) | $(CCLSROOT)
 
 #.PHONY: bear
 #bear: cleanobj cleanlibobj Makefile | $(CCLSROOT)
-#	@$(BEAR) -- make compile
+#    @$(BEAR) -- make compile
 
 ##################################### valgrind (mem check)
 .PHONY: memcheck
@@ -300,13 +293,8 @@ showflags:
 wtf:
 	@printf "LIBOBJDIR=%s\n\n" "$(LIBOBJDIR)"
 	@printf "LIBOBJ=%s\n\n" "$(LIBOBJ)"
-
 	@printf "OBJDIR=%s\n\n" "$(OBJDIR)"
 	@printf "OBJ=%s\n\n" "$(OBJ)"
-
 	@#echo LIBOBJ=$(LIBOBJ)
-	@#echo DEPS=$(DEPS)
-	@#echo LIBSRC=$(LIBSRC)
-	@#echo LIBOBJ=$(LIBOBJ)
-	@#echo DEPS=$(DEPS)
+	@#echo DEP=$(DEP)
 	@#echo LIBSRC=$(LIBSRC)
