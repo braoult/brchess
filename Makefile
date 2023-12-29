@@ -17,17 +17,20 @@ BEAR      := bear
 TOUCH     := touch
 RM        := rm
 RMDIR     := rmdir
+MAKE      := make
 
 SRCDIR    := ./src
-INCDIR    := ./include
 OBJDIR    := ./obj
-
-LIBSRCDIR := ./libsrc
-LIBOBJDIR := ./libobj
-
 BINDIR    := ./bin
-LIBDIR    := ./lib
 DEPDIR    := ./dep
+
+BRLIB     := ./brlib
+BRINCDIR  := $(BRLIB)/include
+BRLIBDIR  := $(BRLIB)/lib
+
+#LIBSRCDIR := $(BRLIB)/src
+#LIBOBJDIR := ./libobj
+
 
 CCLSROOT  := .ccls-root
 CCLSFILE  := compile_commands.json
@@ -37,12 +40,12 @@ SRC_FN    := $(notdir $(SRC))                               # source basename
 OBJ       := $(addprefix $(OBJDIR)/,$(SRC_FN:.c=.o))
 
 LIBSRC    := $(wildcard $(LIBSRCDIR)/*.c)                   # lib sources
-LIBSRC_FN := $(notdir $(LIBSRC))                            # lib sources basename
-LIBOBJ    := $(addprefix $(LIBOBJDIR)/,$(LIBSRC_FN:.c=.o))  # and lib obj ones
+#LIBSRC_FN := $(notdir $(LIBSRC))                            # lib sources basename
+#LIBOBJ    := $(addprefix $(LIBOBJDIR)/,$(LIBSRC_FN:.c=.o))  # and lib obj ones
 
 LIB       := br_$(shell uname -m)                           # library name
-SLIB      := $(addsuffix .a, $(LIBDIR)/lib$(LIB))           # static lib
-DLIB      := $(addsuffix .so, $(LIBDIR)/lib$(LIB))          # dynamic lib
+#SLIB      := $(addsuffix .a, $(LIBDIR)/lib$(LIB))           # static lib
+#DLIB      := $(addsuffix .so, $(LIBDIR)/lib$(LIB))          # dynamic lib
 
 DEP_FN    := $(SRC_FN) $(LIBSRC_FN)
 DEP       := $(addprefix $(DEPDIR)/,$(DEP_FN:.c=.d))
@@ -50,11 +53,11 @@ DEP       := $(addprefix $(DEPDIR)/,$(DEP_FN:.c=.d))
 TARGET_FN := brchess
 TARGET    := $(addprefix $(BINDIR)/,$(TARGET_FN))
 
-LDFLAGS   := -L$(LIBDIR)
+LDFLAGS   := -L$(BRLIBDIR)
 LIBS      := -l$(LIB) -lreadline -lncurses
 
 ##################################### pre-processor flags
-CPPFLAGS  := -I$(INCDIR)
+CPPFLAGS  := -I$(BRINCDIR)
 #CPPFLAGS  += -DDEBUG                         # global
 CPPFLAGS  += -DDEBUG_DEBUG                   # enable log() functions
 #CPPFLAGS  += -DDEBUG_DEBUG_C                # enable verbose log() settings
@@ -83,9 +86,8 @@ CFLAGS    += -Wmissing-declarations
 
 CFLAGS    := $(strip $(CFLAGS))
 
-##################################### archiver/linker/dependency flags
+##################################### archiver/dependency flags
 ARFLAGS   := rcs
-LDFLAGS   := -L$(LIBDIR)
 DEPFLAGS  = -MMD -MP -MF $(DEPDIR)/$*.d
 
 ##################################### General targets
@@ -138,7 +140,7 @@ endef
 ##################################### dirs creation
 .PHONY: alldirs
 
-ALLDIRS   := $(DEPDIR) $(OBJDIR) $(LIBDIR) $(LIBOBJDIR) $(BINDIR)
+ALLDIRS   := $(DEPDIR) $(OBJDIR) $(BINDIR)
 
 alldirs: $(ALLDIRS)
 
@@ -198,7 +200,7 @@ $(LIBOBJDIR)/%.o: $(LIBSRCDIR)/%.c | $(LIBOBJDIR) $(DEPDIR)
 	$(CC) -c $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $< -o $@
 
 ##################################### brlib libraries
-.PHONY: libs cleanlib cleanlibdir
+.PHONY: cleanlib cleanlibdir
 
 cleanlib:
 	$(call rmfiles,$(DLIB) $(SLIB),library)
@@ -206,7 +208,9 @@ cleanlib:
 cleanlibdir:
 	$(call rmdir,$(LIBDIR),libraries)
 
-libs: $(DLIB) $(SLIB)
+# libs: $(DLIB) $(SLIB)
+libs:
+	$(MAKE) -C $(BRLIB)
 
 $(DLIB): CFLAGS += -fPIC
 $(DLIB): LDFLAGS += -shared
@@ -230,9 +234,10 @@ cleanbindir:
 	$(call rmdir,$(BINDIR),binaries)
 
 # We don't use static lib, but we could build it here
-$(TARGET): $(DLIB) $(OBJ) | $(BINDIR) $(SLIB)
+#$(TARGET): $(DLIB) $(OBJ) | $(BINDIR) $(SLIB)
+$(TARGET): libs $(OBJ) | $(BINDIR) $(SLIB)
 	@echo generating $@ executable.
-	@$(CC) $(LDFLAGS) $(OBJ) $(LIBS) -o $@
+	$(CC) $(LDFLAGS) $(OBJ) $(LIBS) -o $@
 
 ##################################### pre-processed (.i) and assembler (.s) output
 %.i: %.c
@@ -291,10 +296,11 @@ showflags:
 	@echo DEPFLAGS: $(DEPFLAGS)
 
 wtf:
-	@printf "LIBOBJDIR=%s\n\n" "$(LIBOBJDIR)"
-	@printf "LIBOBJ=%s\n\n" "$(LIBOBJ)"
-	@printf "OBJDIR=%s\n\n" "$(OBJDIR)"
-	@printf "OBJ=%s\n\n" "$(OBJ)"
+	@printf "BRLIBDIR=%s\n" "$(BRLIBDIR)"
+	@printf "LDFLAGS=%s\n\n" "$(LDFLAGS)"
+	@#printf "LIBOBJ=%s\n\n" "$(LIBOBJ)"
+	@#printf "OBJDIR=%s\n\n" "$(OBJDIR)"
+	@#printf "OBJ=%s\n\n" "$(OBJ)"
 	@#echo LIBOBJ=$(LIBOBJ)
 	@#echo DEP=$(DEP)
 	@#echo LIBSRC=$(LIBSRC)
