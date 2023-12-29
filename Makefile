@@ -55,7 +55,7 @@ LIBS      := -l$(LIB) -lreadline -lncurses
 
 ##################################### pre-processor flags
 CPPFLAGS  := -I$(INCDIR)
-CPPFLAGS  += -DDEBUG                         # global
+#CPPFLAGS  += -DDEBUG                         # global
 CPPFLAGS  += -DDEBUG_DEBUG                   # enable log() functions
 #CPPFLAGS  += -DDEBUG_DEBUG_C                # enable verbose log() settings
 CPPFLAGS  += -DDEBUG_POOL                    # memory pools management
@@ -70,7 +70,7 @@ CPPFLAGS  := $(strip $(CPPFLAGS))
 
 ##################################### compiler flags
 CFLAGS    := -std=gnu11
-#CFLAGS += -O2
+#CFLAGS    += -O2
 CFLAGS    += -g
 CFLAGS    += -Wall
 CFLAGS    += -Wextra
@@ -89,7 +89,7 @@ LDFLAGS   := -L$(LIBDIR)
 DEPFLAGS  = -MMD -MP -MF $(DEPDIR)/$*.d
 
 ##################################### General targets
-.PHONY: all clean cleanall
+.PHONY: all compile clean cleanall
 
 all: $(TARGET)
 
