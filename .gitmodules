@@ -1,0 +1,3 @@
+[submodule "brlib"]
+	path = brlib
+	url = git@git.raoult.com:bruno/brlib.git
