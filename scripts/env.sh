@@ -20,7 +20,8 @@ if [[ ! -v _BRCHESS_ENV_ ]]; then
     export _BRCHESS_ENV_=1 BRCHESS_ROOT BRLIBDIR LD_LIBRARY_PATH
     BRCHESS_ROOT=$(realpath -L "$(dirname "${BASH_SOURCE[0]}")/..")
     BRLIBDIR="$BRCHESS_ROOT/brlib/lib"
-    LD_LIBRARY_PATH=${BRLIBDIR}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+    LD_LIBRARY_PATH="${BRLIBDIR}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+    PATH="$PATH:$(realpath -L "$(dirname "${BASH_SOURCE[0]}")")"
     #printf "R=%s L=%s LD=%s\n" "$BRCHESS_ROOT" "$BRLIB_DIR" "$LD_LIBRARY_PATH"
     printf "Chess environment complete.\n"
 fi
