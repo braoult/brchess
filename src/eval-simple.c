@@ -179,7 +179,7 @@ eval_t eval_simple(pos_t *pos)
 #           endif
 
             eval[color] += popcount64(pos->bb[color][bb]) * P_LETTER(piece);
-            bit_for_each64_2(cur, _t, pos->bb[color][bb]) {
+            bit_for_each64(cur, _t, pos->bb[color][bb]) {
 #               ifdef DEBUG_EVAL
                 log(5, "sq=%d:%d ", cur, gg[color][bb][cur]);
 #               endif

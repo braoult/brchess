@@ -39,7 +39,7 @@ SRC       := $(wildcard $(SRCDIR)/*.c)                      # project sources
 SRC_FN    := $(notdir $(SRC))                               # source basename
 OBJ       := $(addprefix $(OBJDIR)/,$(SRC_FN:.c=.o))
 
-LIBSRC    := $(wildcard $(LIBSRCDIR)/*.c)                   # lib sources
+#LIBSRC    := $(wildcard $(LIBSRCDIR)/*.c)                   # lib sources
 #LIBSRC_FN := $(notdir $(LIBSRC))                            # lib sources basename
 #LIBOBJ    := $(addprefix $(LIBOBJDIR)/,$(LIBSRC_FN:.c=.o))  # and lib obj ones
 
@@ -200,7 +200,7 @@ $(LIBOBJDIR)/%.o: $(LIBSRCDIR)/%.c | $(LIBOBJDIR) $(DEPDIR)
 	$(CC) -c $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $< -o $@
 
 ##################################### brlib libraries
-.PHONY: cleanlib cleanlibdir
+.PHONY: libs cleanlib cleanlibdir
 
 cleanlib:
 	$(call rmfiles,$(DLIB) $(SLIB),library)
@@ -212,15 +212,15 @@ cleanlibdir:
 libs:
 	$(MAKE) -C $(BRLIB)
 
-$(DLIB): CFLAGS += -fPIC
-$(DLIB): LDFLAGS += -shared
-$(DLIB): $(LIBOBJ) | $(LIBDIR)
-	@echo building $@ shared library.
-	@$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
-
-$(SLIB): $(LIBOBJ) | $(LIBDIR)
-	@echo building $@ static library.
-	$(AR) $(ARFLAGS) $@ $^
+#$(DLIB): CFLAGS += -fPIC
+#$(DLIB): LDFLAGS += -shared
+#$(DLIB): $(LIBOBJ) | $(LIBDIR)
+#	@echo building $@ shared library.
+#	@$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+#
+#$(SLIB): $(LIBOBJ) | $(LIBDIR)
+#	@echo building $@ static library.
+#	$(AR) $(ARFLAGS) $@ $^
 
 ##################################### brchess binaries
 .PHONY: targets cleanbin cleanbindir
