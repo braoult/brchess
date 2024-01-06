@@ -28,10 +28,6 @@ BRLIB     := ./brlib
 BRINCDIR  := $(BRLIB)/include
 BRLIBDIR  := $(BRLIB)/lib
 
-#LIBSRCDIR := $(BRLIB)/src
-#LIBOBJDIR := ./libobj
-
-
 CCLSROOT  := .ccls-root
 CCLSFILE  := compile_commands.json
 
@@ -39,13 +35,7 @@ SRC       := $(wildcard $(SRCDIR)/*.c)                      # project sources
 SRC_FN    := $(notdir $(SRC))                               # source basename
 OBJ       := $(addprefix $(OBJDIR)/,$(SRC_FN:.c=.o))
 
-#LIBSRC    := $(wildcard $(LIBSRCDIR)/*.c)                   # lib sources
-#LIBSRC_FN := $(notdir $(LIBSRC))                            # lib sources basename
-#LIBOBJ    := $(addprefix $(LIBOBJDIR)/,$(LIBSRC_FN:.c=.o))  # and lib obj ones
-
-LIB       := br_$(shell uname -m)                           # library name
-#SLIB      := $(addsuffix .a, $(LIBDIR)/lib$(LIB))           # static lib
-#DLIB      := $(addsuffix .so, $(LIBDIR)/lib$(LIB))          # dynamic lib
+LIB       := br_$(shell uname -m)			     # library name
 
 DEP_FN    := $(SRC_FN) $(LIBSRC_FN)
 DEP       := $(addprefix $(DEPDIR)/,$(DEP_FN:.c=.d))

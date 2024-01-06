@@ -11,8 +11,8 @@
  *
  */
 
-#include <bits.h>
-#include <debug.h>
+#include "br.h"
+#include "debug.h"
 
 #include "piece.h"
 #include "eval-simple.h"

@@ -14,7 +14,7 @@
 #ifndef CHESSDEFS_H
 #define CHESSDEFS_H
 
-#include <bits.h>
+#include "br.h"
 
 /* piece_t bits structure
  * MSB 8 7 6 5 4 3 2 1 LSB

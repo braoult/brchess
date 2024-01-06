@@ -14,10 +14,10 @@
 #ifndef BITBOARD_H
 #define BITBOARD_H
 
-#include <bits.h>
-
+#include "br.h"
 #include "chessdefs.h"
 #include "piece.h"
+#include "bitops.h"
 
 enum bb_square {
     A1 = 1UL <<  0, B1 = 1UL <<  1, C1 = 1UL <<  2, D1 = 1UL <<  3,

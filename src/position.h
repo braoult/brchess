@@ -15,9 +15,10 @@
 #define POSITION_H
 
 #include <stdint.h>
-#include <pool.h>
-#include <list.h>
-#include <bits.h>
+
+#include "pool.h"
+#include "list.h"
+#include "bitops.h"
 
 #include "board.h"
 #include "chessdefs.h"
