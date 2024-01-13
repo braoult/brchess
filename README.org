@@ -23,6 +23,7 @@ $ git clone https://git.raoult.com/bruno/brchess.git
 $ git clone git@git.raoult.com:bruno/brchess.git
 $ cd brchess
 $ git remote add github git@github.com:braoult/brchess.git
+$ git fetch --all
 #+END_EXAMPLE
 
 *** add "brlib" submodule
