@@ -1,14 +1,17 @@
+#+OPTIONS: toc:nil
+#+OPTIONS: num:2
 **This is not a working chess program !!**
 
 /I am only experimenting some chess programming concepts./
 
 ** License
-SPDX-License-Identifier: GPL-3.0-or-later <https://spdx.org/licenses/GPL-3.0-or-later.html>
+~SPDX-License-Identifier: GPL-3.0-or-later <https://spdx.org/licenses/GPL-3.0-or-later.html>~~
 
 This work is Copyright (C) 2021-2024 Bruno Raoult ("br"), and licensed under
 the GNU General Public License v3.0 or later.
 
 Some rights reserved. See COPYING.
+
 ** Installation (don't do it until version 0.9)
 *** clone repository
 *user...**
