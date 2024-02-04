@@ -50,8 +50,8 @@ static struct can_castle {
     bitboard_t occupied[2];
 } castle_squares[2] = {
     /*  Queen side      King side           Queen side      King side */
-    { { C1|D1|E1,       E1|F1|G1,      }, { B1|C1|D1,       F1|G1 } },
-    { { C8|D8|E8,       E8|F8|G8,      }, { B8|C8|D8,       F8|G8 } }
+    { { C1bb|D1bb|E1bb, E1bb|F1bb|G1bb }, { B1bb|C1bb|D1bb, F1bb|G1bb } },
+    { { C8bb|D8bb|E8bb, E8bb|F8bb|G8bb }, { B8bb|C8bb|D8bb, F8bb|G8bb } }
 };
 
 pool_t *moves_pool_init()
@@ -863,18 +863,24 @@ pos_t *move_do(pos_t *pos, move_t *move)
     new->board[from].s_piece = NULL;
 
     //printf("old turn=%d ", color);
-    SET_COLOR(new->turn, OPPONENT(color));        /* pos color */
     //printf("new turn=%d\n", new->turn);
     //fflush(stdout);
     /* adjust castling flags */
-    if ((bb_from | bb_to) & (A1 | E1))
+    if ((bb_from | bb_to) & E1bb)
+        new->castle &= ~(CASTLE_WQ | CASTLE_WK);
+    else if ((bb_from | bb_to) & A1bb)
         new->castle &= ~CASTLE_WQ;
-    else if ((bb_from | bb_to) & (E1 | H1))
+    else if ((bb_from | bb_to) & H1bb)
         new->castle &= ~CASTLE_WK;
-    else if ((bb_from | bb_to) & (A8 | E8))
+
+    if ((bb_from | bb_to) & E8bb)
+        new->castle &= ~(CASTLE_BQ | CASTLE_BK);
+    else if ((bb_from | bb_to) & A8bb)
         new->castle &= ~CASTLE_BQ;
-    else if ((bb_from | bb_to) & (E8 | H8))
+    else if ((bb_from | bb_to) & H8bb)
         new->castle &= ~CASTLE_BK;
+
+    SET_COLOR(new->turn, OPPONENT(color));        /* pos color */
     return new;
 }
 

@@ -90,7 +90,7 @@ enum {
  * ffff: file
  * rrrr: rank
  */
-typedef unsigned char square_t;
+typedef uchar square_t;
 
 /* castle_t bits structure
  */

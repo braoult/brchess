@@ -1,6 +1,6 @@
 /* bitboard.h - bitboard definitions.
  *
- * Copyright (C) 2021 Bruno Raoult ("br")
+ * Copyright (C) 2021-2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
  * Some rights reserved. See COPYING.
  *
@@ -19,52 +19,87 @@
 #include "piece.h"
 #include "bitops.h"
 
-enum bb_square {
-    A1 = 1UL <<  0, B1 = 1UL <<  1, C1 = 1UL <<  2, D1 = 1UL <<  3,
-    E1 = 1UL <<  4, F1 = 1UL <<  5, G1 = 1UL <<  6, H1 = 1UL <<  7,
+#define mask(s)  ( 1ULL << (s) )
+#define C64(const_u64) const_u64##ULL
 
-    A2 = 1UL <<  8, B2 = 1UL <<  9, C2 = 1UL << 10, D2 = 1UL << 11,
-    E2 = 1UL << 12, F2 = 1UL << 13, G2 = 1UL << 14, H2 = 1UL << 15,
+typedef enum square {
+    A1, B1, C1, D1, E1, F1, G1, H1,
+    A2, B2, C2, D2, E2, F2, G2, H2,
+    A3, B3, C3, D3, E3, F3, G3, H3,
+    A4, B4, C4, D4, E4, F4, G4, H4,
+    A5, B5, C5, D5, E5, F5, G5, H5,
+    A6, B6, C6, D6, E6, F6, G6, H6,
+    A7, B7, C7, D7, E7, F7, G7, H7,
+    A8, B8, C8, D8, E8, F8, G8, H8,
+    SQ_N,
+    SQ_0 = 0
+} square;
 
-    A3 = 1UL << 16, B3 = 1UL << 17, C3 = 1UL << 18, D3 = 1UL << 19,
-    E3 = 1UL << 20, F3 = 1UL << 21, G3 = 1UL << 22, H3 = 1UL << 23,
+typedef enum file {
+    FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H,
+    FILE_N,
+    FILE_0 = 0
+} file;
 
-    A4 = 1UL << 24, B4 = 1UL << 25, C4 = 1UL << 26, D4 = 1UL << 27,
-    E4 = 1UL << 28, F4 = 1UL << 29, G4 = 1UL << 30, H4 = 1UL << 31,
+typedef enum rank {
+    RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8,
+    RANK_N,
+    RANK_0 = 0
+} rank;
 
-    A5 = 1UL << 32, B5 = 1UL << 33, C5 = 1UL << 34, D5 = 1UL << 35,
-    E5 = 1UL << 36, F5 = 1UL << 37, G5 = 1UL << 38, H5 = 1UL << 39,
+typedef enum sq_bb {
+    //A1 = 0x01ULL, B1 = 0x02ULL, C1 = 1UL <<  2, D1 = 1UL <<  3,
+    //E1 = 1UL <<  4, F1 = 1UL <<  5, G1 = 1UL <<  6, H1 = 1UL <<
+    A1bb = mask(A1), A2bb = mask(A2), A3bb = mask(A3), A4bb = mask(A4),
+    A5bb = mask(A5), A6bb = mask(A6), A7bb = mask(A7), A8bb = mask(A8),
+    B1bb = mask(B1), B2bb = mask(B2), B3bb = mask(B3), B4bb = mask(B4),
+    B5bb = mask(B5), B6bb = mask(B6), B7bb = mask(B7), B8bb = mask(B8),
+    C1bb = mask(C1), C2bb = mask(C2), C3bb = mask(C3), C4bb = mask(C4),
+    C5bb = mask(C5), C6bb = mask(C6), C7bb = mask(C7), C8bb = mask(C8),
+    D1bb = mask(D1), D2bb = mask(D2), D3bb = mask(D3), D4bb = mask(D4),
+    D5bb = mask(D5), D6bb = mask(D6), D7bb = mask(D7), D8bb = mask(D8),
+    E1bb = mask(E1), E2bb = mask(E2), E3bb = mask(E3), E4bb = mask(E4),
+    E5bb = mask(E5), E6bb = mask(E6), E7bb = mask(E7), E8bb = mask(E8),
+    F1bb = mask(F1), F2bb = mask(F2), F3bb = mask(F3), F4bb = mask(F4),
+    F5bb = mask(F5), F6bb = mask(F6), F7bb = mask(F7), F8bb = mask(F8),
+    G1bb = mask(G1), G2bb = mask(G2), G3bb = mask(G3), G4bb = mask(G4),
+    G5bb = mask(G5), G6bb = mask(G6), G7bb = mask(G7), G8bb = mask(G8),
+    H1bb = mask(H1), H2bb = mask(H2), H3bb = mask(H3), H4bb = mask(H4),
+    H5bb = mask(H5), H6bb = mask(H6), H7bb = mask(H7), H8bb = mask(H8),
+} sq_bb;
 
-    A6 = 1UL << 40, B6 = 1UL << 41, C6 = 1UL << 42, D6 = 1UL << 43,
-    E6 = 1UL << 44, F6 = 1UL << 45, G6 = 1UL << 46, H6 = 1UL << 47,
+typedef enum file_bb {
+    FILE_Abb = 0x0101010101010101ULL,
+    FILE_Bbb = 0x0202020202020202ULL,
+    FILE_Cbb = 0x0404040404040404ULL,
+    FILE_Dbb = 0x0808080808080808ULL,
+    FILE_Ebb = 0x1010101010101010ULL,
+    FILE_Fbb = 0x2020202020202020ULL,
+    FILE_Gbb = 0x4040404040404040ULL,
+    FILE_Hbb = 0x8080808080808080ULL,
+} file_bb;
 
-    A7 = 1UL << 48, B7 = 1UL << 49, C7 = 1UL << 50, D7 = 1UL << 51,
-    E7 = 1UL << 52, F7 = 1UL << 53, G7 = 1UL << 54, H7 = 1UL << 55,
+typedef enum rank_bb {
+    RANK_1bb = 0x00000000000000ffULL,
+    RANK_2bb = 0x000000000000ff00ULL,
+    RANK_3bb = 0x0000000000ff0000ULL,
+    RANK_4bb = 0x00000000ff000000ULL,
+    RANK_5bb = 0x000000ff00000000ULL,
+    RANK_6bb = 0x0000ff0000000000ULL,
+    RANK_7bb = 0x00ff000000000000ULL,
+    RANK_8bb = 0xff00000000000000ULL
+} rank_bb;
 
-    A8 = 1UL << 56, B8 = 1UL << 57, C8 = 1UL << 58, D8 = 1UL << 59,
-    E8 = 1UL << 60, F8 = 1UL << 61, G8 = 1UL << 62, H8 = 1UL << 63,
-};
+#define NORTH 8
+#define EAST  1
+#define SOUTH -NORTH
+#define WEST  -EAST
 
-enum bb_files {
-    F_1 = A1 | A2 | A3 | A4 | A5 | A6 | A7 | A8,
-    F_2 = B1 | B2 | B3 | B4 | B5 | B6 | B7 | B8,
-    F_3 = C1 | C2 | C3 | C4 | C5 | C6 | C7 | C8,
-    F_4 = D1 | D2 | D3 | D4 | D5 | D6 | D7 | D8,
-    F_5 = E1 | E2 | E3 | E4 | E5 | E6 | E7 | E8,
-    F_6 = F1 | F2 | F3 | F4 | F5 | F6 | F7 | F8,
-    F_7 = G1 | G2 | G3 | G4 | G5 | G6 | G7 | G8,
-    F_8 = H1 | H2 | H3 | H4 | H5 | H6 | H7 | H8,
-};
+#define NORTH_EAST (NORTH + EAST)
+#define SOUTH_EAST (SOUTH + EAST)
+#define SOUTH_WEST (SOUTH + WEST)
+#define NORTH_WEST (NORTH + WEST)
 
-enum bb_ranges {
-    R_1 = A1 | B1 | C1 | D1 | E1 | F1 | G1 | H1,
-    R_2 = A2 | B2 | C2 | D2 | E2 | F2 | G2 | H2,
-    R_3 = A3 | B3 | C3 | D3 | E3 | F3 | G3 | H3,
-    R_4 = A4 | B4 | C4 | D4 | E4 | F4 | G4 | H4,
-    R_5 = A5 | B5 | C5 | D5 | E5 | F5 | G5 | H5,
-    R_6 = A6 | B6 | C6 | D6 | E6 | F6 | G6 | H6,
-    R_7 = A7 | B7 | C7 | D7 | E7 | F7 | G7 | H7,
-    R_8 = A8 | B8 | C8 | D8 | E8 | F8 | G8 | H8,
-};
+void bitboard_init(void);
 
-#endif  /* BOARD_H */
+#endif  /* BITBOARD_H */
