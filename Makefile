@@ -85,11 +85,13 @@ DEPFLAGS  = -MMD -MP -MF $(DEPDIR)/$*.d
 
 all: $(TARGET)
 
-compile: libobjs objs
+compile: brlib objs
 
-clean: cleandep cleanobj cleanlib cleanlibobj cleanbin
+libs: brlib
 
-cleanall: clean cleandepdir cleanobjdir cleanlibdir cleanlibobjdir cleanbindir
+clean: cleandep cleanobj cleanbrlib cleanbin
+
+cleanall: clean cleandepdir cleanobjdir cleanallbrlib cleanbindir
 
 ##################################### cleaning functions
 # rmfiles - deletes a list of files in a directory if they exist.
@@ -174,43 +176,18 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR) $(DEPDIR)
 	@echo compiling brchess $< "->" $@.
 	@$(CC) -c $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $< -o $@
 
-##################################### brlib objects
-.PHONY: libobjs cleanlibobj cleanlibobjdir
-
-libobjs: $(LIBOBJ)
-
-cleanlibobj:
-	$(call rmfiles,$(LIBOBJ),brlib object)
-
-cleanlibobjdir:
-	$(call rmdir,$(LIBOBJDIR),brlib objects)
-
-$(LIBOBJDIR)/%.o: $(LIBSRCDIR)/%.c | $(LIBOBJDIR) $(DEPDIR)
-	@echo compiling library $< "->" $@.
-	$(CC) -c $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $< -o $@
-
 ##################################### brlib libraries
-.PHONY: libs cleanlib cleanlibdir
+.PHONY: cleanbrlib cleanallbrlib libs brlib
 
-cleanlib:
-	$(call rmfiles,$(DLIB) $(SLIB),library)
+cleanbrlib:
+	$(MAKE) -C $(BRLIB) clean
+	@#$(call rmfiles,$(DLIB) $(SLIB),library)
 
-cleanlibdir:
-	$(call rmdir,$(LIBDIR),libraries)
+cleanallbrlib:
+	$(MAKE) -C $(BRLIB) cleanall
 
-# libs: $(DLIB) $(SLIB)
-libs:
-	$(MAKE) -C $(BRLIB)
-
-#$(DLIB): CFLAGS += -fPIC
-#$(DLIB): LDFLAGS += -shared
-#$(DLIB): $(LIBOBJ) | $(LIBDIR)
-#	@echo building $@ shared library.
-#	@$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
-#
-#$(SLIB): $(LIBOBJ) | $(LIBDIR)
-#	@echo building $@ static library.
-#	$(AR) $(ARFLAGS) $@ $^
+brlib: libs
+	$(MAKE) -C $(BRLIB) libs
 
 ##################################### brchess binaries
 .PHONY: targets cleanbin cleanbindir
@@ -252,7 +229,7 @@ $(CCLSROOT):
 # also, if cclsfile is newer than sources, no need to clean objects file
 # (and to run bear).
 # maybe run cleanobj cleanlibobj in commands ?
-$(CCLSFILE): cleanobj cleanlibobj $(SRC) $(LIBSRC) | $(CCLSROOT)
+$(CCLSFILE): cleanobj cleanbrlib $(SRC) $(LIBSRC) | $(CCLSROOT)
 	@echo "Generating ccls compile commands file ($@)."
 	@$(BEAR) -- make compile
 
