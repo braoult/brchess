@@ -1,6 +1,6 @@
 /* fen.h - fen notation.
  *
- * Copyright (C) 2021 Bruno Raoult ("br")
+ * Copyright (C) 2021-2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
  * Some rights reserved. See COPYING.
  *
@@ -16,6 +16,12 @@
 
 #include "position.h"
 
-pos_t *fen2pos(pos_t *pos, char *fen);
+#define FENSTRLEN 92                              /* secure FEN string size */
+
+extern const char *startfen;                      /* startup position */
+
+extern position *startpos(position *pos);
+extern position *fen2pos(position *pos, const char *fen);
+extern char *pos2fen(const position *pos, char *fen);
 
 #endif /* FEN_H */

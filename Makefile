@@ -48,6 +48,8 @@ LIBS      := -l$(LIB) -lreadline -lncurses
 
 ##################################### pre-processor flags
 CPPFLAGS  := -I$(BRINCDIR)
+CPPFLAGS  += -DBUG_ON
+CPPFLAGS  += -DWARN_ON
 #CPPFLAGS  += -DDEBUG                         # global
 CPPFLAGS  += -DDEBUG_DEBUG                   # enable log() functions
 #CPPFLAGS  += -DDEBUG_DEBUG_C                # enable verbose log() settings
@@ -252,6 +254,16 @@ VALGRINDFLAGS += --suppressions=etc/libreadline.supp
 memcheck: targets
 	@$(VALGRIND) $(VALGRINDFLAGS) $(BINDIR)/brchess
 
+##################################### test binaries
+TEST        = bin/fen-test
+FENTESTOBJS = obj/fen.o obj/position.o obj/piece.o obj/util.o
+
+testing: $(TEST)
+
+bin/fen-test: test/fen-test.c $(FENTESTOBJS)
+	$(CC) $(LDFLAGS) $(CPPFLAGS) $(CFLAGS) $< $(LIBS) $(FENTESTOBJS) -o $@
+
+
 ##################################### Makefile debug
 .PHONY: showflags wft
 
@@ -271,3 +283,6 @@ wtf:
 	@#echo LIBOBJ=$(LIBOBJ)
 	@#echo DEP=$(DEP)
 	@#echo LIBSRC=$(LIBSRC)
+
+zob:
+	$(CC) $(LDFLAGS) $(CPPFLAGS) $(CFLAGS) $< $(LIBS) src/util.c -o util

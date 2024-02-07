@@ -11,74 +11,54 @@
  *
  */
 
-#ifndef CHESSDEFS_H
-#define CHESSDEFS_H
+#ifndef _CHESSDEFS_H
+#define _CHESSDEFS_H
 
-#include "br.h"
+#include "brlib.h"                                /* brlib types */
+
+#define mask(i)        ( 1ULL << (i) )
+#define C64(const_u64) const_u64##ULL
+#define U64(const_s64) const_s64##LL
 
 /* piece_t bits structure
- * MSB 8 7 6 5 4 3 2 1 LSB
- * 1: color (0 for white)
- * 2-7: bit set for pawn (2), knight, bishop, rook, queen, king (7)
+ * piece is on bits 1-3, color on bit 4:
+ * .... CPPP
+ * C: 0 for white, 1: black
+ * PPP: pawn (1), knight, bishop, rook, queen, king (6)
  */
-typedef u8 piece_t;
+typedef enum {
+    WHITE, BLACK,
+    NCOLOR_MAX
+} color;
 
-enum {
-    E_EMPTY = 0,
-    E_COLOR,                                      /* LSB */
-    E_PAWN,
-    E_KNIGHT,
-    E_BISHOP,
-    E_ROOK,
-    E_QUEEN,
-    E_KING,
-};
+typedef enum {
+    ALL_PIECES = 0,                               /* 'all pieces' bitboard */
+    PAWN = 1, KNIGHT, BISHOP, ROOK, QUEEN, KING,
+    PIECE_TYPE_MAX = 7                            /* bit 4 */
+} piece_type;
 
-/* pos_t bitboards tables
- */
-enum {
-    BB_ALL = 0,                                   /* OR of all bitboards */
-    BB_UNUSED,                                    /* future use ? */
-    BB_PAWN = E_PAWN,
-    BB_KNIGHT,
-    BB_BISHOP,
-    BB_ROOK,
-    BB_QUEEN,
-    BB_KING,
-    BB_END
-};
+typedef enum {
+    EMPTY,
+    W_PAWN = PAWN, W_KNIGHT, W_BISHOP, W_ROOK, W_QUEEN, W_KING,
+    B_PAWN = PAWN | 8, B_KNIGHT, B_BISHOP, B_ROOK, B_QUEEN, B_KING,
+    PIECE_MAX
+} piece;
 
-/* piece bitmask in piece_t
- */
-enum {
-    EMPTY  = 0,
-    PAWN   = 1 << (E_PAWN - 1),                   /* 1<<(2-1) = 0x02 00000010 */
-    KNIGHT = 1 << (E_KNIGHT - 1),                 /* 0x04 00000100 */
-    BISHOP = 1 << (E_BISHOP - 1),                 /* 0x08 00001000 */
-    ROOK   = 1 << (E_ROOK - 1),                   /* 0x10 00010000 */
-    QUEEN  = 1 << (E_QUEEN - 1),                  /* 0x20 00100000 */
-    KING   = 1 << (E_KING - 1),                   /* 0x40 01000000 */
-};
+#define OPPONENT(p)       !(p)
 
-#define PIECETOBB(p)    (ffs64(PIECE(p)))         /* from piece_t to bb piece array */
+#define MASK_PIECE        0x07                      /* 00000111 */
+#define MASK_COLOR        0x08                      /* 00001000 */
 
-#define WHITE           0                         /* 0x00 00000000 */
-#define BLACK           1                         /* 0x01 00000001 */
-#define OPPONENT(p)     !(p)
+#define COLOR(p)          ((p) >> 3)              /* bitmask */
+#define PIECE(p)          ((p) & MASK_PIECE)
+#define MAKE_PIECE(p, c)  ((p) | (c) << 3)
 
-#define MASK_COLOR      0x01                      /* 00000001 */
-#define MASK_PIECE      0x7E                      /* 01111110 */
+#define IS_WHITE(p)       (!COLOR(p))
+#define IS_BLACK(p)       (COLOR(p))
 
-#define COLOR(p)        ((p) & MASK_COLOR)        /* bitmask */
-#define PIECE(p)        ((p) & MASK_PIECE)
-#define E_PIECE(p)      (ffs64(PIECE(p)))         /* convert mask to E_XX */
-
-#define IS_WHITE(p)     (!COLOR(p))
-#define IS_BLACK(p)     (COLOR(p))
-
-#define SET_WHITE(p)    ((p) &= ~MASK_COLOR)
-#define SET_BLACK(p)    ((p) |= MASK_COLOR)
-#define SET_COLOR(p, c) (!(c)? SET_WHITE(p): SET_BLACK(p))
+#define SET_WHITE(p)      ((p) &= ~MASK_COLOR)
+#define SET_BLACK(p)      ((p) |= MASK_COLOR)
+#define SET_COLOR(p, c)   (!(c)? SET_WHITE(p): SET_BLACK(p))
 
 /* flip a 0-63 square:
  * Vertical:   G8 (62) becomes G1 (6)
@@ -86,20 +66,25 @@ enum {
  */
 #define FLIP_V(sq)      ((sq) ^ 56)
 #define FLIP_H(sq)      ((sq) ^ 7)
-/* square_t bits structure : rrrrffff
- * ffff: file
- * rrrr: rank
- */
-typedef uchar square_t;
+
+typedef u64 bitboard;
+typedef ushort board;
+#define BOARDSIZE    (8*8)
+/* from human to machine */
+#define C2FILE(c)    (tolower(c) - 'a')
+#define C2RANK(c)    (tolower(c) - '1')
+/* from machine to human */
+#define FILE2C(f)    ((f) + 'a')
+#define RANK2C(r)    ((r) + '1')
 
 /* castle_t bits structure
  */
-typedef unsigned char castle_t;
-
-#define CASTLE_WK       (1 << 0)                  /* 0x01 00000001 */
-#define CASTLE_WQ       (1 << 1)                  /* 0x02 00000010 */
-#define CASTLE_BK       (1 << 2)                  /* 0x04 00000100 */
-#define CASTLE_BQ       (1 << 3)                  /* 0x08 00001000 */
+typedef enum {
+    CASTLE_WK = (1 << 0),                         /* 0x01 00000001 */
+    CASTLE_WQ = (1 << 1),                         /* 0x02 00000010 */
+    CASTLE_BK = (1 << 2),                         /* 0x04 00000100 */
+    CASTLE_BQ = (1 << 3),                         /* 0x08 00001000 */
+} castle;
 
 #define CASTLE_W        (CASTLE_WK | CASTLE_WQ)   /* 00000011 W castle mask */
 #define CASTLE_B        (CASTLE_BK | CASTLE_BQ)   /* 00001100 B castle mask */
@@ -112,18 +97,17 @@ typedef unsigned char castle_t;
 
 /* bitboard
  */
-typedef u64 bitboard_t;
-
+//typedef u64 bitboard_t;
 
 /* eval type
  */
-typedef s32 eval_t;
+//typedef s32 eval_t;
 
 /* forward typedefs
  */
-typedef struct piece_list_s piece_list_t;
-typedef struct board_s board_t;
-typedef struct pos_s pos_t;
-typedef struct move_s move_t;
+//typedef struct piece_list_s piece_list_t;
+//typedef struct board_s board_t;
+//typedef struct pos_s pos_t;
+//typedef struct move_s move_t;
 
-#endif
+#endif  /* _CHESSDEFS_H */

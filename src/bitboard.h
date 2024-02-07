@@ -11,18 +11,15 @@
  *
  */
 
-#ifndef BITBOARD_H
-#define BITBOARD_H
+#ifndef _BITBOARD_H
+#define _BITBOARD_H
 
-#include "br.h"
+#include "brlib.h"
 #include "chessdefs.h"
 #include "piece.h"
 #include "bitops.h"
 
-#define mask(s)  ( 1ULL << (s) )
-#define C64(const_u64) const_u64##ULL
-
-typedef enum square {
+typedef enum {
     A1, B1, C1, D1, E1, F1, G1, H1,
     A2, B2, C2, D2, E2, F2, G2, H2,
     A3, B3, C3, D3, E3, F3, G3, H3,
@@ -31,23 +28,21 @@ typedef enum square {
     A6, B6, C6, D6, E6, F6, G6, H6,
     A7, B7, C7, D7, E7, F7, G7, H7,
     A8, B8, C8, D8, E8, F8, G8, H8,
-    SQ_N,
-    SQ_0 = 0
+    SQUARE_MAX = 64,
+    SQUARE_NONE = 64
 } square;
 
-typedef enum file {
+typedef enum {
     FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H,
-    FILE_N,
-    FILE_0 = 0
+    FILE_MAX,
 } file;
 
-typedef enum rank {
+typedef enum {
     RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8,
-    RANK_N,
-    RANK_0 = 0
+    RANK_MAX,
 } rank;
 
-typedef enum sq_bb {
+typedef enum {
     //A1 = 0x01ULL, B1 = 0x02ULL, C1 = 1UL <<  2, D1 = 1UL <<  3,
     //E1 = 1UL <<  4, F1 = 1UL <<  5, G1 = 1UL <<  6, H1 = 1UL <<
     A1bb = mask(A1), A2bb = mask(A2), A3bb = mask(A3), A4bb = mask(A4),
@@ -68,7 +63,7 @@ typedef enum sq_bb {
     H5bb = mask(H5), H6bb = mask(H6), H7bb = mask(H7), H8bb = mask(H8),
 } sq_bb;
 
-typedef enum file_bb {
+typedef enum {
     FILE_Abb = 0x0101010101010101ULL,
     FILE_Bbb = 0x0202020202020202ULL,
     FILE_Cbb = 0x0404040404040404ULL,
@@ -79,7 +74,7 @@ typedef enum file_bb {
     FILE_Hbb = 0x8080808080808080ULL,
 } file_bb;
 
-typedef enum rank_bb {
+typedef enum {
     RANK_1bb = 0x00000000000000ffULL,
     RANK_2bb = 0x000000000000ff00ULL,
     RANK_3bb = 0x0000000000ff0000ULL,
@@ -90,16 +85,31 @@ typedef enum rank_bb {
     RANK_8bb = 0xff00000000000000ULL
 } rank_bb;
 
-#define NORTH 8
-#define EAST  1
-#define SOUTH -NORTH
-#define WEST  -EAST
+typedef enum {
+    NORTH = 8,
+    EAST =  1,
+    SOUTH = -NORTH,
+    WEST = -EAST,
 
-#define NORTH_EAST (NORTH + EAST)
-#define SOUTH_EAST (SOUTH + EAST)
-#define SOUTH_WEST (SOUTH + WEST)
-#define NORTH_WEST (NORTH + WEST)
+    NORTH_EAST = (NORTH + EAST),
+    SOUTH_EAST = (SOUTH + EAST),
+    SOUTH_WEST = (SOUTH + WEST),
+    NORTH_WEST = (NORTH + WEST),
+} direction;
+
+static inline square BB(file file, rank rank)
+{
+    return (rank << 3) + file;
+}
+static inline file BBfile(square square)
+{
+    return square & 7;
+}
+static inline rank BBrank(square square)
+{
+    return square >> 3;
+}
 
 void bitboard_init(void);
 
-#endif  /* BITBOARD_H */
+#endif  /* _BITBOARD_H */
