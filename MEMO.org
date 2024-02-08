@@ -1,0 +1,2 @@
+** Some current ideas
+- helpers for square, pieces, etc: validity, conversions
