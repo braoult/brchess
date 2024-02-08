@@ -70,7 +70,7 @@ inline void bitboard_print2_raw(bitboard_t bb1, bitboard_t bb2, char *title)
  * pos_pieces_print() - Print position pieces
  * @pos:  &position
  */
-void pos_pieces_print(position *pos)
+void pos_pieces_print(pos_t *pos)
 {
     int bit, count, cur;
     char pname;
@@ -102,6 +102,25 @@ void pos_pieces_print(position *pos)
 }
 
 /**
+ * raw_bitboard_print - print simple bitboard representation
+ * @bb: the bitboard
+ * @tit: a string or NULL
+ */
+void raw_bitboard_printc(const bitboard bb, const char *tit, piece_t p)
+{
+    if (tit)
+        printf("%s\n", tit);
+    for (rank_t r = RANK_8; r >= RANK_1; --r) {
+        printf("%d ", r);
+        for (file_t f = FILE_A; f <= FILE_H; ++f)
+            printf(" %c", bb & (BB(f, r)) ? p: '.');
+        printf("  A B C D E F G H\n");
+    }
+    printf(" \n");
+    return;
+}
+
+/**
  * pos_bitboards_print() - Print position bitboards
  * @pos:  &position
  */
@@ -118,10 +137,10 @@ void pos_pieces_print(position *pos)
  * pos_print() - Print position on stdout.
  * @pos:  &position
  */
-void pos_print(position *pos)
+void pos_print(pos_t *pos)
 {
     int rank, file;
-    piece pc, *board = pos->board;
+    piece_t pc, *board = pos->board;
 
     //piece_list_t *wk = list_first_entry(&pos->pieces[WHITE], piece_list_t, list),
     //    *bk = list_first_entry(&pos->pieces[BLACK], piece_list_t, list);
@@ -220,7 +239,7 @@ void pos_print(position *pos)
  * }
  */
 
-position *pos_clear(position *pos)
+pos_t *pos_clear(pos_t *pos)
 {
     printf("size(pos_board=%lu elt=%lu\n", sizeof(pos->board), sizeof(int));
     //for (square square = A1; square <= H8; ++square)
@@ -238,8 +257,8 @@ position *pos_clear(position *pos)
     //pos->eval = 0;
     //pos->occupied[WHITE] = 0;
     //pos->occupied[BLACK] = 0;
-    for (color color = WHITE; color <= BLACK; ++color) {
-        for (piece_type piece = 0; piece <= KING; ++piece)
+    for (color_t color = WHITE; color <= BLACK; ++color) {
+        for (piece_type_t piece = 0; piece <= KING; ++piece)
             pos->bb[color][piece] = 0;
         pos->controlled[WHITE] = 0;
         pos->controlled[BLACK] = 0;
@@ -271,9 +290,9 @@ position *pos_clear(position *pos)
  */
 
 
-position *pos_new(void)
+pos_t *pos_new(void)
 {
-    position *pos = safe_malloc(sizeof(position));
+    pos_t *pos = safe_malloc(sizeof(pos_t));
     //assert(pos);
     return pos_clear(pos);
 }
@@ -295,9 +314,9 @@ position *pos_new(void)
  *
  * TODO: merge with pos_new - NULL for init, non null for duplicate
  */
-position *pos_dup(position *pos)
+pos_t *pos_dup(pos_t *pos)
 {
-    position *newpos= pool_get(pos_pool);
+    pos_t *newpos= pool_get(pos_pool);
 
     if (newpos) {
         //board = new->board;
@@ -315,7 +334,7 @@ position *pos_dup(position *pos)
 pool_t *pos_pool_init()
 {
     if (!pos_pool)
-        pos_pool = pool_create("positions", 128, sizeof(position));
+        pos_pool = pool_create("positions", 128, sizeof(pos_t));
     return pos_pool;
 }
 

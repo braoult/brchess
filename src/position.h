@@ -30,8 +30,8 @@ typedef struct {
     int turn;                                     /* WHITE or BLACK */
     u16 clock_50;
     u16 plycount;                                 /* plies so far, start is 0 */
-    square en_passant;
-    castle castle;
+    square_t en_passant;
+    castle_rights_t castle;
 
     //eval_t eval;
     //int check[2];
@@ -46,8 +46,8 @@ typedef struct {
     //u16 mobility[2];
     //struct list_head pieces[2];                   /* pieces list, King is first */
     //struct list_head moves[2];
-    piece board[BOARDSIZE];
-} position;
+    piece_t board[BOARDSIZE];
+} pos_t;
 
 /**
  * pos_set_sq - unconditionally set a piece on a square
@@ -57,10 +57,10 @@ typedef struct {
  *
  * Both position bords and bitboards are modified.
  */
-static inline void pos_set_sq(position *pos, piece_type p, color c, file f, rank r)
+static inline void pos_set_sq(pos_t *pos, piece_type_t p, color_t c, file_t f, rank_t r)
 {
-    piece piece = MAKE_PIECE(p, c);
-    square square = BB(f, r);
+    piece_t piece = MAKE_PIECE(p, c);
+    square_t square = BB(f, r);
     pos->board[square] = piece;
     pos->bb[c][ALL_PIECES] |= 1 << square;
     pos->bb[c][p] |= 1 << square;
@@ -73,11 +73,11 @@ static inline void pos_set_sq(position *pos, piece_type p, color c, file f, rank
  *
  * Both position bords and bitboards are modified.
  */
-static inline void pos_clr_sq(position *pos, file f, rank r)
+static inline void pos_clr_sq(pos_t *pos, file_t f, rank_t r)
 {
-    square square = BB(f, r);
-    piece_type piece = PIECE(pos->board[square]);
-    color color = COLOR(pos->board[square]);
+    square_t square = BB(f, r);
+    piece_type_t piece = PIECE(pos->board[square]);
+    color_t color = COLOR(pos->board[square]);
     pos->board[square] = EMPTY;
     pos->bb[color][piece] &= ~(1 << square);
     pos->bb[color][ALL_PIECES] &= ~(1 << square);
@@ -85,16 +85,19 @@ static inline void pos_clr_sq(position *pos, file f, rank r)
 
 //void bitboard_print(bitboard_t bb, char *title);
 //void bitboard_print2(bitboard_t bb1, bitboard_t bb2, char *title);
-void pos_pieces_print(position *pos);
+
+void raw_bitboard_print(const bitboard bitboard, const char *title);
+void pos_pieces_print(pos_t *pos);
+
 //void pos_bitboards_print(pos_t *pos);
-void pos_print(position *pos);
-position *pos_clear(position *pos);
+void pos_print(pos_t *pos);
+pos_t *pos_clear(pos_t *pos);
 //void pos_del(position *pos);
-position *pos_startpos(position *pos);
-position *pos_new();
+pos_t *pos_startpos(pos_t *pos);
+pos_t *pos_new();
 pool_t *pos_pool_init();
 void pos_pool_stats();
-position *pos_dup(position *pos);
+pos_t *pos_dup(pos_t *pos);
 //void pos_check(position *pos);
 
 #endif  /* POSITION_H */

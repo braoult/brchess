@@ -28,21 +28,21 @@
  */
 typedef enum {
     WHITE, BLACK,
-    NCOLOR_MAX
-} color;
+    COLOR_MAX
+} color_t;
 
 typedef enum {
     ALL_PIECES = 0,                               /* 'all pieces' bitboard */
     PAWN = 1, KNIGHT, BISHOP, ROOK, QUEEN, KING,
     PIECE_TYPE_MAX = 7                            /* bit 4 */
-} piece_type;
+} piece_type_t;
 
 typedef enum {
     EMPTY,
     W_PAWN = PAWN, W_KNIGHT, W_BISHOP, W_ROOK, W_QUEEN, W_KING,
     B_PAWN = PAWN | 8, B_KNIGHT, B_BISHOP, B_ROOK, B_QUEEN, B_KING,
     PIECE_MAX
-} piece;
+} piece_t;
 
 #define OPPONENT(p)       !(p)
 
@@ -84,7 +84,7 @@ typedef enum {
     CASTLE_WQ = (1 << 1),                         /* 0x02 00000010 */
     CASTLE_BK = (1 << 2),                         /* 0x04 00000100 */
     CASTLE_BQ = (1 << 3),                         /* 0x08 00001000 */
-} castle;
+} castle_rights_t;
 
 #define CASTLE_W        (CASTLE_WK | CASTLE_WQ)   /* 00000011 W castle mask */
 #define CASTLE_B        (CASTLE_BK | CASTLE_BQ)   /* 00001100 B castle mask */

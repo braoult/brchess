@@ -21,40 +21,19 @@
 
 #include "chessdefs.h"
 
-/*
-#define bug_on(expr) do {                                            \
-        if (unlikely(expr)) {                                                  \
-            fprintf(stderr,                                                    \
-                    "** BUG IN %s[%s:%d]: assertion \"" #expr "\" failed.\n",  \
-                    __func__, __FILE__,__LINE__);                              \
-            abort();                                                           \
-        }                                                                      \
-    } while (0)
-
-#define warn_on(expr) ({                                                           \
-            int _ret = !!(expr);                                                   \
-            if (unlikely(_ret)) {                                                  \
-                fprintf(stderr,                                                    \
-                        "** WARN ON %s[%s:%d]: assertion \"" #expr "\" failed.\n", \
-                        __func__, __FILE__,__LINE__);                              \
-            }                                                                      \
-            _ret;                                                                  \
-        })
-*/
 #undef safe_malloc
+#undef safe_free
+
+
 #define safe_malloc(size) ({                   \
             void *_ret = malloc(size);         \
             bug_on(_ret == NULL);              \
             _ret;                              \
         })
 
-#undef safe_free
 #define safe_free(ptr) do {                    \
         bug_on(ptr == NULL);                   \
         free(_ret);                            \
     } while (0)
-
-
-void raw_bitboard_print(const bitboard bitboard, const char *title);
 
 #endif  /* UTIL_H */

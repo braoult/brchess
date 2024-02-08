@@ -26,26 +26,29 @@
 //#include "bitboard.h"
 //#include "position.h"
 
-//static pool_t *pieces_pool;
-
+/**
+ * piece_details
+ */
 const struct piece_details piece_details[] = {
-    /*            W    B    SW   SB   Name     start value */
-    [EMPTY]  = { ' ', ' ', " ", " ", "",
-        0, 0, 0 },
-    [PAWN]   = { 'P', 'p', "♙", "♟", "Pawn",
-        PAWN_VALUE, PAWN_VALUE, PAWN_VALUE },
-    [KNIGHT] = { 'N', 'n', "♘", "♞", "Knight",
-        KNIGHT_VALUE, KNIGHT_VALUE, KNIGHT_VALUE },
-    [BISHOP] = { 'B', 'b', "♗", "♝", "Bishop",
-        BISHOP_VALUE, BISHOP_VALUE, BISHOP_VALUE },
-    [ROOK]   = { 'R', 'r', "♖", "♜", "Rook",
-        ROOK_VALUE, ROOK_VALUE, ROOK_VALUE },
-    [QUEEN]  = { 'Q', 'q', "♕", "♛", "Queen",
-        QUEEN_VALUE, QUEEN_VALUE, QUEEN_VALUE },
-    [KING]   = { 'K', 'k', "♔", "♚", "King",
-        KING_VALUE, KING_VALUE, KING_VALUE }
+    /*             Abb  Sym  Name   start value */
+    [EMPTY]    = { ' ', " ", " ", 0, 0, 0 },
+    [W_PAWN]   = { 'P', "♙", "Pawn",   P_VAL_OPN, P_VAL_MID, P_VAL_END },
+    [W_KNIGHT] = { 'N', "♘", "Knight", N_VAL_OPN, N_VAL_MID, N_VAL_END },
+    [W_BISHOP] = { 'B', "♗", "Bishop", B_VAL_OPN, B_VAL_MID, B_VAL_END },
+    [W_ROOK]   = { 'R', "♖", "Rook",   R_VAL_OPN, R_VAL_MID, R_VAL_END },
+    [W_QUEEN]  = { 'Q', "♕", "Queen",  Q_VAL_OPN, Q_VAL_MID, Q_VAL_END },
+    [W_KING]   = { 'K', "♔", "King",   K_VAL_OPN, K_VAL_MID, K_VAL_END },
+    [7]        = { '7', "�", "Inv 7",  0, 0, 0 },
+    [8]        = { '7', "�", "Inv 8",  0, 0, 0 },
+    [B_PAWN]   = { 'p', "♟", "Pawn",   P_VAL_OPN, P_VAL_MID, P_VAL_END },
+    [B_KNIGHT] = { 'n', "♞", "Knight", P_VAL_OPN, N_VAL_MID, N_VAL_END },
+    [B_BISHOP] = { 'b', "♝", "Bishop", P_VAL_OPN, B_VAL_MID, B_VAL_END },
+    [B_ROOK]   = { 'r', "♜", "Rook",   P_VAL_OPN, R_VAL_MID, R_VAL_END },
+    [B_QUEEN]  = { 'q', "♛", "Queen",  P_VAL_OPN, Q_VAL_MID, Q_VAL_END },
+    [B_KING]   = { 'k', "♚", "King",   P_VAL_OPN, K_VAL_MID, K_VAL_END },
 };
 
+const char *fenpieces_idx = " PNBRQ  pnbrq";
 /*
  * void piece_list_print(struct list_head *list)
  * {

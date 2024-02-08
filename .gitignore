@@ -4,6 +4,9 @@ vgcore.*
 *.i
 *.old
 *.save
+/GPATH
+/GRTAGS
+/GTAGS
 /.ccls-root
 /.ccls-cache/
 /obj/

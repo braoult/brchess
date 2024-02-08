@@ -71,7 +71,7 @@ static const char *castle_str = "KQkq";
  *
  * @return: the pos position.
  */
-position *startpos(position *pos)
+pos_t *startpos(pos_t *pos)
 {
     return fen2pos(pos, startfen);
 }
@@ -86,13 +86,13 @@ position *startpos(position *pos)
  *
  * @return: the pos position, or NULL if error.
  */
-position *fen2pos(position *pos, const char *fen)
+pos_t *fen2pos(pos_t *pos, const char *fen)
 {
     const char *cur = fen;
     char *p;
     short rank, file, color, tmp;
     int consumed, err_line = 0, err_pos, err_char;
-    position tmppos;
+    pos_t tmppos;
 
     pos_clear(&tmppos);
 
@@ -203,7 +203,7 @@ end:
  * @pos: a position pointer
  * @fen: destination FEN char*, or NULL
  *
- * If @fen is NULL, a 100 bytes memory will be allocated with malloc(1),
+ * If @fen is NULL, a 92 bytes memory will be allocated with malloc(1),
  * that should be freed by caller.
  *
  * Note: If @fen is given, no check is done on its length, but to
@@ -213,7 +213,7 @@ end:
  *
  * @return: the pos position, or NULL if error.
  */
-char *pos2fen(const position *pos, char *fen)
+char *pos2fen(const pos_t *pos, char *fen)
 {
     int cur = 0;
 
@@ -222,14 +222,14 @@ char *pos2fen(const position *pos, char *fen)
 
     /*  1) position
      */
-    for (int rank = RANK_8; rank >= RANK_1; --rank) {
+    for (rank_t rank = RANK_8; rank >= RANK_1; --rank) {
         printf("r=%d 1=%d\n", rank, RANK_1);
-        for (int file = FILE_A; file <= FILE_H;) {
+        for (file_t file = FILE_A; file <= FILE_H;) {
             printf(" f=%d H=%d\n", file, FILE_H);
-            square sq = BB(file, rank);
+            square_t sq = BB(file, rank);
             printf("  sq=%d\n", sq);
-            piece piece = PIECE(pos->board[sq]);
-            color color = COLOR(pos->board[sq]);
+            piece_t piece = PIECE(pos->board[sq]);
+            color_t color = COLOR(pos->board[sq]);
             if (pos->board[sq] == EMPTY) {
                 int len = 0;
                 for (; file <= FILE_H && pos->board[BB(file,rank)] == EMPTY; file++)
@@ -255,7 +255,6 @@ char *pos2fen(const position *pos, char *fen)
     if (pos->castle == 0) {
         fen[cur++] = '-';
     } else {
-        //static char *
         for (int i = 0; i < 4; ++i)
             if (pos->castle & mask(i))
                 fen[cur++] = castle_str[i];

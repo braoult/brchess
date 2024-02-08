@@ -20,8 +20,8 @@
 
 extern const char *startfen;                      /* startup position */
 
-extern position *startpos(position *pos);
-extern position *fen2pos(position *pos, const char *fen);
-extern char *pos2fen(const position *pos, char *fen);
+extern pos_t *startpos(pos_t *pos);
+extern pos_t *fen2pos(pos_t *pos, const char *fen);
+extern char *pos2fen(const pos_t *pos, char *fen);
 
 #endif /* FEN_H */

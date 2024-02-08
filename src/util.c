@@ -17,25 +17,6 @@
 #include "util.h"
 #include "bitboard.h"
 
-/**
- * bitboard_print_simple - print simple bitboard representation
- * @bitboard: the bitboard
- * @title: a string or NULL
- */
-void raw_bitboard_print(const bitboard bitboard, const char *title)
-{
-    if (title)
-        printf("%s\n", title);
-    for (rank r = RANK_8; r >= RANK_1; --r) {
-        printf("%d ", r);
-        for (file f = FILE_A; f <= FILE_H; ++f)
-            printf(" %c", bitboard & (BB(f, r)) ? 'X': '.');
-        printf("  A B C D E F G H\n");
-    }
-    printf(" \n");
-    return;
-}
-
 /*int main()
 {
     char *foo = safe_malloc(1000);

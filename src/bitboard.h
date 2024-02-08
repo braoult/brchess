@@ -20,7 +20,8 @@
 #include "bitops.h"
 
 typedef enum {
-    A1, B1, C1, D1, E1, F1, G1, H1,
+    _SSQUARE_ = -1,                               /* force signed enum */
+    A1 = 0, B1, C1, D1, E1, F1, G1, H1,
     A2, B2, C2, D2, E2, F2, G2, H2,
     A3, B3, C3, D3, E3, F3, G3, H3,
     A4, B4, C4, D4, E4, F4, G4, H4,
@@ -30,17 +31,19 @@ typedef enum {
     A8, B8, C8, D8, E8, F8, G8, H8,
     SQUARE_MAX = 64,
     SQUARE_NONE = 64
-} square;
+} square_t;
 
 typedef enum {
-    FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H,
+    _SFILE_ = -1,                                 /* force signed enum */
+    FILE_A = 0, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H,
     FILE_MAX,
-} file;
+} file_t;
 
 typedef enum {
-    RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8,
+    _SRANK_ = -1,                                 /* force signed enum */
+    RANK_1 = 0, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8,
     RANK_MAX,
-} rank;
+} rank_t;
 
 typedef enum {
     //A1 = 0x01ULL, B1 = 0x02ULL, C1 = 1UL <<  2, D1 = 1UL <<  3,
@@ -95,17 +98,17 @@ typedef enum {
     SOUTH_EAST = (SOUTH + EAST),
     SOUTH_WEST = (SOUTH + WEST),
     NORTH_WEST = (NORTH + WEST),
-} direction;
+} dir_t;
 
-static inline square BB(file file, rank rank)
+static inline square_t BB(file_t file, rank_t rank)
 {
     return (rank << 3) + file;
 }
-static inline file BBfile(square square)
+static inline file_t BBfile(square_t square)
 {
     return square & 7;
 }
-static inline rank BBrank(square square)
+static inline rank_t BBrank(square_t square)
 {
     return square >> 3;
 }

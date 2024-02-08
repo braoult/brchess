@@ -21,14 +21,31 @@
 #include "pool.h"
 
 
-/* initial default values */
-#define EMPTY_VALUE       0
-#define PAWN_VALUE      100
-#define KNIGHT_VALUE    300
-#define BISHOP_VALUE    300
-#define ROOK_VALUE      500
-#define QUEEN_VALUE     900
-#define KING_VALUE    20000
+/* default values for opening, midgame, endgame
+ */
+#define E_VAL_OPN    0                            /* empty */
+#define P_VAL_OPN    100
+#define N_VAL_OPN    300
+#define B_VAL_OPN    300
+#define R_VAL_OPN    500
+#define Q_VAL_OPN    900
+#define K_VAL_OPN    20000
+
+#define E_VAL_MID    0
+#define P_VAL_MID    100
+#define N_VAL_MID    300
+#define B_VAL_MID    300
+#define R_VAL_MID    500
+#define Q_VAL_MID    900
+#define K_VAL_MID    20000
+
+#define E_VAL_END    0
+#define P_VAL_END    100
+#define N_VAL_END    300
+#define B_VAL_END    300
+#define R_VAL_END    500
+#define Q_VAL_END    900
+#define K_VAL_END    20000
 
 /*
 typedef struct piece_list_s {
@@ -43,24 +60,20 @@ typedef struct piece_list_s {
 /* some default values for pieces
  */
 extern const struct piece_details {
-    char abbrev_w;                                /* used for game notation */
-    char abbrev_b;
-    char *symbol_w;
-    char *symbol_b;                               /* used for game notation */
+    char abbrev;                                /* used for game notation */
+    //char abbrev_b;
+    char *symbol;
+    //char *symbol_b;                               /* used for game notation */
     char *name;
     s64  opn_value;
     s64  mid_value;
     s64  end_value;
 } piece_details[];
 
+#define P_ABBR(p)      piece_details[PIECE(p)].abbrev
+#define P_SYM(p)       piece_details[PIECE(p)].symbol
 #define P_NAME(p)      piece_details[PIECE(p)].name
-#define P_LETTER(p)    piece_details[PIECE(p)].abbrev_w
-#define P_SYM(p)       piece_details[PIECE(p)].symbol_b
-#define P_CSHORT(p)    (IS_WHITE(p)? piece_details[PIECE(p)].abbrev_w: \
-                        piece_details[PIECE(p)].abbrev_b)
-#define P_CSYM(p)      (IS_WHITE(p)? piece_details[PIECE(p)].symbol_w: \
-                        piece_details[PIECE(p)].symbol_b)
-#define P_VALUE(p)     (piece_details[PIECE(p)].value)
+#define P_VAL(p)       piece_details[PIECE(p)].opn_value
 
 /* use short name or symbol - no effect
  */

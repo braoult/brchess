@@ -6,7 +6,7 @@
 
 int main(int ac, char**av)
 {
-    position *pos;
+    pos_t *pos;
 
 
     debug_init(5, stderr, true);
