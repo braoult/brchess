@@ -55,10 +55,6 @@
 
 /*  chess startup position FEN */
 const char *startfen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-
-/* next must follow 'piece_type' enum values (pawn is 1, king is 6) */
-static const char *pieces_str = " PNBRQK";
-/* And this one must follow 'castle' enum order (also same as usual FEN) */
 static const char *castle_str = "KQkq";
 
 #define SKIP_BLANK(p) for(;isspace(*(p)); (p)++)
@@ -81,7 +77,7 @@ pos_t *startpos(pos_t *pos)
  * @pos: a position pointer or NULL
  * @fen: a valid fen string
  *
- * If @pos is NULL, a position will be allocated with malloc(1),
+ * If @pos is NULL, a position will be allocated with @pos_new(),
  * that should be freed by caller.
  *
  * @return: the pos position, or NULL if error.
@@ -90,7 +86,8 @@ pos_t *fen2pos(pos_t *pos, const char *fen)
 {
     const char *cur = fen;
     char *p;
-    short rank, file, color, tmp;
+    short rank, file, tmp;
+    piece_t piece;
     int consumed, err_line = 0, err_pos, err_char;
     pos_t tmppos;
 
@@ -108,13 +105,12 @@ pos_t *fen2pos(pos_t *pos, const char *fen)
             file += *cur - '0';
             continue;
         }
-        color = isupper(*cur)? WHITE: BLACK;
-        if ((p = strchr(pieces_str, toupper(*cur)))) {  /* valid piece letter */
+        if ((piece = char_color_to_piece(*cur)) != EMPTY) {
 #           ifdef DEBUG_FEN
-            log_i(5, "f=%d r=%d *p=%c piece=%c color=%d ppos=%ld\n",
-                  file, rank, *cur, *p, color, p - pieces_str);
+            log_i(5, "f=%d r=%d *p=%c piece=%#04x t=%d c=%d\n", file, rank, *cur,
+                  piece, PIECE(piece), COLOR(piece));
 #           endif
-            pos_set_sq(&tmppos, p - pieces_str, color, file, rank);
+            pos_set_sq(&tmppos, BB(file, rank), piece);
             file++;
         } else {                                  /* error */
             err_line = __LINE__, err_char = *cur, err_pos = cur - fen;
@@ -163,37 +159,24 @@ pos_t *fen2pos(pos_t *pos, const char *fen)
 
     /* 6) current full move number, starting with 1
      */
-    printf ("remain=[%s]\n", cur);
     sscanf(cur, "%hd", &tmp);
-    printf ("tmp=[%d]\n", tmp);
     if (tmp <= 0)                                 /* fix faulty numbers*/
         tmp = 1;
-    printf ("tmp2=[%d]\n", tmp);
     tmp = 2 * (tmp - 1) + (tmppos.turn == BLACK); /* plies, +1 if black turn */
-    printf ("tmp3=[%d]\n", tmp);
 
     tmppos.plycount = tmp;
 
 #   ifdef DEBUG_FEN
-    for (rank = 7; rank >= 0; --rank) {
-        for (file = 0; file < 8; ++file) {
-            log(5, "%02x ", tmppos.board[BB(file, rank)]);
-        }
-        log(5, "\n");
-    }
-    log(5, "turn=%d 50_rule=%d curply=%d\n",
-        tmppos.turn, tmppos.clock_50, tmppos.plycount);
+    raw_board_print(&tmppos);
 #   endif
 
 end:
-    if (warn(err_line, "FEN error line %d: pos=%d char=%#x(%c)\n",
+    if (warn(err_line, "FEN error line %d: charpos=%d char=%#x(%c)\n",
              err_line, err_pos, err_char, err_char)) {
         return NULL;
     }
     if (!pos)
         pos = pos_new();
-    else
-        pos_clear(pos);
     *pos = tmppos;
     return pos;
 }
@@ -223,24 +206,18 @@ char *pos2fen(const pos_t *pos, char *fen)
     /*  1) position
      */
     for (rank_t rank = RANK_8; rank >= RANK_1; --rank) {
-        printf("r=%d 1=%d\n", rank, RANK_1);
         for (file_t file = FILE_A; file <= FILE_H;) {
-            printf(" f=%d H=%d\n", file, FILE_H);
             square_t sq = BB(file, rank);
-            printf("  sq=%d\n", sq);
-            piece_t piece = PIECE(pos->board[sq]);
-            color_t color = COLOR(pos->board[sq]);
+            piece_t piece =pos->board[sq];
             if (pos->board[sq] == EMPTY) {
                 int len = 0;
                 for (; file <= FILE_H && pos->board[BB(file,rank)] == EMPTY; file++)
                     len++;
                 fen[cur++] = '0' + len;
             } else {
-                char c = pieces_str[piece];
-                fen[cur++] = color == WHITE? c: tolower(c);
+                fen[cur++] = piece_to_char_color(piece);
                 file++;
             }
-            fen[cur]=0; puts(fen);
         }
         fen[cur++] = rank == RANK_1? ' ': '/';
     }

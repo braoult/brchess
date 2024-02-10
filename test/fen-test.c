@@ -8,15 +8,23 @@ int main(int ac, char**av)
 {
     pos_t *pos;
 
+    const char *fen;
+    char revfen[128];
+    int comp;
 
     debug_init(5, stderr, true);
-    pos_pool_init();
+    //pos_pool_init();
     pos = pos_new();
     if (ac == 1) {
+        fen = startfen;
         startpos(pos);
     } else {
-        fen2pos(pos, av[1]);
+        fen = av[1];
+        fen2pos(pos, fen);
     }
     pos_print(pos);
-    printf("fen=[%s]\n", pos2fen(pos, NULL));
+    pos2fen(pos, revfen);
+    //printf("reverse fen=[%s]\n", pos2fen(pos, NULL));
+    comp = strcmp(fen, revfen);
+    printf("compare=%d - %s\n", comp, comp? "NOK": "OK");
 }

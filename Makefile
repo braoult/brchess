@@ -54,7 +54,7 @@ CPPFLAGS  += -DWARN_ON
 CPPFLAGS  += -DDEBUG_DEBUG                   # enable log() functions
 #CPPFLAGS  += -DDEBUG_DEBUG_C                # enable verbose log() settings
 CPPFLAGS  += -DDEBUG_POOL                    # memory pools management
-CPPFLAGS  += -DDEBUG_FEN                     # FEN decoding
+#CPPFLAGS  += -DDEBUG_FEN                     # FEN decoding
 CPPFLAGS  += -DDEBUG_MOVE                    # move generation
 CPPFLAGS  += -DDEBUG_EVAL                    # eval functions
 CPPFLAGS  += -DDEBUG_PIECE                   # piece list management
@@ -233,7 +233,7 @@ $(CCLSROOT):
 # maybe run cleanobj cleanlibobj in commands ?
 $(CCLSFILE): cleanobj cleanbrlib $(SRC) $(LIBSRC) | $(CCLSROOT)
 	@echo "Generating ccls compile commands file ($@)."
-	@$(BEAR) -- make compile
+	@$(BEAR) -- $(MAKE) compile
 
 #.PHONY: bear
 #bear: cleanobj cleanlibobj Makefile | $(CCLSROOT)

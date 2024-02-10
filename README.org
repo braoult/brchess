@@ -13,6 +13,9 @@ the GNU General Public License v3.0 or later.
 Some rights reserved. See COPYING.
 
 ** Installation (don't do it until version 0.9)
+*** dependencire
+- GCC 10 or newer
+- libreadline
 *** clone repository
 *user...**
 #+BEGIN_EXAMPLE

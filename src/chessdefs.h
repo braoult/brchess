@@ -20,45 +20,9 @@
 #define C64(const_u64) const_u64##ULL
 #define U64(const_s64) const_s64##LL
 
-/* piece_t bits structure
- * piece is on bits 1-3, color on bit 4:
- * .... CPPP
- * C: 0 for white, 1: black
- * PPP: pawn (1), knight, bishop, rook, queen, king (6)
- */
-typedef enum {
-    WHITE, BLACK,
-    COLOR_MAX
-} color_t;
+typedef u64 bitboard;
+typedef ushort board;
 
-typedef enum {
-    ALL_PIECES = 0,                               /* 'all pieces' bitboard */
-    PAWN = 1, KNIGHT, BISHOP, ROOK, QUEEN, KING,
-    PIECE_TYPE_MAX = 7                            /* bit 4 */
-} piece_type_t;
-
-typedef enum {
-    EMPTY,
-    W_PAWN = PAWN, W_KNIGHT, W_BISHOP, W_ROOK, W_QUEEN, W_KING,
-    B_PAWN = PAWN | 8, B_KNIGHT, B_BISHOP, B_ROOK, B_QUEEN, B_KING,
-    PIECE_MAX
-} piece_t;
-
-#define OPPONENT(p)       !(p)
-
-#define MASK_PIECE        0x07                      /* 00000111 */
-#define MASK_COLOR        0x08                      /* 00001000 */
-
-#define COLOR(p)          ((p) >> 3)              /* bitmask */
-#define PIECE(p)          ((p) & MASK_PIECE)
-#define MAKE_PIECE(p, c)  ((p) | (c) << 3)
-
-#define IS_WHITE(p)       (!COLOR(p))
-#define IS_BLACK(p)       (COLOR(p))
-
-#define SET_WHITE(p)      ((p) &= ~MASK_COLOR)
-#define SET_BLACK(p)      ((p) |= MASK_COLOR)
-#define SET_COLOR(p, c)   (!(c)? SET_WHITE(p): SET_BLACK(p))
 
 /* flip a 0-63 square:
  * Vertical:   G8 (62) becomes G1 (6)
@@ -67,8 +31,6 @@ typedef enum {
 #define FLIP_V(sq)      ((sq) ^ 56)
 #define FLIP_H(sq)      ((sq) ^ 7)
 
-typedef u64 bitboard;
-typedef ushort board;
 #define BOARDSIZE    (8*8)
 /* from human to machine */
 #define C2FILE(c)    (tolower(c) - 'a')

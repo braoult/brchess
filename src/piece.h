@@ -14,12 +14,34 @@
 #ifndef PIECE_H
 #define PIECE_H
 
-#include <ctype.h>
+#include <string.h>
 
 #include "chessdefs.h"
-#include "list.h"
-#include "pool.h"
 
+/* piece_t bits structure
+ * piece is on bits 1-3, color on bit 4:
+ * .... CPPP
+ * C: 0 for white, 1: black
+ * PPP: pawn (1), knight, bishop, rook, queen, king (6)
+ */
+typedef enum {
+    WHITE, BLACK,
+    COLOR_MAX
+} color_t;
+
+typedef enum {
+    ALL_PIECES = 0,                               /* 'all pieces' bitboard */
+    PAWN = 1, KNIGHT, BISHOP, ROOK, QUEEN, KING,
+    PIECE_TYPE_MAX = 7                            /* bit 4 */
+} piece_type_t;
+
+typedef enum {
+    EMPTY = 0,
+    NO_PIECE = 0,
+    W_PAWN = PAWN, W_KNIGHT, W_BISHOP, W_ROOK, W_QUEEN, W_KING,
+    B_PAWN = PAWN | 8, B_KNIGHT, B_BISHOP, B_ROOK, B_QUEEN, B_KING,
+    PIECE_MAX
+} piece_t;
 
 /* default values for opening, midgame, endgame
  */
@@ -47,33 +69,51 @@
 #define Q_VAL_END    900
 #define K_VAL_END    20000
 
-/*
-typedef struct piece_list_s {
-    piece_t piece;
-    square_t square;
-    short castle;
-    s64 value;
-    struct list_head list;
-} piece_list_t;
-*/
-
 /* some default values for pieces
  */
 extern const struct piece_details {
-    char abbrev;                                /* used for game notation */
-    //char abbrev_b;
-    char *symbol;
-    //char *symbol_b;                               /* used for game notation */
+    char abbr;                                    /* used for game notation */
+    char abbr_color;                              /* lowercase = black */
+    char *sym;                                    /* used for game notation */
+    char *sym_color;                              /* different W & B */
     char *name;
-    s64  opn_value;
-    s64  mid_value;
-    s64  end_value;
-} piece_details[];
+    s64  opn_value;                               /* value opening */
+    s64  mid_value;                               /* value midgame */
+    s64  end_value;                               /* value endgame */
+} piece_details[PIECE_MAX];
 
-#define P_ABBR(p)      piece_details[PIECE(p)].abbrev
-#define P_SYM(p)       piece_details[PIECE(p)].symbol
-#define P_NAME(p)      piece_details[PIECE(p)].name
-#define P_VAL(p)       piece_details[PIECE(p)].opn_value
+extern const char pieces_str[6+6+1];
+
+//#define P_SYM(p)       piece_details[p].sym
+//#define P_NAME(p)      piece_details[p].name
+//#define P_VAL(p)       piece_details[p].opn_value
+
+#define OPPONENT(p)       !(p)
+
+#define MASK_PIECE        0x07                      /* 00000111 */
+#define MASK_COLOR        0x08                      /* 00001000 */
+
+#define COLOR(p)          ((p) >> 3)              /* bitmask */
+#define PIECE(p)          ((p) & MASK_PIECE)
+#define MAKE_PIECE(p, c)  ((p) | (c) << 3)
+
+#define IS_WHITE(p)       (!COLOR(p))
+#define IS_BLACK(p)       (COLOR(p))
+
+#define SET_WHITE(p)      ((p) &= ~MASK_COLOR)
+#define SET_BLACK(p)      ((p) |= MASK_COLOR)
+#define SET_COLOR(p, c)   (!(c)? SET_WHITE(p): SET_BLACK(p))
+
+extern bool piece_ok(piece_t p);
+
+extern char piece_to_char(piece_t p);
+extern char piece_to_char_color(piece_t p);
+extern char *piece_to_sym(piece_t p);
+extern char *piece_to_sym_color(piece_t p);
+extern char *piece_to_name(piece_t p);
+
+extern piece_t char_to_piece(char c);
+extern piece_t char_color_to_piece(char c);
 
 /* use short name or symbol - no effect
  */

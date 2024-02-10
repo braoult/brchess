@@ -24,7 +24,6 @@
 #undef safe_malloc
 #undef safe_free
 
-
 #define safe_malloc(size) ({                   \
             void *_ret = malloc(size);         \
             bug_on(_ret == NULL);              \
@@ -33,7 +32,7 @@
 
 #define safe_free(ptr) do {                    \
         bug_on(ptr == NULL);                   \
-        free(_ret);                            \
+        free(ptr);                             \
     } while (0)
 
 #endif  /* UTIL_H */

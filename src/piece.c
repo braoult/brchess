@@ -16,39 +16,79 @@
 #include <string.h>
 #include <assert.h>
 
-//#include <debug.h>
-//#include <pool.h>
-//#include <list.h>
+#include "bug.h"
 
 #include "chessdefs.h"
 #include "piece.h"
-//#include "board.h"
-//#include "bitboard.h"
-//#include "position.h"
 
 /**
  * piece_details
  */
-const struct piece_details piece_details[] = {
-    /*             Abb  Sym  Name   start value */
-    [EMPTY]    = { ' ', " ", " ", 0, 0, 0 },
-    [W_PAWN]   = { 'P', "♙", "Pawn",   P_VAL_OPN, P_VAL_MID, P_VAL_END },
-    [W_KNIGHT] = { 'N', "♘", "Knight", N_VAL_OPN, N_VAL_MID, N_VAL_END },
-    [W_BISHOP] = { 'B', "♗", "Bishop", B_VAL_OPN, B_VAL_MID, B_VAL_END },
-    [W_ROOK]   = { 'R', "♖", "Rook",   R_VAL_OPN, R_VAL_MID, R_VAL_END },
-    [W_QUEEN]  = { 'Q', "♕", "Queen",  Q_VAL_OPN, Q_VAL_MID, Q_VAL_END },
-    [W_KING]   = { 'K', "♔", "King",   K_VAL_OPN, K_VAL_MID, K_VAL_END },
-    [7]        = { '7', "�", "Inv 7",  0, 0, 0 },
-    [8]        = { '7', "�", "Inv 8",  0, 0, 0 },
-    [B_PAWN]   = { 'p', "♟", "Pawn",   P_VAL_OPN, P_VAL_MID, P_VAL_END },
-    [B_KNIGHT] = { 'n', "♞", "Knight", P_VAL_OPN, N_VAL_MID, N_VAL_END },
-    [B_BISHOP] = { 'b', "♝", "Bishop", P_VAL_OPN, B_VAL_MID, B_VAL_END },
-    [B_ROOK]   = { 'r', "♜", "Rook",   P_VAL_OPN, R_VAL_MID, R_VAL_END },
-    [B_QUEEN]  = { 'q', "♛", "Queen",  P_VAL_OPN, Q_VAL_MID, Q_VAL_END },
-    [B_KING]   = { 'k', "♚", "King",   P_VAL_OPN, K_VAL_MID, K_VAL_END },
+const struct piece_details piece_details[PIECE_MAX] = {
+    /*             Abb  AbbC Sym  SymC Name   start value */
+    [EMPTY]    = { ' ', ' ', " ", " ", " ", 0, 0, 0 },
+    [W_PAWN]   = { 'P', 'P', "♟", "♙", "Pawn",   P_VAL_OPN, P_VAL_MID, P_VAL_END },
+    [W_KNIGHT] = { 'N', 'N', "♞", "♘", "Knight", N_VAL_OPN, N_VAL_MID, N_VAL_END },
+    [W_BISHOP] = { 'B', 'B', "♝", "♗", "Bishop", B_VAL_OPN, B_VAL_MID, B_VAL_END },
+    [W_ROOK]   = { 'R', 'R', "♜", "♖", "Rook",   R_VAL_OPN, R_VAL_MID, R_VAL_END },
+    [W_QUEEN]  = { 'Q', 'Q', "♛", "♕", "Queen",  Q_VAL_OPN, Q_VAL_MID, Q_VAL_END },
+    [W_KING]   = { 'K', 'K', "♚", "♔", "King",   K_VAL_OPN, K_VAL_MID, K_VAL_END },
+    [7]        = { '7', '7', "�", "�", "Inv 7",  0, 0, 0 },
+    [8]        = { '8', '8', "�", "�", "Inv 8",  0, 0, 0 },
+    [B_PAWN]   = { 'P', 'p', "♟", "♟", "Pawn",   P_VAL_OPN, P_VAL_MID, P_VAL_END },
+    [B_KNIGHT] = { 'N', 'n', "♞", "♞", "Knight", P_VAL_OPN, N_VAL_MID, N_VAL_END },
+    [B_BISHOP] = { 'B', 'b', "♝", "♝", "Bishop", P_VAL_OPN, B_VAL_MID, B_VAL_END },
+    [B_ROOK]   = { 'R', 'r', "♜", "♜", "Rook",   P_VAL_OPN, R_VAL_MID, R_VAL_END },
+    [B_QUEEN]  = { 'Q', 'q', "♛", "♛", "Queen",  P_VAL_OPN, Q_VAL_MID, Q_VAL_END },
+    [B_KING]   = { 'K', 'k', "♚", "♚", "King",   P_VAL_OPN, K_VAL_MID, K_VAL_END },
 };
 
-const char *fenpieces_idx = " PNBRQ  pnbrq";
+const char pieces_str[6+6+1] = "PNBRQKpnbrqk";
+
+bool piece_ok(piece_t p)
+{
+    piece_type_t pt = PIECE(p);
+    return !(p & ~(MASK_COLOR | MASK_PIECE)) && pt && (pt <= KING);
+}
+
+char piece_to_char(piece_t p)
+{
+    return piece_details[p].abbr;
+}
+
+char piece_to_char_color(piece_t p)
+{
+    return piece_details[p].abbr_color;
+}
+
+char *piece_to_sym(piece_t p)
+{
+    return piece_details[PIECE(p)].sym;
+}
+
+char *piece_to_sym_color(piece_t p)
+{
+    return piece_details[p].sym_color;
+}
+
+char *piece_to_name(piece_t p)
+{
+    return piece_details[p].name;
+}
+
+piece_t char_to_piece(char c)
+{
+    char *p = strchr(pieces_str, c);
+    return p? (p - pieces_str) % 6 + 1: EMPTY;
+}
+
+piece_t char_color_to_piece(char c)
+{
+    piece_t piece = char_to_piece(c);
+    return isupper(c)? piece: SET_BLACK(piece);
+}
+
+
 /*
  * void piece_list_print(struct list_head *list)
  * {

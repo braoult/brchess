@@ -11,7 +11,7 @@
  *
  */
 
-#include "br.h"
+#include "brlib.h"
 #include "bitboard.h"
 
 /*  maps are clockwise from N */

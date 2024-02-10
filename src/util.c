@@ -16,10 +16,3 @@
 
 #include "util.h"
 #include "bitboard.h"
-
-/*int main()
-{
-    char *foo = safe_malloc(1000);
-    exit(0);
-}
-*/

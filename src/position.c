@@ -28,44 +28,155 @@
 #include "util.h"
 //#include "eval.h"
 
-static pool_t *pos_pool;
+//static pool_t *pos_pool;
 
-const char *rankstr = "12345678";
-const char *filestr = "ABCDEFGH";
+//const char *rankstr = "12345678";
+//const char *filestr = "ABCDEFGH";
 
-#define BYTE_PRINT "%c%c%c%c%c%c%c%c"
-#define BYTE2BIN(b) ((b) & 0x01 ? '1' : '0'),  \
-        ((b) & 0x02 ? '1' : '0'),              \
-        ((b) & 0x04 ? '1' : '0'),              \
-        ((b) & 0x08 ? '1' : '0'),              \
-        ((b) & 0x10 ? '1' : '0'),              \
-        ((b) & 0x20 ? '1' : '0'),              \
-        ((b) & 0x40 ? '1' : '0'),              \
-        ((b) & 0x80 ? '1' : '0')
+/****************************************************
+ * #define BYTE_PRINT "%c%c%c%c%c%c%c%c"            *
+ * #define BYTE2BIN(b) ((b) & 0x01 ? '1' : '0'),  \ *
+ *         ((b) & 0x02 ? '1' : '0'),              \ *
+ *         ((b) & 0x04 ? '1' : '0'),              \ *
+ *         ((b) & 0x08 ? '1' : '0'),              \ *
+ *         ((b) & 0x10 ? '1' : '0'),              \ *
+ *         ((b) & 0x20 ? '1' : '0'),              \ *
+ *         ((b) & 0x40 ? '1' : '0'),              \ *
+ *         ((b) & 0x80 ? '1' : '0')                 *
+ ****************************************************/
 
-/*
-inline void bitboard_print_raw(bitboard_t bb, char *title)
+/**
+ * pos_new() - allocate a new position
+ *
+ * position is not initialized
+ */
+pos_t *pos_new(void)
 {
-    int i;
-    printf("%s%s %#018lx\n", title? title: "", title? " - ": "", bb);
-    for (i=56; i>=0; i-=8)
-        printf("\t"BYTE_PRINT"\n",
-               BYTE2BIN(bb>>i));
+    return safe_malloc(sizeof(pos_t));
 }
-*/
-/*
-inline void bitboard_print2_raw(bitboard_t bb1, bitboard_t bb2, char *title)
-{
-    int i;
-    printf("%s%s", title? title: "", title? ":\n": "");
 
-    printf("\tW: %#018lx\tB: %#018lx\n", bb1, bb2);
-    for (i=56; i>=0; i-=8)
-        printf("\t"BYTE_PRINT"\t\t"BYTE_PRINT"\n",
-               BYTE2BIN(bb1>>i),
-               BYTE2BIN(bb2>>i));
+/**
+ * pos_dup() - duplicate a position.
+ * @pos: &position to duplicate.
+ *
+ * New position is the same as source one (with duplicated pieces list),
+ * except:
+ * - moves list is empty
+ * - bestmove is NULL
+ * - nodecount is set to zero
+ * - eval is set to EVAL_INVALID
+ * - moves_generated ans moves_counted are unset
+ * - check is set to zero
+ *
+ * @return: The new position.
+ *
+ * TODO: merge with pos_new - NULL for init, non null for duplicate
+ */
+pos_t *pos_dup(pos_t *pos)
+{
+    pos_t *newpos = safe_malloc(sizeof(pos_t));
+
+    //board = new->board;
+    *newpos = *pos;
+    //new->bestmove = NULL;
+    newpos->node_count = 0;
+    //new->eval = EVAL_INVALID;
+    //new->moves_generated = false;
+    //new->moves_counted = false;
+    //new->check[WHITE] = new->check[BLACK] = 0;
+    return newpos;
 }
-*/
+
+/**
+ * pos_del() - delete a position.
+ * @pos: &position.
+ */
+void pos_del(pos_t *pos)
+{
+    safe_free(pos);
+}
+
+/**
+ * pos_clear() - clear a position.
+ * @pos: &position.
+ */
+pos_t *pos_clear(pos_t *pos)
+{
+    printf("size(pos_board=%lu elt=%lu\n", sizeof(pos->board), sizeof(int));
+    //for (square square = A1; square <= H8; ++square)
+    //    pos->board[square] = EMPTY;
+
+    SET_WHITE(pos->turn);
+    pos->node_count = 0;
+    pos->turn = 0;
+    pos->clock_50 = 0;
+    pos->plycount = 0;
+    pos->en_passant = 0;
+    pos->castle = 0;
+    memset(pos->board, 0, sizeof(pos->board));
+    //pos->curmove = 0;
+    //pos->eval = 0;
+    //pos->occupied[WHITE] = 0;
+    //pos->occupied[BLACK] = 0;
+    for (color_t color = WHITE; color <= BLACK; ++color) {
+        for (piece_type_t piece = 0; piece <= KING; ++piece)
+            pos->bb[color][piece] = 0;
+        pos->controlled[WHITE] = 0;
+        pos->controlled[BLACK] = 0;
+    }
+    //pos->mobility[WHITE] = 0;
+    //pos->mobility[BLACK] = 0;
+    //pos->moves_generated = false;
+    //pos->moves_counted = false;
+    /* remove pieces / moves */
+    //pieces_del(pos, WHITE);
+    //pieces_del(pos, BLACK);
+    //moves_del(pos);
+
+    return pos;
+}
+
+/**
+ * pos_print() - Print position and fen on stdout.
+ * @pos:  &position
+ */
+void pos_print(pos_t *pos)
+{
+    int rank, file;
+    piece_t pc, *board = pos->board;
+    char fen[92];
+
+    //piece_list_t *wk = list_first_entry(&pos->pieces[WHITE], piece_list_t, list),
+    //    *bk = list_first_entry(&pos->pieces[BLACK], piece_list_t, list);
+
+
+    printf("  +---+---+---+---+---+---+---+---+\n");
+    for (rank = 7; rank >= 0; --rank) {
+        printf("%c |", rank + '1');
+        for (file = 0; file < 8; ++file) {
+            pc = board[BB(file, rank)];
+            printf(" %s |", piece_to_sym_color(pc));
+        }
+        printf("\n  +---+---+---+---+---+---+---+---+\n");
+    }
+    printf("    A   B   C   D   E   F   G   H\n");
+    printf("%s\n", pos2fen(pos, fen));
+    //printf("Turn: %s.\n", IS_WHITE(pos->turn) ? "white" : "black");
+    /*
+     * printf("Kings: W:%c%c B:%c%c\n",
+     *        FILE2C(F88(wk->square)),
+     *        RANK2C(R88(wk->square)),
+     *        FILE2C(F88(bk->square)),
+     *        RANK2C(R88(bk->square)));
+     */
+    //printf("plies=%d clock50=%d\n", pos->plycount, pos->clock_50);
+    //printf("Current move = %d\n", pos->curmove);
+    //printf("Squares controlled: W:%d B:%d\n", popcount64(pos->controlled[WHITE]),
+    //       popcount64(pos->controlled[BLACK]));
+    //printf("Mobility: W:%u B:%u\n", pos->mobility[WHITE],
+    //       pos->mobility[BLACK]);
+}
+
 /**
  * pos_pieces_print() - Print position pieces
  * @pos:  &position
@@ -81,7 +192,7 @@ void pos_pieces_print(pos_t *pos)
             p = pos->bb[color][piece];
             count = popcount64(p);
             cur = 0;
-            pname = P_LETTER(piece);
+            pname = piece_to_char(piece);
             printf("%c(0)%s", pname, count? ":": "");
             if (count) {
                 bit_for_each64(bit, tmp, p) {
@@ -101,12 +212,42 @@ void pos_pieces_print(pos_t *pos)
     }
 }
 
+
+/*
+inline void bitboard_print2_raw(bitboard_t bb1, bitboard_t bb2, char *title)
+{
+    int i;
+    printf("%s%s", title? title: "", title? ":\n": "");
+
+    printf("\tW: %#018lx\tB: %#018lx\n", bb1, bb2);
+    for (i=56; i>=0; i-=8)
+        printf("\t"BYTE_PRINT"\t\t"BYTE_PRINT"\n",
+               BYTE2BIN(bb1>>i),
+               BYTE2BIN(bb2>>i));
+}
+*/
+
+/**
+ * raw_board_print - print simple board (hex values)
+ * @bb: the bitboard
+ */
+void raw_board_print(const pos_t *pos)
+{
+
+    for (rank_t r = RANK_8; r >= RANK_1; --r) {
+        for (file_t f = FILE_A; f <= FILE_H; ++f)
+            printf("%02x ", pos->board[BB(f, r)]);
+        printf(" \n");
+    }
+    return;
+}
+
 /**
  * raw_bitboard_print - print simple bitboard representation
  * @bb: the bitboard
  * @tit: a string or NULL
  */
-void raw_bitboard_printc(const bitboard bb, const char *tit, piece_t p)
+void raw_bitboard_print(const bitboard bb, const char *tit, const piece_t p)
 {
     if (tit)
         printf("%s\n", tit);
@@ -132,64 +273,6 @@ void raw_bitboard_printc(const bitboard bb, const char *tit, piece_t p)
 //    bitboard_print2(pos->controlled[WHITE], pos->controlled[BLACK]);
 //
 //}
-
-/**
- * pos_print() - Print position on stdout.
- * @pos:  &position
- */
-void pos_print(pos_t *pos)
-{
-    int rank, file;
-    piece_t pc, *board = pos->board;
-
-    //piece_list_t *wk = list_first_entry(&pos->pieces[WHITE], piece_list_t, list),
-    //    *bk = list_first_entry(&pos->pieces[BLACK], piece_list_t, list);
-
-
-    printf("  +---+---+---+---+---+---+---+---+\n");
-    for (rank = 7; rank >= 0; --rank) {
-        printf("%c |", rank + '1');
-        for (file = 0; file < 8; ++file) {
-            pc = board[BB(file, rank)];
-            printf(" %s |", P_CSYM(pc));
-        }
-        printf("\n  +---+---+---+---+---+---+---+---+\n");
-    }
-    printf("    A   B   C   D   E   F   G   H\n\n");
-    printf("Turn: %s.\n", IS_WHITE(pos->turn) ? "white" : "black");
-    /*
-     * printf("Kings: W:%c%c B:%c%c\n",
-     *        FILE2C(F88(wk->square)),
-     *        RANK2C(R88(wk->square)),
-     *        FILE2C(F88(bk->square)),
-     *        RANK2C(R88(bk->square)));
-     */
-    printf("Possible en-passant: [%#x] ", pos->en_passant);
-    if (pos->en_passant == 0)
-        printf("None.\n");
-    else
-        printf("%c%c.\n",
-               FILE2C(BBfile(pos->en_passant)),
-               RANK2C(BBrank(pos->en_passant)));
-
-    printf("castle [%#x] : ", pos->castle);
-
-    if (pos->castle & CASTLE_WK)
-        printf("K");
-    if (pos->castle & CASTLE_WQ)
-        printf("Q");
-    if (pos->castle & CASTLE_BK)
-        printf("k");
-    if (pos->castle & CASTLE_BQ)
-        printf("q");
-
-    printf("\nplies=%d clock50=%d\n", pos->plycount, pos->clock_50);
-    //printf("Current move = %d\n", pos->curmove);
-    //printf("Squares controlled: W:%d B:%d\n", popcount64(pos->controlled[WHITE]),
-    //       popcount64(pos->controlled[BLACK]));
-    //printf("Mobility: W:%u B:%u\n", pos->mobility[WHITE],
-    //       pos->mobility[BLACK]);
-}
 
 /**
  * pos_check() - extensive position consistenci check.
@@ -239,46 +322,6 @@ void pos_print(pos_t *pos)
  * }
  */
 
-pos_t *pos_clear(pos_t *pos)
-{
-    printf("size(pos_board=%lu elt=%lu\n", sizeof(pos->board), sizeof(int));
-    //for (square square = A1; square <= H8; ++square)
-    //    pos->board[square] = EMPTY;
-
-    SET_WHITE(pos->turn);
-    pos->node_count = 0;
-    pos->turn = 0;
-    pos->clock_50 = 0;
-    pos->plycount = 0;
-    pos->en_passant = 0;
-    pos->castle = 0;
-    memset(pos->board, 0, sizeof(pos->board));
-    //pos->curmove = 0;
-    //pos->eval = 0;
-    //pos->occupied[WHITE] = 0;
-    //pos->occupied[BLACK] = 0;
-    for (color_t color = WHITE; color <= BLACK; ++color) {
-        for (piece_type_t piece = 0; piece <= KING; ++piece)
-            pos->bb[color][piece] = 0;
-        pos->controlled[WHITE] = 0;
-        pos->controlled[BLACK] = 0;
-    }
-    //pos->mobility[WHITE] = 0;
-    //pos->mobility[BLACK] = 0;
-    //pos->moves_generated = false;
-    //pos->moves_counted = false;
-    /* remove pieces / moves */
-    //pieces_del(pos, WHITE);
-    //pieces_del(pos, BLACK);
-    //moves_del(pos);
-
-    return pos;
-}
-
-/**
- * pos_del() - delete a position.
- * @pos: &position.
- */
 /*
  * void pos_del(pos_t *pos)
  * {
@@ -290,56 +333,17 @@ pos_t *pos_clear(pos_t *pos)
  */
 
 
-pos_t *pos_new(void)
-{
-    pos_t *pos = safe_malloc(sizeof(pos_t));
-    //assert(pos);
-    return pos_clear(pos);
-}
-
-/**
- * pos_dup() - duplicate a position.
- * @pos: &position to duplicate.
- *
- * New position is the same as source one (with duplicated pieces list),
- * except:
- * - moves list is empty
- * - bestmove is NULL
- * - nodecount is set to zero
- * - eval is set to EVAL_INVALID
- * - moves_generated ans moves_counted are unset
- * - check is set to zero
- *
- * @return: The new position.
- *
- * TODO: merge with pos_new - NULL for init, non null for duplicate
- */
-pos_t *pos_dup(pos_t *pos)
-{
-    pos_t *newpos= pool_get(pos_pool);
-
-    if (newpos) {
-        //board = new->board;
-        *newpos = *pos;
-        //new->bestmove = NULL;
-        newpos->node_count = 0;
-        //new->eval = EVAL_INVALID;
-        //new->moves_generated = false;
-        //new->moves_counted = false;
-        //new->check[WHITE] = new->check[BLACK] = 0;
-    }
-    return newpos;
-}
-
-pool_t *pos_pool_init()
-{
-    if (!pos_pool)
-        pos_pool = pool_create("positions", 128, sizeof(pos_t));
-    return pos_pool;
-}
-
-void pos_pool_stats()
-{
-    if (pos_pool)
-        pool_stats(pos_pool);
-}
+/********************************************************************
+ * pool_t *pos_pool_init()                                          *
+ * {                                                                *
+ *     if (!pos_pool)                                               *
+ *         pos_pool = pool_create("positions", 128, sizeof(pos_t)); *
+ *     return pos_pool;                                             *
+ * }                                                                *
+ *                                                                  *
+ * void pos_pool_stats()                                            *
+ * {                                                                *
+ *     if (pos_pool)                                                *
+ *         pool_stats(pos_pool);                                    *
+ * }                                                                *
+ ********************************************************************/
