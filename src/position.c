@@ -18,11 +18,12 @@
 #include <ctype.h>
 #include <assert.h>
 
+#include "brlib.h"
 #include "bitops.h"
 
 #include "chessdefs.h"
 #include "position.h"
-//#include "move.h"
+#include "bitboard.h"
 #include "fen.h"
 #include "piece.h"
 #include "util.h"
@@ -154,7 +155,7 @@ void pos_print(pos_t *pos)
     for (rank = 7; rank >= 0; --rank) {
         printf("%c |", rank + '1');
         for (file = 0; file < 8; ++file) {
-            pc = board[BB(file, rank)];
+            pc = board[sq_make(file, rank)];
             printf(" %s |", piece_to_sym_color(pc));
         }
         printf("\n  +---+---+---+---+---+---+---+---+\n");
@@ -186,7 +187,7 @@ void pos_pieces_print(pos_t *pos)
     int bit, count, cur;
     char pname;
     u64 tmp;
-    bitboard p;
+    bitboard_t p;
     for (int color = WHITE; color <= BLACK; ++color) {
         for (int piece = KING; piece >= PAWN; --piece) {
             p = pos->bb[color][piece];
@@ -196,7 +197,7 @@ void pos_pieces_print(pos_t *pos)
             printf("%c(0)%s", pname, count? ":": "");
             if (count) {
                 bit_for_each64(bit, tmp, p) {
-                    char cf = BBfile(bit), cr = BBrank(bit);
+                    char cf = sq_file(bit), cr = sq_rank(bit);
                     printf("%s%c%c", cur? ",": "", FILE2C(cf), RANK2C(cr));
                     cur++;
                 }
@@ -236,28 +237,9 @@ void raw_board_print(const pos_t *pos)
 
     for (rank_t r = RANK_8; r >= RANK_1; --r) {
         for (file_t f = FILE_A; f <= FILE_H; ++f)
-            printf("%02x ", pos->board[BB(f, r)]);
+            printf("%02x ", pos->board[sq_make(f, r)]);
         printf(" \n");
     }
-    return;
-}
-
-/**
- * raw_bitboard_print - print simple bitboard representation
- * @bb: the bitboard
- * @tit: a string or NULL
- */
-void raw_bitboard_print(const bitboard bb, const char *tit, const piece_t p)
-{
-    if (tit)
-        printf("%s\n", tit);
-    for (rank_t r = RANK_8; r >= RANK_1; --r) {
-        printf("%d ", r);
-        for (file_t f = FILE_A; f <= FILE_H; ++f)
-            printf(" %c", bb & (BB(f, r)) ? p: '.');
-        printf("  A B C D E F G H\n");
-    }
-    printf(" \n");
     return;
 }
 
@@ -331,19 +313,3 @@ void raw_bitboard_print(const bitboard bb, const char *tit, const piece_t p)
  *     pool_add(pos_pool, pos);
  * }
  */
-
-
-/********************************************************************
- * pool_t *pos_pool_init()                                          *
- * {                                                                *
- *     if (!pos_pool)                                               *
- *         pos_pool = pool_create("positions", 128, sizeof(pos_t)); *
- *     return pos_pool;                                             *
- * }                                                                *
- *                                                                  *
- * void pos_pool_stats()                                            *
- * {                                                                *
- *     if (pos_pool)                                                *
- *         pool_stats(pos_pool);                                    *
- * }                                                                *
- ********************************************************************/

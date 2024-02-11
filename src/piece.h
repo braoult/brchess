@@ -82,11 +82,7 @@ extern const struct piece_details {
     s64  end_value;                               /* value endgame */
 } piece_details[PIECE_MAX];
 
-extern const char pieces_str[6+6+1];
-
-//#define P_SYM(p)       piece_details[p].sym
-//#define P_NAME(p)      piece_details[p].name
-//#define P_VAL(p)       piece_details[p].opn_value
+extern const char pieces_str[6+6+1];              /* to search from fen/user input */
 
 #define OPPONENT(p)       !(p)
 

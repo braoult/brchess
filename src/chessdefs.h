@@ -16,20 +16,10 @@
 
 #include "brlib.h"                                /* brlib types */
 
-#define mask(i)        ( 1ULL << (i) )
 #define C64(const_u64) const_u64##ULL
 #define U64(const_s64) const_s64##LL
 
-typedef u64 bitboard;
-typedef ushort board;
-
-
-/* flip a 0-63 square:
- * Vertical:   G8 (62) becomes G1 (6)
- * Horizontal: G8 (62) becomes B8 (57)
- */
-#define FLIP_V(sq)      ((sq) ^ 56)
-#define FLIP_H(sq)      ((sq) ^ 7)
+//typedef ushort board;
 
 #define BOARDSIZE    (8*8)
 /* from human to machine */

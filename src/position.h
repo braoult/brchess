@@ -17,13 +17,11 @@
 #include <stdint.h>
 
 #include "brlib.h"
-//#include "pool.h"
-//#include "list.h"
 #include "bitops.h"
-#include "bitboard.h"
 
-#include "board.h"
+#include "bitboard.h"
 #include "chessdefs.h"
+#include "piece.h"
 
 typedef struct {
     u64 node_count;                               /* evaluated nodes */
@@ -41,10 +39,10 @@ typedef struct {
     //bool moves_generated;
     //bool moves_counted;
 
-    bitboard bb[2][PIECE_TYPE_MAX];               /* bb[0][PAWN], bb[1][ALL_PIECES] */
-    bitboard controlled[2];
+    bitboard_t bb[2][PIECE_TYPE_MAX];             /* bb[0][PAWN], bb[1][ALL_PIECES] */
+    bitboard_t controlled[2];
     //u16 mobility[2];
-    //struct list_head pieces[2];                   /* pieces list, King is first */
+                                                  //struct list_head pieces[2];                   /* pieces list, King is first */
     //struct list_head moves[2];
     piece_t board[BOARDSIZE];
 } pos_t;
@@ -95,7 +93,6 @@ extern void pos_print(pos_t *pos);
 extern void pos_pieces_print(pos_t *pos);
 
 extern void raw_board_print(const pos_t *pos);
-extern void raw_bitboard_print(const bitboard bitboard, const char *title, const piece_t piece);
 
 //extern pos_t *pos_startpos(pos_t *pos);
 

@@ -110,7 +110,7 @@ pos_t *fen2pos(pos_t *pos, const char *fen)
             log_i(5, "f=%d r=%d *p=%c piece=%#04x t=%d c=%d\n", file, rank, *cur,
                   piece, PIECE(piece), COLOR(piece));
 #           endif
-            pos_set_sq(&tmppos, BB(file, rank), piece);
+            pos_set_sq(&tmppos, sq_make(file, rank), piece);
             file++;
         } else {                                  /* error */
             err_line = __LINE__, err_char = *cur, err_pos = cur - fen;
@@ -146,7 +146,7 @@ pos_t *fen2pos(pos_t *pos, const char *fen)
     if (*cur == '-') {
         cur++;
     } else {
-        tmppos.en_passant = BB(C2FILE(*cur), C2RANK(*(cur+1)));
+        tmppos.en_passant = sq_make(C2FILE(*cur), C2RANK(*(cur+1)));
         cur += 2;
     }
     SKIP_BLANK(cur);
@@ -205,21 +205,21 @@ char *pos2fen(const pos_t *pos, char *fen)
 
     /*  1) position
      */
-    for (rank_t rank = RANK_8; rank >= RANK_1; --rank) {
-        for (file_t file = FILE_A; file <= FILE_H;) {
-            square_t sq = BB(file, rank);
+    for (rank_t r = RANK_8; r >= RANK_1; --r) {
+        for (file_t f = FILE_A; f <= FILE_H;) {
+            square_t sq = sq_make(f, r);
             piece_t piece =pos->board[sq];
             if (pos->board[sq] == EMPTY) {
                 int len = 0;
-                for (; file <= FILE_H && pos->board[BB(file,rank)] == EMPTY; file++)
+                for (; f <= FILE_H && pos->board[sq_make(f, r)] == EMPTY; f++)
                     len++;
                 fen[cur++] = '0' + len;
             } else {
                 fen[cur++] = piece_to_char_color(piece);
-                file++;
+                f++;
             }
         }
-        fen[cur++] = rank == RANK_1? ' ': '/';
+        fen[cur++] = r == RANK_1? ' ': '/';
     }
 
     /* 2) next turn color
@@ -243,8 +243,8 @@ char *pos2fen(const pos_t *pos, char *fen)
     if (!pos->en_passant) {
         fen[cur++] = '-';
     } else {
-        fen[cur++] = FILE2C(BBfile(pos->en_passant));
-        fen[cur++] = RANK2C(BBrank(pos->en_passant));
+        fen[cur++] = FILE2C(sq_file(pos->en_passant));
+        fen[cur++] = RANK2C(sq_rank(pos->en_passant));
     }
     fen[cur++] = ' ';
 

@@ -44,7 +44,7 @@ TARGET_FN := brchess
 TARGET    := $(addprefix $(BINDIR)/,$(TARGET_FN))
 
 LDFLAGS   := -L$(BRLIBDIR)
-LIBS      := -l$(LIB) -lreadline -lncurses
+LIBS      := $(strip -l$(LIB) -lreadline)
 
 ##################################### pre-processor flags
 CPPFLAGS  := -I$(BRINCDIR)
@@ -175,7 +175,7 @@ cleanobjdir: cleanobj
 # The part right of '|' are "order-only prerequisites": They are build as
 # "normal" ones, but do not imply to rebuild target.
 $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR) $(DEPDIR)
-	@echo compiling brchess $< "->" $@.
+	@echo compiling brchess module: $< "->" $@.
 	@$(CC) -c $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $< -o $@
 
 ##################################### brlib libraries
@@ -255,13 +255,18 @@ memcheck: targets
 	@$(VALGRIND) $(VALGRINDFLAGS) $(BINDIR)/brchess
 
 ##################################### test binaries
-TEST        = bin/fen-test
-FENTESTOBJS = obj/fen.o obj/position.o obj/piece.o obj/util.o
+TEST        = bin/fen-test bin/bitboard-test
+
+FENTESTOBJS = obj/fen.o obj/position.o obj/piece.o obj/util.o obj/bitboard.o
+BITBOARDOBJS = obj/position.o obj/piece.o obj/bitboard.o obj/fen.o
 
 testing: $(TEST)
 
 bin/fen-test: test/fen-test.c $(FENTESTOBJS)
-	$(CC) $(LDFLAGS) $(CPPFLAGS) $(CFLAGS) $< $(LIBS) $(FENTESTOBJS) -o $@
+	$(CC) $(LDFLAGS) $(CPPFLAGS) $(CFLAGS) $< $(FENTESTOBJS) $(LIBS) -o $@
+
+bin/bitboard-test: test/bitboard-test.c $(BITBOARDOBJS)
+	$(CC) $(LDFLAGS) $(CPPFLAGS) $(CFLAGS) $< $(BITBOARDOBJS) $(LIBS) -o $@
 
 
 ##################################### Makefile debug
