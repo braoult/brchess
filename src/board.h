@@ -80,6 +80,7 @@ static __always_inline rank_t sq_rank(square_t square)
 
 
 #define sq_ok(sq)       ((sq) >= A1 && (sq) <= H8)
+#define sq_coord_ok(c)  ((c) >= 0 && (c) < 8)
 
 /* Chebyshev distance: https://www.chessprogramming.org/Distance */
 #define sq_dist(sq1, sq2) (max(abs(sq_file(sq2) - sq_file(sq1)),  \

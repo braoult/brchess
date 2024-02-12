@@ -22,7 +22,13 @@
 
 typedef u64 bitboard_t;
 
-extern bitboard_t sq_bb[64], knight_attacks[64], king_attacks[64];
+/* mapping square -> bitboard */
+extern bitboard_t sq_bb[64];
+
+/* mapping square -> rank/file/diagonal/antidiagonal */
+extern bitboard_t sq_bbrank[64], sq_bbfile[64], sq_bbdiag[64], sq_bbanti[64];
+
+extern bitboard_t knight_attacks[64], king_attacks[64];
 
 #define mask(i)        ( 1ULL << (i) )
 
@@ -56,6 +62,7 @@ static __always_inline bitboard_t bb_rotate_90(bitboard_t b)
 }
 
 extern void bitboard_init(void);
-extern void bitboard_print(const bitboard_t bitboard, const char *title);
+extern void bitboard_print(const char *title, const bitboard_t bitboard);
+extern void bitboard_print_multi(const char *title, const int n, ...);
 
 #endif  /* _BITBOARD_H */
