@@ -12,7 +12,7 @@ int main(int ac, char**av)
     char revfen[128];
     int comp;
 
-    debug_init(5, stderr, true);
+    //debug_init(5, stderr, true);
     //pos_pool_init();
     pos = pos_new();
     if (ac == 1) {

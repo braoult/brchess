@@ -23,16 +23,15 @@
 typedef u64 bitboard_t;
 
 /* mapping square -> bitboard */
-extern bitboard_t sq_bb[64];
+extern bitboard_t bb_sq[64];
 
 /* mapping square -> rank/file/diagonal/antidiagonal */
-extern bitboard_t sq_bbrank[64], sq_bbfile[64], sq_bbdiag[64], sq_bbanti[64];
-
-extern bitboard_t knight_attacks[64], king_attacks[64];
+extern bitboard_t bb_rank[64], bb_file[64], bb_diagonal[64], bb_antidiagonal[64];
+extern bitboard_t bb_knight[64], bb_king[64];
 
 #define mask(i)        ( 1ULL << (i) )
 
-typedef enum {
+enum {
     FILE_Abb = 0x0101010101010101ULL,
     FILE_Bbb = 0x0202020202020202ULL,
     FILE_Cbb = 0x0404040404040404ULL,
@@ -41,9 +40,9 @@ typedef enum {
     FILE_Fbb = 0x2020202020202020ULL,
     FILE_Gbb = 0x4040404040404040ULL,
     FILE_Hbb = 0x8080808080808080ULL,
-} file_bb;
+};
 
-typedef enum {
+enum {
     RANK_1bb = 0x00000000000000ffULL,
     RANK_2bb = 0x000000000000ff00ULL,
     RANK_3bb = 0x0000000000ff0000ULL,
@@ -52,7 +51,7 @@ typedef enum {
     RANK_6bb = 0x0000ff0000000000ULL,
     RANK_7bb = 0x00ff000000000000ULL,
     RANK_8bb = 0xff00000000000000ULL
-} rank_bb;
+};
 
 /* https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating#Rotation
  */
@@ -61,8 +60,43 @@ static __always_inline bitboard_t bb_rotate_90(bitboard_t b)
     return b;
 }
 
+/* TODO: when OK, replace with macros */
+static __always_inline bitboard_t shift_n(const bitboard_t bb)
+{
+    return bb << NORTH;
+}
+static __always_inline bitboard_t shift_ne(const bitboard_t bb)
+{
+    return (bb & ~FILE_Hbb) << NORTH_EAST;
+}
+static __always_inline bitboard_t shift_e(const bitboard_t bb)
+{
+    return (bb & ~FILE_Hbb) << EAST;
+}
+static __always_inline bitboard_t shift_se(const bitboard_t bb)
+{
+    return (bb & ~FILE_Hbb) >> -SOUTH_EAST;
+}
+static __always_inline bitboard_t shift_s(const bitboard_t bb)
+{
+    return bb >> -SOUTH;
+}
+static __always_inline bitboard_t shift_sw(const bitboard_t bb)
+{
+    return (bb & ~FILE_Abb) >> -SOUTH_WEST;
+}
+static __always_inline bitboard_t shift_w(const bitboard_t bb)
+{
+    return (bb & ~FILE_Abb) >> -WEST;
+}
+static __always_inline bitboard_t shift_nw(const bitboard_t bb)
+{
+    return (bb & ~FILE_Abb) << NORTH_WEST;
+}
+
 extern void bitboard_init(void);
 extern void bitboard_print(const char *title, const bitboard_t bitboard);
 extern void bitboard_print_multi(const char *title, const int n, ...);
+extern char *bitboard8_sprint(char *str, const uchar bb8);
 
 #endif  /* _BITBOARD_H */

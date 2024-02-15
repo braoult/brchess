@@ -18,7 +18,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-#include <br.h>
+#include <brlib.h>
 #include <list.h>
 #include <debug.h>
 
