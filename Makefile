@@ -20,6 +20,7 @@ RMDIR     := rmdir
 MAKE      := make
 
 SRCDIR    := ./src
+INCDIR    := ./src
 OBJDIR    := ./obj
 BINDIR    := ./bin
 DEPDIR    := ./dep
@@ -47,7 +48,7 @@ LDFLAGS   := -L$(BRLIBDIR)
 LIBS      := $(strip -l$(LIB) -lreadline)
 
 ##################################### pre-processor flags
-CPPFLAGS  := -I$(BRINCDIR)
+CPPFLAGS  := -I$(BRINCDIR) -I$(INCDIR)
 CPPFLAGS  += -DBUG_ON
 CPPFLAGS  += -DWARN_ON
 #CPPFLAGS  += -DDEBUG                         # global
@@ -91,7 +92,7 @@ compile: brlib objs
 
 libs: brlib
 
-clean: cleandep cleanobj cleanbrlib cleanbin
+clean: cleandep cleanobj cleanbin
 
 cleanall: clean cleandepdir cleanobjdir cleanallbrlib cleanbindir
 
@@ -258,15 +259,16 @@ memcheck: targets
 TEST        = bin/fen-test bin/bitboard-test
 
 FENTESTOBJS = obj/fen.o obj/position.o obj/piece.o obj/util.o obj/bitboard.o
-BITBOARDOBJS = obj/position.o obj/piece.o obj/bitboard.o obj/fen.o
+BITBOARDOBJS = obj/position.o obj/piece.o obj/bitboard.o obj/fen.o \
+	obj/hyperbola-quintessence.o
 
 testing: $(TEST)
 
 bin/fen-test: test/fen-test.c $(FENTESTOBJS)
-	$(CC) $(LDFLAGS) $(CPPFLAGS) $(CFLAGS) $< $(FENTESTOBJS) $(LIBS) -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(FENTESTOBJS)  $(LDFLAGS) $(LIBS) -o $@
 
 bin/bitboard-test: test/bitboard-test.c $(BITBOARDOBJS)
-	$(CC) $(LDFLAGS) $(CPPFLAGS) $(CFLAGS) $< $(BITBOARDOBJS) $(LIBS) -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(BITBOARDOBJS) $(LDFLAGS) $(LIBS) -o $@
 
 
 ##################################### Makefile debug
