@@ -208,7 +208,7 @@ char *pos2fen(const pos_t *pos, char *fen)
     for (rank_t r = RANK_8; r >= RANK_1; --r) {
         for (file_t f = FILE_A; f <= FILE_H;) {
             square_t sq = sq_make(f, r);
-            piece_t piece =pos->board[sq];
+            piece_t piece = pos->board[sq];
             if (pos->board[sq] == EMPTY) {
                 int len = 0;
                 for (; f <= FILE_H && pos->board[sq_make(f, r)] == EMPTY; f++)

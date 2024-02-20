@@ -30,15 +30,29 @@ uchar bb_rank_attacks[64 * 8];
  * See: https://www.chessprogramming.org/Kindergarten_Bitboards
  * and  https://www.chessprogramming.org/Hyperbola_Quintessence
  *
- * Generate the rank attacks bitboard:
- * bb_rank_hyperbola[64 * 8], where:
- *   - 64 = 2^6 = the occupation of inner 6 bits on rank
- *   - 8  = file of sliding piece
+ *
+ * Rank attacks table:
+ * bb_rank_hyperbola[512 = 9 bits], indexed by oooooofff where:
+ *   - O = oooooo: occupation of inner 6 bits on rank
+ *   - F = fff:    file of sliding piece
+ * The index is built as (oooooo << 3 + fff), = ((O << 3) + F), where:
+ *   - O = all combinations of 6 bits (loop from 0 to 64)
+ *   - F = all files (loop from 0 to 7)
+ * To retrieve the index, given an 8 bits mask M=XooooooX, and a file F=fff,
+ * we get O from M with:
+ *   1) remove bits 'X' (O = M & 01111110)
+ *   2) shift left result 2 more bits, as bit 0 is unused and already cleared:
+ *      (O <<= 2)
+ *
+ * TODO ? create masks excluding slider (eg. bb_diagonal ^ bb_sq[square]),
+ * to save one operation in hyperbola_moves().
+ * TODO ? replace rank attack with this idea, mapping rank to diagonal ?
+ * See http://timcooijmans.blogspot.com/2014/04/
  *
  */
 void hyperbola_init()
 {
-    /* generate rank attacks
+    /* generate rank attacks, not handled by HQ
      */
     for (int occ = 0; occ < 64; ++occ) {
         for (int file = 0; file < 8; ++file) {
@@ -48,7 +62,7 @@ void hyperbola_init()
             for (int slide = file - 1; slide >= 0; --slide) {
                 int b = bb_sq[slide];             /* bit to consider */
                 attacks |= b;                     /* add to attack mask */
-                if ((occ << 1) & b)                     /* piece on b, we stop */
+                if ((occ << 1) & b)               /* piece on b, we stop */
                     break;
             }
             /* set f right attacks */
@@ -61,6 +75,24 @@ void hyperbola_init()
             bb_rank_attacks[occ * 8 + file] = attacks;
         }
     }
+}
+
+/**
+ * hyperbola_rank_moves() - generate rank moves for a sliding piece.
+ * @pieces: occupation bitboard
+ * @sq: piece square
+ *
+ * Rank attacks are not handled by HQ, so we do it with a
+ *
+ * @Return: The moves mask for piece
+ */
+static bitboard_t hyperbola_rank_moves(bitboard_t occ, square_t sq)
+{
+    uint32_t rank = sq & SQ_FILEMASK;
+    uint32_t file = sq & SQ_RANKMASK;
+    uint64_t o = (occ >> rank) & 0x7e;            /* 01111110 clear bits 0 & 7 */
+
+    return ((bitboard_t)bb_rank_attacks[o * 4 + file]) << rank;
 }
 
 /**
@@ -80,19 +112,9 @@ static bitboard_t hyperbola_moves(const bitboard_t pieces, const square_t sq,
     bitboard_t r = bswap64(o);
     square_t  r_sq = FLIP_V(sq);
 
-    return (         (o - mask(sq)   )
-            ^ bswap64(r - mask(r_sq)))
+    return (         (o - 2 * mask(sq)   )
+            ^ bswap64(r - 2 * mask(r_sq)))
         & mask;
-
-}
-
-static bitboard_t hyperbola_rank_moves(bitboard_t occ, square_t sq)
-{
-    uint32_t rank = sq & SQ_FILEMASK;
-    uint32_t file = sq & SQ_RANKMASK;
-    uint64_t o = (occ >> rank) & 126;             /* removes bits 0 & 7 */
-
-    return ((bitboard_t)bb_rank_attacks[o * 4 + file]) << rank;
 }
 
 static bitboard_t hyperbola_file_moves(bitboard_t occ, square_t sq)

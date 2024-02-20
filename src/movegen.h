@@ -1,4 +1,4 @@
-/* hyperbola-quintessence.h - hyperbola-quintessence definitions.
+/* movegen.h - move generation
  *
  * Copyright (C) 2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
@@ -11,15 +11,20 @@
  *
  */
 
-#ifndef _HYPERBOLA_QUINTESSENCE_H
-#define _HYPERBOLA_QUINTESSENCE_H
+#ifndef MOVEGEN_H
+#define MOVEGEN_H
 
-#include "board.h"
+#include "bitops.h"
+
 #include "bitboard.h"
+#include "hyperbola-quintessence.h"
+#include "piece.h"
+#include "move.h"
 
-void hyperbola_init(void);
-extern bitboard_t hyperbola_bishop_moves(bitboard_t occ, square_t sq);
-extern bitboard_t hyperbola_rook_moves(bitboard_t occ, square_t sq);
-extern bitboard_t hyperbola_queen_moves(bitboard_t occ, square_t sq);
+/**
+ * gen_all_pseudomoves() - generate all pseudo moves
+ *
+ */
+int gen_all_pseudomoves(pos_t *pos);
 
-#endif  /* _HYPERBOLA_QUINTESSENCE_H */
+#endif  /* MOVEGEN_H */

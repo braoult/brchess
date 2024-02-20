@@ -22,6 +22,7 @@
 #include "bitboard.h"
 #include "chessdefs.h"
 #include "piece.h"
+#include "move.h"
 
 typedef struct {
     u64 node_count;                               /* evaluated nodes */
@@ -40,11 +41,14 @@ typedef struct {
     //bool moves_counted;
 
     bitboard_t bb[2][PIECE_TYPE_MAX];             /* bb[0][PAWN], bb[1][ALL_PIECES] */
+    square_t king[2];                             /* dup with bb, faster retrieval */
     bitboard_t controlled[2];
     //u16 mobility[2];
                                                   //struct list_head pieces[2];                   /* pieces list, King is first */
     //struct list_head moves[2];
     piece_t board[BOARDSIZE];
+    movelist_t moves;
+    int nmoves;
 } pos_t;
 
 /**
@@ -62,6 +66,8 @@ static inline void pos_set_sq(pos_t *pos, square_t square, piece_t piece)
     pos->board[square] = piece;
     pos->bb[color][type] |= 1 << square;
     pos->bb[color][ALL_PIECES] |= 1 << square;
+    if (type == KING)
+        pos->king[color] = square;
 }
 
 /**

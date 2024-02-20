@@ -16,19 +16,50 @@
 
 #include "chessdefs.h"
 #include "position.h"
-#include "pool.h"
+//#include "pool.h"
 #include "piece.h"
 
-/* move flags
+/* move structure:
+ * 3     2 2     1 1 1 1 1 1
+ * 1     5 4     8 7 5 4 2 1    6 5    0
+ * UUUUUUU FFFFFFF ppp ccc tttttt ffffff
+ *
+ * bits    range         type     mask        get   desc
+ * ffffff    0-5     square_t       3f        &63   from
+ * tttttt   6-11     square_t      fc0   (>>6)&63   to
+ * ccc     12-14 piece_type_t     7000   (>>12)&7   captured
+ * ppp     15-17 piece_type_t    38000   (>>15)&7   promoted
+ * FFFFFFF 18-24          N/A  1fc0000        N/A   flags
+ * UUUUUUU 25-31       unused fe000000        N/A   future usage ?
  */
-typedef unsigned char move_flags_t;
-#define M_NORMAL       0x00
-#define M_CHECK        0x01                       /* unsure if we know */
-#define M_CAPTURE      0x02
-#define M_EN_PASSANT   0x04
-#define M_PROMOTION    0x08
-#define M_CASTLE_K     0x10
-#define M_CASTLE_Q     0x20
+#define move_t u32
+
+#define M_
+/* move flags */
+#define M_FLAGS_BEG 18
+#define M_HAS_FLAGS mask(_M_FLAGS_BEG + 0)            /* probably unused */
+#define M_CAPTURE   mask(_M_FLAGS_BEG + 1)
+#define M_ENPASSANT mask(_M_FLAGS_BEG + 2)
+#define M_PROMOTION mask(_M_FLAGS_BEG + 3)
+#define M_CASTLE_K  mask(_M_FLAGS_BEG + 4)
+#define M_CASTLE_Q  mask(_M_FLAGS_BEG + 5)
+#define M_CHECK     mask(_M_FLAGS_BEG + 6)            /* probably unknown/useless */
+
+#define M_FLAGS     (M_CAPTURE | M_ENPASSANT | M_PROMOTION | \
+                     M_CASTLE_K | M_CASTLE_Q | M_CHECK)
+#define M_NORMAL    (~M_FLAGS)
+
+#define MOVES_MAX   256
+
+static inline move_t move_make(square_t from, square_t to)
+{
+    return (to << 3) | from;
+}
+
+static inline move_t move_from(move_t move)
+{
+    return move & 56;
+}
 
 /* moves_print flags
  */
@@ -40,30 +71,23 @@ typedef unsigned char move_flags_t;
 #define M_PR_SEPARATE  0x40                       /* separate captures */
 #define M_PR_LONG      0x80
 
-typedef struct move_s {
-    piece_t piece;
-    square_t from, to;
-    piece_t capture;                              /* captured piece */
-    piece_t promotion;                            /* promoted piece */
-    move_flags_t flags;
-    eval_t negamax;
-    eval_t eval;
-    eval_t eval_simple;
-    pos_t *pos;
-    struct list_head list;                        /* next move */
-} move_t;
+typedef struct {
+    move_t move[MOVES_MAX];
+    int nmoves;                                   /* total moves (fill) */
+    int curmove;                                  /* current move (use) */
+} movelist_t;
 
-pool_t *moves_pool_init();
-void moves_pool_stats();
-int move_print(int movenum, move_t *move, move_flags_t flags);
-void moves_print(pos_t *move, move_flags_t flags);
+//pool_t *moves_pool_init();
+//void moves_pool_stats();
+//int move_print(int movenum, move_t *move, move_flags_t flags);
+//void moves_print(pos_t *move, move_flags_t flags);
 
-void move_del(struct list_head *ptr);
-int moves_del(pos_t *pos);
+//void move_del(struct list_head *ptr);
+//int moves_del(pos_t *pos);
 
 int pseudo_moves_castle(pos_t *pos, bool color, bool doit, bool do_king);
-int pseudo_moves_gen(pos_t *pos, piece_list_t *piece, bool doit, bool do_king);
-int pseudo_moves_pawn(pos_t *pos, piece_list_t *piece, bool doit);
+//int pseudo_moves_gen(pos_t *pos, piece_list_t *piece, bool doit, bool do_king);
+//int pseudo_moves_pawn(pos_t *pos, piece_list_t *piece, bool doit);
 int moves_gen(pos_t *pos, bool color, bool doit, bool do_king);
 int moves_gen_king_moves(pos_t *pos, bool color, bool doit);
 

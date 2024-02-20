@@ -68,12 +68,12 @@ typedef enum {
  */
 #define FLIP_V(sq)      ((sq) ^ 56)
 #define FLIP_H(sq)      ((sq) ^ 7)
-#define FLIP_HV(sq)     (FLIP_V(FLIP_H(sq)))
+#define FLIP_HV(sq)     ((sq) ^ 63)               /* FLIP_V ^ FLIP_H */
 
 /* TODO: revert to macros after bitboard migration */
 static __always_inline square_t sq_make(file_t file, rank_t rank)
 {
-    return (rank << 3) + file;
+    return (rank << 6) + file;
 }
 static __always_inline file_t sq_file(square_t square)
 {
@@ -81,7 +81,7 @@ static __always_inline file_t sq_file(square_t square)
 }
 static __always_inline rank_t sq_rank(square_t square)
 {
-    return square >> 3;
+    return square >> 6;
 }
 
 #define sq_ok(sq)       ((sq) >= A1 && (sq) <= H8)

@@ -51,6 +51,8 @@ LIBS      := $(strip -l$(LIB) -lreadline)
 CPPFLAGS  := -I$(BRINCDIR) -I$(INCDIR)
 CPPFLAGS  += -DBUG_ON
 CPPFLAGS  += -DWARN_ON
+CPPFLAGS  += -NDEBUG                         #
+
 #CPPFLAGS  += -DDEBUG                         # global
 CPPFLAGS  += -DDEBUG_DEBUG                   # enable log() functions
 #CPPFLAGS  += -DDEBUG_DEBUG_C                # enable verbose log() settings
@@ -66,7 +68,7 @@ CPPFLAGS  := $(strip $(CPPFLAGS))
 
 ##################################### compiler flags
 CFLAGS    := -std=gnu11
-#CFLAGS    += -O2
+CFLAGS    += -O3
 CFLAGS    += -g
 CFLAGS    += -Wall
 CFLAGS    += -Wextra

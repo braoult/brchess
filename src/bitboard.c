@@ -20,6 +20,7 @@
 #include "piece.h"
 #include "board.h"
 #include "bitboard.h"
+#include "position.h"
 
 /*  vectors are clockwise from N */
 static int knight_vector[] = {
@@ -108,6 +109,15 @@ void bitboard_init(void)
             }
         }
     }
+}
+
+bitboard_t bb_knight_moves(bitboard_t notmine, square_t sq)
+{
+    return bb_knight[sq] & notmine;
+}
+bitboard_t bb_king_moves(bitboard_t notmine, square_t sq)
+{
+    return bb_king[sq] & notmine;
 }
 
 /**
