@@ -112,7 +112,7 @@ pos_t *pos_clear(pos_t *pos)
     pos->turn = 0;
     pos->clock_50 = 0;
     pos->plycount = 0;
-    pos->en_passant = 0;
+    pos->en_passant = SQUARE_NONE;
     pos->castle = 0;
     memset(pos->board, 0, sizeof(pos->board));
     //pos->curmove = 0;
@@ -237,7 +237,7 @@ void raw_board_print(const pos_t *pos)
 
     for (rank_t r = RANK_8; r >= RANK_1; --r) {
         for (file_t f = FILE_A; f <= FILE_H; ++f)
-            printf("%02x ", pos->board[sq_make(f, r)]);
+            printf("%02o ", pos->board[sq_make(f, r)]);
         printf(" \n");
     }
     return;

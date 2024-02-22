@@ -64,8 +64,8 @@ static inline void pos_set_sq(pos_t *pos, square_t square, piece_t piece)
     color_t color = COLOR(piece);
     piece_type_t type = PIECE(piece);
     pos->board[square] = piece;
-    pos->bb[color][type] |= 1 << square;
-    pos->bb[color][ALL_PIECES] |= 1 << square;
+    pos->bb[color][type] |= mask(square);
+    pos->bb[color][ALL_PIECES] |= mask(square);
     if (type == KING)
         pos->king[color] = square;
 }
@@ -83,8 +83,8 @@ static inline void pos_clr_sq(pos_t *pos, square_t square)
     piece_type_t type = PIECE(piece);
     color_t color = COLOR(piece);
     pos->board[square] = EMPTY;
-    pos->bb[color][type] &= ~(1 << square);
-    pos->bb[color][ALL_PIECES] &= ~(1 << square);
+    pos->bb[color][type] &= ~mask(square);
+    pos->bb[color][ALL_PIECES] &= ~mask(square);
 }
 
 //void bitboard_print(bitboard_t bb, char *title);
