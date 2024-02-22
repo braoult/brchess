@@ -24,7 +24,7 @@
 #include "piece.h"
 #include "move.h"
 
-typedef struct {
+typedef struct _pos_s {
     u64 node_count;                               /* evaluated nodes */
     int turn;                                     /* WHITE or BLACK */
     u16 clock_50;

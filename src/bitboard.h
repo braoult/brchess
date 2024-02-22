@@ -101,6 +101,6 @@ extern bitboard_t bb_king_moves(bitboard_t occ, square_t sq);
 
 extern void bitboard_print(const char *title, const bitboard_t bitboard);
 extern void bitboard_print_multi(const char *title, const int n, ...);
-extern char *bitboard8_sprint(char *str, const uchar bb8);
+extern char *bitboard_rank_sprint(char *str, const uchar bb8);
 
 #endif  /* _BITBOARD_H */

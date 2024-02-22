@@ -34,7 +34,6 @@
  */
 #define move_t u32
 
-#define M_
 /* move flags */
 #define M_FLAGS_BEG 18
 #define M_HAS_FLAGS mask(_M_FLAGS_BEG + 0)            /* probably unused */
@@ -88,16 +87,16 @@ typedef struct {
 int pseudo_moves_castle(pos_t *pos, bool color, bool doit, bool do_king);
 //int pseudo_moves_gen(pos_t *pos, piece_list_t *piece, bool doit, bool do_king);
 //int pseudo_moves_pawn(pos_t *pos, piece_list_t *piece, bool doit);
-int moves_gen(pos_t *pos, bool color, bool doit, bool do_king);
-int moves_gen_king_moves(pos_t *pos, bool color, bool doit);
+//extern int moves_gen(pos_t *pos, bool color, bool doit, bool do_king);
+//extern int moves_gen_king_moves(pos_t *pos, bool color, bool doit);
 
-void moves_sort(pos_t *pos);
-void moves_gen_eval_sort(pos_t *pos);
+//extern void moves_sort(pos_t *pos);
+//extern void moves_gen_eval_sort(pos_t *pos);
 
-void moves_gen_all(pos_t *pos);
-void moves_gen_all_nomoves(pos_t *pos);
+//extern void moves_gen_all(pos_t *pos);
+//extern void moves_gen_all_nomoves(pos_t *pos);
 
-pos_t *move_do(pos_t *pos, move_t *move);
-void move_undo(pos_t *pos, move_t *move);
+//extern pos_t *move_do(pos_t *pos, move_t *move);
+//extern void move_undo(pos_t *pos, move_t *move);
 
 #endif  /* MOVE_H */

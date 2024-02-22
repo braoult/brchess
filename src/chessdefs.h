@@ -47,6 +47,8 @@ typedef enum {
 #define MIDDLEGAME 1
 #define ENDGAME    2
 
+/* forward defs */
+typedef struct _pos_s pos_t;
 /* bitboard
  */
 //typedef u64 bitboard_t;

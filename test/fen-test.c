@@ -1,6 +1,7 @@
 #include "debug.h"
 #include "pool.h"
 
+#include "../src/chessdefs.h"
 #include "../src/bitboard.h"
 #include "../src/position.h"
 #include "../src/fen.h"
