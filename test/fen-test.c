@@ -1,6 +1,7 @@
 #include "debug.h"
 #include "pool.h"
 
+#include "../src/bitboard.h"
 #include "../src/position.h"
 #include "../src/fen.h"
 
@@ -14,6 +15,7 @@ int main(int ac, char**av)
 
     //debug_init(5, stderr, true);
     //pos_pool_init();
+    bitboard_init();
     pos = pos_new();
     if (ac == 1) {
         fen = startfen;

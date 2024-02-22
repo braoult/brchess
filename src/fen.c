@@ -21,10 +21,11 @@
 #include <bug.h>
 
 #include "chessdefs.h"
+#include "util.h"
+#include "piece.h"
+#include "bitboard.h"
 #include "position.h"
 #include "fen.h"
-#include "piece.h"
-#include "util.h"
 
 /* FEN description:
  * 1 : pieces on board (no space allowed):
@@ -60,6 +61,90 @@ static const char *castle_str = "KQkq";
 #define SKIP_BLANK(p) for(;isspace(*(p)); (p)++)
 
 /**
+ * fen_test(pos_t *pos) - test (and try to fix) fen-generated position.
+ * @pos: position
+ *
+ * fen_test() tests the following:
+ * - fatal: number of pawns > 8
+ * - fatal: number of pieces > 16
+ * - fatal: number of kings != 1
+ * - fixable: inconsistent castle flags (if K & R are not in correct position)
+ * - fixable: inconsistent en-passant square (turn, bad pawn position)
+ *
+ * @return: 0 if OK, 1 if OK after fix, -1 if fatal issue.
+ */
+static int fen_test(pos_t *pos)
+{
+    char *colstr[2] = { "white", "black"};
+    int error = 0, warning = 0;
+
+    /* en passant, depends on who plays next */
+    if (pos->en_passant != SQUARE_NONE) {
+        rank_t eprank = sq_rank(pos->en_passant);
+        file_t epfile = sq_file(pos->en_passant);
+        rank_t rank5 = pos->turn == WHITE? RANK_5: RANK_4;
+        rank_t rank6 = pos->turn == WHITE? RANK_6: RANK_3;
+        rank_t rank7 = pos->turn == WHITE? RANK_7: RANK_2;
+        piece_t pawn = pos->turn == WHITE? B_PAWN: W_PAWN;
+        if (warn(eprank != rank6 ||
+                 pos->board[sq_make(epfile, rank5)] != pawn ||
+                 pos->board[sq_make(epfile, rank6)] != EMPTY ||
+                 pos->board[sq_make(epfile, rank7)] != EMPTY,
+                 "fen warn: wrong en-passant settings. (fixed)\n")) {
+            printf("ep5=%o ep6=%o ep7=%o\n", sq_make(epfile, rank5),
+                   sq_make(epfile, rank6), sq_make(epfile, rank6));
+            warning++;
+            pos->en_passant = SQUARE_NONE;
+        }
+    }
+
+    for (int color = WHITE; color <= BLACK; ++color) {
+        int n;
+        rank_t rank1 = color == WHITE? RANK_1: RANK_8;
+
+        /* castling */
+        /* where K and R should be for valid castle flag */
+        bitboard_t k    = bb_sq[sq_make(FILE_E, rank1)];
+        bitboard_t r_k  = bb_sq[sq_make(FILE_H, rank1)];
+        bitboard_t r_q  = bb_sq[sq_make(FILE_A, rank1)];
+
+       /* where they are */
+        bitboard_t kings = pos->bb[color][KING];
+        bitboard_t rooks = pos->bb[color][ROOK];
+        castle_rights_t castle_k = color == WHITE? CASTLE_WK: CASTLE_BK;
+        castle_rights_t castle_q = color == WHITE? CASTLE_WQ: CASTLE_BQ;
+        if (pos->castle & castle_k) {
+            if (warn(!(k & kings && r_k & rooks),
+                     "fen warn: wrong %s short castling K or R position (fixed)\n",
+                     colstr[color])) {
+                warning++;
+                pos->castle &= ~castle_k;
+            }
+        }
+        if (pos->castle & castle_q) {
+            if (warn(!(k & kings && r_q & rooks),
+                     "fen warn: wrong %s long castling K or R position (fixed)\n",
+                     colstr[color])) {
+                warning++;
+                pos->castle &= ~castle_q;
+            }
+        }
+
+        /* piece, pawn, anf king count */
+        n = popcount64(pos->bb[color][PAWN]);
+        error += warn(n > 8,
+                      "fen err: %s has %d pawns\n", colstr[color], n);
+        n = popcount64(pos->bb[color][KING]);
+        error += warn(n != 1,
+                      "fen err: %s has %d kings\n", colstr[color], n);
+        n = popcount64(pos->bb[color][ALL_PIECES]);
+        error += warn(n > 16,
+                      "fen err: %s has %d pieces\n", colstr[color], n);
+    }
+    return error ? -1: warning ? 1: 0;
+}
+
+/**
  * startpos - create a game start position
  * @pos: a position pointer or NULL
  *
@@ -92,7 +177,6 @@ pos_t *fen2pos(pos_t *pos, const char *fen)
     pos_t tmppos;
 
     pos_clear(&tmppos);
-
     /* 1) get piece placement information
      */
     for (rank = 7, file = 0; *cur && !isspace(*cur); ++cur) {
@@ -142,7 +226,6 @@ pos_t *fen2pos(pos_t *pos, const char *fen)
 
     /* 4) en passant
      */
-    tmppos.en_passant = 0;
     if (*cur == '-') {
         cur++;
     } else {
@@ -175,9 +258,11 @@ end:
              err_line, err_pos, err_char, err_char)) {
         return NULL;
     }
-    if (!pos)
-        pos = pos_new();
-    *pos = tmppos;
+    if (fen_test(&tmppos) >= 0) {
+        if (!pos)
+            pos = pos_new();
+        *pos = tmppos;
+    }
     return pos;
 }
 
@@ -240,7 +325,7 @@ char *pos2fen(const pos_t *pos, char *fen)
 
     /* 4) en passant
      */
-    if (!pos->en_passant) {
+    if (pos->en_passant == SQUARE_NONE) {
         fen[cur++] = '-';
     } else {
         fen[cur++] = FILE2C(sq_file(pos->en_passant));
