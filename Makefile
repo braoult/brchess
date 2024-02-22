@@ -51,7 +51,7 @@ LIBS      := $(strip -l$(LIB) -lreadline)
 CPPFLAGS  := -I$(BRINCDIR) -I$(INCDIR)
 CPPFLAGS  += -DBUG_ON
 CPPFLAGS  += -DWARN_ON
-CPPFLAGS  += -NDEBUG                         #
+CPPFLAGS  += -DNDEBUG
 
 #CPPFLAGS  += -DDEBUG                         # global
 CPPFLAGS  += -DDEBUG_DEBUG                   # enable log() functions

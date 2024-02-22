@@ -25,7 +25,10 @@
 
 /**
  * gen_all_pseudomoves() - generate all pseudo moves
+ * @pos: position
  *
+ * Generate all moves, no check is done on validity due to castle rules,
+ * or check (pinned pieces, etc...).
  */
 int gen_all_pseudomoves(pos_t *pos)
 {
@@ -70,5 +73,13 @@ int gen_all_pseudomoves(pos_t *pos)
     bit_for_each64(to, tmp2, movebits) {
         moves.move[moves.nmoves++] = move_make(from, to);
     }
-    /* TODO  */
+
+    /* TODO
+     * pawn ranks 2-6 advance (1 push, + 2 squares for rank 2)
+     * pawns ranks 2-6 capture
+     * pawns rank 7 advance + promotion
+     * pawns rank 7 capture + promotion
+     * pawns en-passant
+     * castle
+     */
 }
