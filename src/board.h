@@ -73,7 +73,7 @@ typedef enum {
 /* TODO: revert to macros after bitboard migration */
 static __always_inline square_t sq_make(file_t file, rank_t rank)
 {
-    return (rank << 6) + file;
+    return (rank << 3) + file;
 }
 static __always_inline file_t sq_file(square_t square)
 {
@@ -81,7 +81,7 @@ static __always_inline file_t sq_file(square_t square)
 }
 static __always_inline rank_t sq_rank(square_t square)
 {
-    return square >> 6;
+    return square >> 3;
 }
 
 #define sq_ok(sq)       ((sq) >= A1 && (sq) <= H8)
