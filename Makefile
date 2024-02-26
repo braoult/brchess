@@ -20,10 +20,11 @@ RMDIR     := rmdir
 MAKE      := make
 
 SRCDIR    := ./src
-INCDIR    := ./src
+INCDIR    := ./src					    # used by ./test sources
 OBJDIR    := ./obj
 BINDIR    := ./bin
 DEPDIR    := ./dep
+TSTDIR    := ./test
 
 BRLIB     := ./brlib
 BRINCDIR  := $(BRLIB)/include
@@ -32,11 +33,13 @@ BRLIBDIR  := $(BRLIB)/lib
 CCLSROOT  := .ccls-root
 CCLSFILE  := compile_commands.json
 
-SRC       := $(wildcard $(SRCDIR)/*.c)                      # project sources
-SRC_FN    := $(notdir $(SRC))                               # source basename
+SRC       := $(wildcard $(SRCDIR)/*.c)			    # project sources
+SRC_FN    := $(notdir $(SRC))				    # source basename
 OBJ       := $(addprefix $(OBJDIR)/,$(SRC_FN:.c=.o))
 
-LIB       := br_$(shell uname -m)			     # library name
+TSTSRC    := $(wildcard $(TSTDIR)/*.c)
+
+LIB       := br_$(shell uname -m)			    # library name
 
 DEP_FN    := $(SRC_FN) $(LIBSRC_FN)
 DEP       := $(addprefix $(DEPDIR)/,$(DEP_FN:.c=.d))
@@ -47,21 +50,26 @@ TARGET    := $(addprefix $(BINDIR)/,$(TARGET_FN))
 LDFLAGS   := -L$(BRLIBDIR)
 LIBS      := $(strip -l$(LIB) -lreadline)
 
+ASMFILES  := $(SRC:.c=.s) $(TSTSRC:.c=.s)
+CPPFILES  := $(SRC:.c=.i) $(TSTSRC:.c=.i)
+
 ##################################### pre-processor flags
 CPPFLAGS  := -I$(BRINCDIR) -I$(INCDIR)
-CPPFLAGS  += -DBUG_ON
-CPPFLAGS  += -DWARN_ON
-CPPFLAGS  += -DNDEBUG
 
-#CPPFLAGS  += -DDEBUG                         # global
-CPPFLAGS  += -DDEBUG_DEBUG                   # enable log() functions
-#CPPFLAGS  += -DDEBUG_DEBUG_C                # enable verbose log() settings
-CPPFLAGS  += -DDEBUG_POOL                    # memory pools management
-#CPPFLAGS  += -DDEBUG_FEN                     # FEN decoding
-CPPFLAGS  += -DDEBUG_MOVE                    # move generation
-CPPFLAGS  += -DDEBUG_EVAL                    # eval functions
-CPPFLAGS  += -DDEBUG_PIECE                   # piece list management
-CPPFLAGS  += -DDEBUG_SEARCH                  # move search
+CPPFLAGS  += -DNDEBUG                                       # assert
+
+CPPFLAGS  += -DBUG_ON                                       # bug.h
+CPPFLAGS  += -DWARN_ON                                      # bug.h
+#CPPFLAGS  += -DDEBUG                                       # global - unused
+
+CPPFLAGS  += -DDEBUG_DEBUG                                  # enable log() functions
+#CPPFLAGS  += -DDEBUG_DEBUG_C                                # enable log() settings
+CPPFLAGS  += -DDEBUG_POOL                                   # memory pools management
+#CPPFLAGS  += -DDEBUG_FEN                                    # FEN decoding
+CPPFLAGS  += -DDEBUG_MOVE                                   # move generation
+CPPFLAGS  += -DDEBUG_EVAL                                   # eval functions
+CPPFLAGS  += -DDEBUG_PIECE                                  # piece list management
+CPPFLAGS  += -DDEBUG_SEARCH                                 # move search
 
 # remove extraneous spaces (due to spaces before comments)
 CPPFLAGS  := $(strip $(CPPFLAGS))
@@ -94,15 +102,14 @@ compile: brlib objs
 
 libs: brlib
 
-clean: cleandep cleanobj cleanbin
+clean: cleandep cleanasmcpp cleanobj cleanbin
 
 cleanall: clean cleandepdir cleanobjdir cleanallbrlib cleanbindir
 
 ##################################### cleaning functions
-# rmfiles - deletes a list of files in a directory if they exist.
+# rmfiles - delete a list of files if they exist.
 # $(1): the directory
-# $(2): the list of files to delete
-# $(3): The string to include in action output - "cleaning X files."
+# $(2): The string to include in action output - "cleaning X files."
 # see: https://stackoverflow.com/questions/6783243/functions-in-makefiles
 #
 # Don't use wildcard like "$(DIR)/*.o", so we can control mismatches between
@@ -118,7 +125,7 @@ define rmfiles
 	fi
 endef
 
-# rmdir - deletes a directory if it exists.
+# rmdir - delete a directory if it exists.
 # $(1): the directory
 # $(2): The string to include in action output - "removing X dir."
 #
@@ -182,16 +189,15 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR) $(DEPDIR)
 	@$(CC) -c $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $< -o $@
 
 ##################################### brlib libraries
-.PHONY: cleanbrlib cleanallbrlib libs brlib
+.PHONY: cleanbrlib cleanallbrlib brlib
 
 cleanbrlib:
 	$(MAKE) -C $(BRLIB) clean
-	@#$(call rmfiles,$(DLIB) $(SLIB),library)
 
 cleanallbrlib:
 	$(MAKE) -C $(BRLIB) cleanall
 
-brlib: libs
+brlib:
 	$(MAKE) -C $(BRLIB) libs
 
 ##################################### brchess binaries
@@ -205,13 +211,16 @@ cleanbin:
 cleanbindir:
 	$(call rmdir,$(BINDIR),binaries)
 
-# We don't use static lib, but we could build it here
-#$(TARGET): $(DLIB) $(OBJ) | $(BINDIR) $(SLIB)
-$(TARGET): libs $(OBJ) | $(BINDIR) $(SLIB)
+$(TARGET): libs $(OBJ) | $(BINDIR)
 	@echo generating $@ executable.
 	$(CC) $(LDFLAGS) $(OBJ) $(LIBS) -o $@
 
 ##################################### pre-processed (.i) and assembler (.s) output
+.PHONY: cleanasmcpp
+
+cleanasmcpp:
+	@$(call rmfiles,$(ASMFILES) $(CPPFILES),asm and pre-processed)
+
 %.i: %.c
 	@echo generating $@
 	@$(CC) -E $(CPPFLAGS) $(CFLAGS) $< -o $@
@@ -230,17 +239,13 @@ $(CCLSROOT):
 	@$(TOUCH) $@
 
 # generate compile_commands.json.
-# Need to add includes and Makefile dependencies.
+# TODO: add Makefile dependencies.
 # also, if cclsfile is newer than sources, no need to clean objects file
 # (and to run bear).
 # maybe run cleanobj cleanlibobj in commands ?
 $(CCLSFILE): cleanobj cleanbrlib $(SRC) $(LIBSRC) | $(CCLSROOT)
 	@echo "Generating ccls compile commands file ($@)."
-	@$(BEAR) -- $(MAKE) compile
-
-#.PHONY: bear
-#bear: cleanobj cleanlibobj Makefile | $(CCLSROOT)
-#    @$(BEAR) -- make compile
+	@$(BEAR) -- $(MAKE) compile testing
 
 ##################################### valgrind (mem check)
 .PHONY: memcheck
@@ -258,19 +263,21 @@ memcheck: targets
 	@$(VALGRIND) $(VALGRINDFLAGS) $(BINDIR)/brchess
 
 ##################################### test binaries
-TEST        = bin/fen-test bin/bitboard-test
+TEST           = bin/fen-test bin/bitboard-test
 
-FENTESTOBJS = obj/fen.o obj/position.o obj/piece.o obj/util.o obj/bitboard.o
-BITBOARDOBJS = obj/position.o obj/piece.o obj/bitboard.o obj/fen.o \
-	obj/hyperbola-quintessence.o
+FENTESTOBJS    = obj/fen.o obj/position.o obj/piece.o obj/bitboard.o \
+	obj/board.o obj/util.o
+BITBOARDOBJS   = obj/fen.o obj/position.o obj/piece.o obj/bitboard.o \
+	 obj/board.o obj/hyperbola-quintessence.o
 
 testing: $(TEST)
 
 bin/fen-test: test/fen-test.c $(FENTESTOBJS)
-	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(FENTESTOBJS)  $(LDFLAGS) $(LIBS) -o $@
+	$(CC) $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $< $(FENTESTOBJS)  $(LDFLAGS) $(LIBS) -o $@
 
 bin/bitboard-test: test/bitboard-test.c $(BITBOARDOBJS)
-	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(BITBOARDOBJS) $(LDFLAGS) $(LIBS) -o $@
+	echo all=$^
+	$(CC) $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $< $(BITBOARDOBJS) $(LDFLAGS) $(LIBS) -o $@
 
 
 ##################################### Makefile debug
