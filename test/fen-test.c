@@ -1,10 +1,11 @@
-#include "debug.h"
-#include "pool.h"
+//#include <stdio.h>
 
-#include "../src/chessdefs.h"
-#include "../src/bitboard.h"
-#include "../src/position.h"
-#include "../src/fen.h"
+#include "bug.h"
+
+#include "chessdefs.h"
+#include "bitboard.h"
+#include "position.h"
+#include "fen.h"
 
 int main(int ac, char**av)
 {
@@ -13,7 +14,6 @@ int main(int ac, char**av)
     const char *fen;
     char revfen[128];
     int comp;
-
     //debug_init(5, stderr, true);
     //pos_pool_init();
     bitboard_init();
