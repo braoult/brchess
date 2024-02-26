@@ -16,9 +16,9 @@
 
 #include "brlib.h"                                /* brlib types */
 
+#define ONE            1ull
 #define C64(const_u64) const_u64##ULL
-#define U64(const_s64) const_s64##LL
-
+#define mask(i)        ( ONE << (i) )
 //typedef ushort board;
 
 #define BOARDSIZE    (8*8)

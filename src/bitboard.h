@@ -19,17 +19,25 @@
 
 #include "chessdefs.h"
 #include "board.h"
+#include "piece.h"
 
 typedef u64 bitboard_t;
 
 /* mapping square -> bitboard */
 extern bitboard_t bb_sq[64];
+/* squares between sq1 and sq2, exclusing both */
+extern bitboard_t bb_between_excl[64][64];
+/* squares between sq1 and sq2, including sq2 */
+extern bitboard_t bb_between[64][64];
 
-/* mapping square -> rank/file/diagonal/antidiagonal */
-extern bitboard_t bb_rank[64], bb_file[64], bb_diagonal[64], bb_antidiagonal[64];
+/* bb_rank[64]: square to rank
+ * bb_file[64]: square to file
+ * bb_diag[64]: square to diagonal
+ * bb_anti[64]: square to antidiagonal
+ */
+extern bitboard_t bb_rank[64], bb_file[64], bb_diag[64], bb_anti[64];
+/* knight and king moves */
 extern bitboard_t bb_knight[64], bb_king[64];
-
-#define mask(i)        ( 1ULL << (i) )
 
 enum {
     FILE_Abb = 0x0101010101010101ULL,
@@ -94,6 +102,12 @@ static __always_inline bitboard_t shift_nw(const bitboard_t bb)
     return (bb & ~FILE_Abb) << NORTH_WEST;
 }
 
+/* pawn moves/attacks */
+#define pawn_push(bb, c)       ((c) == WHITE ? shift_n(bb): shift_s(bb))
+#define pawn_take_left(bb, c)  ((c) == WHITE ? shift_nw(bb): shift_se(bb))
+#define pawn_take_right(bb, c) ((c) == WHITE ? shift_ne(bb): shift_sw(bb))
+
+extern bitboard_t bitboard_between_excl(square_t sq1, square_t sq2);
 extern void bitboard_init(void);
 
 extern bitboard_t bb_knight_moves(bitboard_t occ, square_t sq);

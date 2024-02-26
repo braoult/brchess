@@ -34,17 +34,56 @@ static int king_vector[8] = {
     SOUTH, SOUTH_WEST, WEST, NORTH_WEST
 };
 
-bitboard_t bb_sq[SQUARE_MAX];
-bitboard_t bb_rank[64], bb_file[64], bb_diagonal[64], bb_antidiagonal[64];
+bitboard_t bb_sq[64];
+bitboard_t bb_rank[64], bb_file[64], bb_diag[64], bb_anti[64];
+bitboard_t bb_between_excl[64][64];
+bitboard_t bb_between[64][64];
 
 bitboard_t bb_knight[64], bb_king[64];
 bitboard_t bb_pawn_push[2][64], bb_bpawn_attack[2][64], bb_pawn_ep[2][64];
+
+/**
+ * bitboard_between_excl() - get bitboard of squares between two squares.
+ * @sq1, @sq2: The two square_t squares
+ *
+ * From: http://www.talkchess.com/forum3/viewtopic.php?f=7&t=12499&start=14
+ * This function may be used instead of bb_XXX arrays if cache pressure is high.
+ *
+ * @Return: bitboard_t, squares between @sq1 and @sq2 (excl. @sq1 and @sq2).
+ */
+bitboard_t bitboard_between_excl(square_t sq1, square_t sq2)
+{
+    const bitboard_t m1 = -1;
+    const bitboard_t a2a7 = C64(0x0001010101010100);
+    const bitboard_t b7h1 = C64(0x0002040810204080);
+    bitboard_t btwn_bits, ray_bits;
+    u32 rank_diff, file_diff, anti_diff, diag_diff;
+
+    btwn_bits  =  (m1 << sq1) ^ (m1 << sq2);      /* includes sq1 and sq2 */
+    rank_diff  = ((sq2 | 7) - sq1) >> 3,          /* signed */
+    file_diff  =  (sq2 & 7) - (sq1 & 7);          /* signed */
+
+    anti_diff  =  rank_diff  + file_diff;
+    rank_diff  =  rank_diff  & 15;
+    file_diff  =  file_diff  & 15;
+    anti_diff  =  anti_diff  & 15;
+    diag_diff  =  rank_diff  ^ file_diff;
+    ray_bits   =  2 * ((rank_diff - 1) >> 26);
+
+    ray_bits  |=  bswap64((m1 + diag_diff) & b7h1);
+    ray_bits  |=  (m1 + anti_diff) & b7h1;
+    ray_bits  |=  (m1 + file_diff) & a2a7;
+    ray_bits  *=  btwn_bits  &  -btwn_bits;
+    return ray_bits & btwn_bits;
+}
 
 /**
  * bitboard_init() - initialize general bitboards
  *
  * Generate the following bitboards :
  *   bb_sq[64]: square to bitboard
+ *   bb_between_excl[64][64]: strict squares between two squares
+ *   bb_between[64][64]: squares between two squares including second square
  *   bb_rank[64]: square to rank
  *   bb_file[64]: square to file
  *   bb_diagonal[64]: square to diagonal
@@ -53,13 +92,12 @@ bitboard_t bb_pawn_push[2][64], bb_bpawn_attack[2][64], bb_pawn_ep[2][64];
  * And the following pseudo move masks:
  *   bb_knight[64]: knight moves
  *   bb_king[64]: king moves
- *   bb_pawn[2][64]: white pawn moves (not attacks)
- *   bb_pawn_att[2][64]: white pawn attacks
+ *
  */
 void bitboard_init(void)
 {
     /*  for each square, the 4 masks: file, rank, diagonal, antidiagonal */
-    struct { int df, dr; } dirs[4] = {
+    struct { int df, dr; } vecs[4] = {
         { 0,  1 },                                /* vertical/file */
         { 1,  0 },                                /* horizontal/rank */
         { 1,  1 },                                /* diagonal */
@@ -67,20 +105,31 @@ void bitboard_init(void)
     } ;
     bitboard_t tmpbb[64][4] = { 0 };
 
-    /* 1) square to bitboard */
-    for (square_t sq = A1; sq <= H8; ++sq)
-        bb_sq[sq] = mask(sq);
+    /* 1) square to bitboard, and in-between-sq2-excluded */
+    for (square_t sq1 = A1; sq1 <= H8; ++sq1) {
+        bb_sq[sq1] = mask(sq1);
+        for (square_t sq2 = A1; sq2 <= H8; ++sq2)
+            bb_between_excl[sq1][sq2] = bitboard_between_excl(sq1, sq2);
+    }
 
-    /* 2) square to rank/file/diagonal/antidiagonal */
+    /* 2) sq1-to-sq2 mask, sq2 included
+     *    square to file/rank/dia/anti bitmaps
+     */
     for (square_t sq = 0; sq < 64; ++sq) {
-        int r = sq_rank(sq), f = sq_file(sq);
-        for (int mult = -7; mult < 8; ++mult) {
-            for (int dir = 0; dir < 4; ++dir) {
-                int dst_f = f + mult * dirs[dir].df;
-                int dst_r = r + mult * dirs[dir].dr;
-                if (sq_coord_ok(dst_f) && sq_coord_ok(dst_r)) {
-                    int dst = sq_make(dst_f, dst_r);
-                    tmpbb[sq][dir] |= mask(dst);
+        file_t f = sq_file(sq);
+        rank_t r = sq_rank(sq);
+        for (int vec = 0; vec < 4; ++vec) {
+            tmpbb[sq][vec] |= mask(sq_make(f, r));
+            for (int dir = -1; dir <= 1; dir += 2) {
+                file_t df = dir * vecs[vec].df, f2 = f + df;
+                rank_t dr = dir * vecs[vec].dr, r2 = r + dr;
+                bitboard_t mask_between = 0;
+                while (sq_coord_ok(f2) && sq_coord_ok(r2)) {
+                    square_t dest = sq_make(f2, r2);
+                    tmpbb[sq][vec] |= mask(dest);
+                    mask_between |= mask(dest);
+                    bb_between[sq][dest] = mask_between;
+                    f2 += df, r2 += dr;
                 }
             }
         }
@@ -88,12 +137,34 @@ void bitboard_init(void)
     for (square_t sq = 0; sq < 64; ++sq) {
         bb_file[sq] = tmpbb[sq][0];
         bb_rank[sq] = tmpbb[sq][1];
-        bb_diagonal[sq] = tmpbb[sq][2];
-        bb_antidiagonal[sq] = tmpbb[sq][3];
+        bb_diag[sq] = tmpbb[sq][2];
+        bb_anti[sq] = tmpbb[sq][3];
     }
+
+    /*
+     * for (int i = 0; i < 64; ++i) {
+     *     for (int j = 0; j < 64; ++j) {
+     *         if (bb_between[i][j] != bb_between_excl[i][j]) {
+     *             bitboard_t diff = bb_between_excl[i][j] ^ bb_between[i][j];
+     *             int k = popcount64(bb_between[i][j]) -
+     *                 popcount64(bb_between_excl[i][j]);
+     *             printf("%s-%s diff=%d excl=%s   ",
+     *                    sq_string(i), sq_string(j),
+     *                    k,
+     *                    sq_string(ctz64(diff)));
+     *             if (k == 1 && ctz64(diff) == j)
+     *                 printf("OK\n");
+     *             else
+     *                 printf("NOK\n");
+     *         }
+     *     }
+     * }
+     */
 
     /* 3) knight and king moves */
     for (square_t sq = A1; sq <= H8; ++sq) {
+        //rank_t r1 = sq_rank(sq);
+        //file_t f1 = sq_file(sq);
         for (int vec = 0; vec < 8; ++vec) {
             int dst = sq + knight_vector[vec];
             if (sq_ok(dst)) {
@@ -147,14 +218,14 @@ void bitboard_print(const char *title, const bitboard_t bitboard)
  * @n: number of bitboards
  * @bb_ptr...: pointers to bitboards
  *
- * @n is the number of bitboards to print. If @n -s > 8, it is reduced to 8;
+ * @n is the number of bitboards to print. If @n > 10, it is reduced to 10
  */
 void bitboard_print_multi(const char *title, int n, ...)
 {
     bitboard_t bb[8];
     va_list ap;
 
-    n = min(n, 8);
+    n = min(n, 10);
 
     va_start(ap, n);
     for (int i = 0; i < n; ++i) {                 /* save all bitboards */

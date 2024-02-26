@@ -44,7 +44,7 @@ uchar bb_rank_attacks[64 * 8];
  *   2) shift left result 2 more bits, as bit 0 is unused and already cleared:
  *      (O <<= 2)
  *
- * TODO ? create masks excluding slider (eg. bb_diagonal ^ bb_sq[square]),
+ * TODO ? create masks excluding slider (eg. bb_diag ^ bb_sq[square]),
  * to save one operation in hyperbola_moves().
  * TODO ? replace rank attack with this idea, mapping rank to diagonal ?
  * See http://timcooijmans.blogspot.com/2014/04/
@@ -122,19 +122,19 @@ static bitboard_t hyperbola_file_moves(bitboard_t occ, square_t sq)
     return hyperbola_moves(occ, bb_file[sq], sq);
 }
 
-static bitboard_t hyperbola_diagonal_moves(bitboard_t occ, square_t sq)
+static bitboard_t hyperbola_diag_moves(bitboard_t occ, square_t sq)
 {
-    return hyperbola_moves(occ, bb_diagonal[sq], sq);
+    return hyperbola_moves(occ, bb_diag[sq], sq);
 }
 
-static bitboard_t hyperbola_antidiagonal_moves(bitboard_t occ, square_t sq)
+static bitboard_t hyperbola_anti_moves(bitboard_t occ, square_t sq)
 {
-    return hyperbola_moves(occ, bb_antidiagonal[sq], sq);
+    return hyperbola_moves(occ, bb_anti[sq], sq);
 }
 
 bitboard_t hyperbola_bishop_moves(bitboard_t occ, square_t sq)
 {
-    return hyperbola_diagonal_moves(occ, sq) + hyperbola_antidiagonal_moves(occ, sq);
+    return hyperbola_diag_moves(occ, sq) + hyperbola_anti_moves(occ, sq);
 }
 
 bitboard_t hyperbola_rook_moves(bitboard_t occ, square_t sq)

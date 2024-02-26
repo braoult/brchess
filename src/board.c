@@ -14,7 +14,7 @@
 #include "brlib.h"
 #include "board.h"
 
-char *sq_strings[] = {
+static const char *sq_strings[] = {
     "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
     "a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
     "a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3",
@@ -25,7 +25,13 @@ char *sq_strings[] = {
     "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
 };
 
-const char *sq_string(const int sq)
+/**
+ * sq_string() - return a square string
+ * @square: square (0-64)
+ *
+ * @Return: Pointer to @square string representation ("a1"-"h8").
+ */
+const char *sq_string(const square_t square)
 {
-    return sq_strings[sq];
+    return sq_strings[square];
 }
