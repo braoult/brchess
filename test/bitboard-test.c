@@ -41,13 +41,12 @@ int main(int __unused ac, __unused char**av)
                          bb_between[C4][F3], bb_between[C4][E1],
                          bb_between[C4][C1], bb_between[C4][A1],
                          bb_between[C4][A3], bb_between[C4][A5]);
-    /*
-     * for (square_t sq = 0; sq < 64; ++sq) {
-     *     sprintf(str, "%2d %#lx %#lx knight", sq, bb_sq[sq], bb_knight[sq]);
-     *     bitboard_print(str, bb_knight[sq]);
-     *     sprintf(str, "%2d %#lx %#lx knight", sq, bb_sq[sq], bb_king[sq]);
-     *     bitboard_print(str, bb_king[sq]);
-     * }
-     */
+
+    for (square_t sq = 0; sq < 64; ++sq) {
+         sprintf(str, "%2d %#lx %#lx knight", sq, bb_sq[sq], bb_knight[sq]);
+         bitboard_print(str, bb_knight[sq]);
+         //sprintf(str, "%2d %#lx %#lx knight", sq, bb_sq[sq], bb_king[sq]);
+         //bitboard_print(str, bb_king[sq]);
+    }
     return 0;
 }

@@ -26,8 +26,11 @@ int main(int ac, char**av)
         fen2pos(pos, fen);
     }
     pos_print(pos);
+
     pos2fen(pos, revfen);
     //printf("reverse fen=[%s]\n", pos2fen(pos, NULL));
     comp = strcmp(fen, revfen);
     printf("compare=%d - %s\n", comp, comp? "NOK": "OK");
+    pos_print_board_raw(pos, 0);
+    pos_print_board_raw(pos, 1);
 }
