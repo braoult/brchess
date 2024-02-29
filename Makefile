@@ -41,7 +41,7 @@ TSTSRC    := $(wildcard $(TSTDIR)/*.c)
 
 LIB       := br_$(shell uname -m)			    # library name
 
-DEP_FN    := $(SRC_FN) $(LIBSRC_FN)
+DEP_FN    := $(SRC_FN)
 DEP       := $(addprefix $(DEPDIR)/,$(DEP_FN:.c=.d))
 
 TARGET_FN := brchess
@@ -66,6 +66,7 @@ CPPFLAGS  += -DDEBUG_DEBUG                                  # enable log() funct
 #CPPFLAGS  += -DDEBUG_DEBUG_C                                # enable log() settings
 CPPFLAGS  += -DDEBUG_POOL                                   # memory pools management
 #CPPFLAGS  += -DDEBUG_FEN                                    # FEN decoding
+#CPPFLAGS  += -DDEBUG_POS				    # position.c
 CPPFLAGS  += -DDEBUG_MOVE                                   # move generation
 CPPFLAGS  += -DDEBUG_EVAL                                   # eval functions
 CPPFLAGS  += -DDEBUG_PIECE                                  # piece list management
@@ -76,7 +77,7 @@ CPPFLAGS  := $(strip $(CPPFLAGS))
 
 ##################################### compiler flags
 CFLAGS    := -std=gnu11
-CFLAGS    += -O3
+CFLAGS    += -O1
 CFLAGS    += -g
 CFLAGS    += -Wall
 CFLAGS    += -Wextra
@@ -263,23 +264,35 @@ memcheck: targets
 	@$(VALGRIND) $(VALGRINDFLAGS) $(BINDIR)/brchess
 
 ##################################### test binaries
-TEST           = bin/fen-test bin/bitboard-test
+TEST           = bin/fen-test bin/bitboard-test bin/movegen-test \
+	bin/mktestdata
 
 FENTESTOBJS    = obj/fen.o obj/position.o obj/piece.o obj/bitboard.o \
 	obj/board.o obj/util.o
 BITBOARDOBJS   = obj/fen.o obj/position.o obj/piece.o obj/bitboard.o \
-	 obj/board.o obj/hyperbola-quintessence.o
+	obj/board.o obj/hyperbola-quintessence.o
+MOVEGENOBJS    = obj/fen.o obj/position.o obj/piece.o obj/bitboard.o \
+	obj/board.o obj/hyperbola-quintessence.o obj/move.o obj/movegen.o
+MKTESTDATAOBJS = obj/fen.o obj/position.o obj/piece.o obj/bitboard.o \
+	obj/board.o obj/hyperbola-quintessence.o obj/move.o
 
 testing: $(TEST)
 
 bin/fen-test: test/fen-test.c $(FENTESTOBJS)
-	$(CC) $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $< $(FENTESTOBJS)  $(LDFLAGS) $(LIBS) -o $@
+	@echo compiling $@ executable.
+	@$(CC) $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $< $(FENTESTOBJS)  $(LDFLAGS) $(LIBS) -o $@
 
 bin/bitboard-test: test/bitboard-test.c $(BITBOARDOBJS)
-	echo all=$^
-	$(CC) $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $< $(BITBOARDOBJS) $(LDFLAGS) $(LIBS) -o $@
+	@echo compiling $@ executable.
+	@$(CC) $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $< $(BITBOARDOBJS) $(LDFLAGS) $(LIBS) -o $@
 
+bin/movegen-test: test/movegen-test.c $(MOVEGENOBJS)
+	@echo compiling $@ executable.
+	@$(CC) $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $< $(MOVEGENOBJS) $(LDFLAGS) $(LIBS) -o $@
 
+bin/mktestdata: test/mktestdata.c $(MKTESTDATAOBJS)
+	@echo compiling $@ executable.
+	@$(CC) $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $< $(MKTESTDATAOBJS) $(LDFLAGS) $(LIBS) -o $@
 ##################################### Makefile debug
 .PHONY: showflags wft
 
