@@ -229,29 +229,30 @@ pos_t *fen2pos(pos_t *pos, const char *fen)
     if (*cur == '-') {
         cur++;
     } else {
-        tmppos.en_passant = sq_make(C2FILE(*cur), C2RANK(*(cur+1)));
+        tmppos.en_passant = sq_from_string(cur);
         cur += 2;
     }
     SKIP_BLANK(cur);
 
     /* 5) half moves since last capture or pawn move (50 moves rule)
      */
-    sscanf(cur, "%hd%n", &tmppos.clock_50, &consumed);
+    tmppos.clock_50 = 0;
+    tmppos.plycount = 1;
+    if (sscanf(cur, "%hd%n", &tmp, &consumed) != 1)
+        goto end;                                 /* early end, ignore w/o err */
+
+    tmppos.clock_50 = tmp;
     cur += consumed;
     SKIP_BLANK(cur);
 
     /* 6) current full move number, starting with 1
      */
-    sscanf(cur, "%hd", &tmp);
+    if (sscanf(cur, "%hd", &tmp) != 1)
+        goto end;
     if (tmp <= 0)                                 /* fix faulty numbers*/
         tmp = 1;
     tmp = 2 * (tmp - 1) + (tmppos.turn == BLACK); /* plies, +1 if black turn */
-
     tmppos.plycount = tmp;
-
-#   ifdef DEBUG_FEN
-    raw_board_print(&tmppos);
-#   endif
 
 end:
     if (warn(err_line, "FEN error line %d: charpos=%d char=%#x(%c)\n",
@@ -263,6 +264,10 @@ end:
             pos = pos_new();
         *pos = tmppos;
     }
+#   ifdef DEBUG_FEN
+    pos_print_board_raw(&tmppos, 1);
+#   endif
+
     return pos;
 }
 
@@ -300,7 +305,7 @@ char *pos2fen(const pos_t *pos, char *fen)
                     len++;
                 fen[cur++] = '0' + len;
             } else {
-                fen[cur++] = piece_to_char_color(piece);
+                fen[cur++] = *piece_to_char_color(piece);
                 f++;
             }
         }
