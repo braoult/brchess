@@ -11,6 +11,8 @@
  *
  */
 
+#include <ctype.h>
+
 #include "brlib.h"
 #include "board.h"
 
@@ -26,12 +28,25 @@ static const char *sq_strings[] = {
 };
 
 /**
- * sq_string() - return a square string
+ * sq_to_string() - return a square string
  * @square: square (0-64)
  *
  * @Return: Pointer to @square string representation ("a1"-"h8").
  */
-const char *sq_string(const square_t square)
+const char *sq_to_string(const square_t square)
 {
     return sq_strings[square];
+}
+
+/**
+ * sq_from_string() - return a square from a string
+ * @sqstr: the square representation (a1-h8)
+ *
+ * @Return: square_t representation of str.
+ */
+square_t sq_from_string(const char *sqstr)
+{
+    file_t f = C2FILE(sqstr[0]);
+    rank_t r = C2RANK(sqstr[1]);
+    return sq_coord_ok(f) && sq_coord_ok(r) ? sq_make(f, r): SQUARE_NONE;
 }

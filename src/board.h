@@ -97,6 +97,7 @@ static __always_inline rank_t sq_rank(square_t square)
 #define sq_manh(sq1, sq2) (abs(sq_file(sq2) - sq_file(sq1)) +     \
                            abs(sq_rank(sq2) - sq_rank(sq1)))
 
-extern const char *sq_string(const square_t sq);
+extern const char *sq_to_string(const square_t sq);
+extern square_t sq_from_string(const char *sq_string);
 
 #endif  /* BOARD_H */

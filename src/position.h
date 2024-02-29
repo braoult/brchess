@@ -19,16 +19,18 @@
 #include "brlib.h"
 #include "bitops.h"
 
-#include "bitboard.h"
 #include "chessdefs.h"
+#include "bitboard.h"
 #include "piece.h"
 #include "move.h"
 
-typedef struct _pos_s {
+typedef struct __pos_s {
     u64 node_count;                               /* evaluated nodes */
     int turn;                                     /* WHITE or BLACK */
     u16 clock_50;
     u16 plycount;                                 /* plies so far, start is 0 */
+
+    square_t king[2];                             /* dup with bb, faster retrieval */
     square_t en_passant;
     castle_rights_t castle;
 
@@ -41,14 +43,13 @@ typedef struct _pos_s {
     //bool moves_counted;
 
     bitboard_t bb[2][PIECE_TYPE_MAX];             /* bb[0][PAWN], bb[1][ALL_PIECES] */
-    square_t king[2];                             /* dup with bb, faster retrieval */
     bitboard_t controlled[2];
     //u16 mobility[2];
                                                   //struct list_head pieces[2];                   /* pieces list, King is first */
     //struct list_head moves[2];
     piece_t board[BOARDSIZE];
     movelist_t moves;
-    int nmoves;
+    //int nmoves;
 } pos_t;
 
 /**
@@ -98,7 +99,7 @@ extern pos_t *pos_clear(pos_t *pos);
 extern void pos_print(pos_t *pos);
 extern void pos_pieces_print(pos_t *pos);
 
-extern void raw_board_print(const pos_t *pos);
+extern void pos_print_board_raw(const pos_t *pos, int type);
 
 //extern pos_t *pos_startpos(pos_t *pos);
 

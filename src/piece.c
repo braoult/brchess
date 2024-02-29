@@ -25,22 +25,22 @@
  * piece_details
  */
 const struct piece_details piece_details[PIECE_MAX] = {
-    /*             Abb  AbbC Sym  SymC Name   start value */
-    [EMPTY]    = { ' ', ' ', " ", " ", " ", 0, 0, 0 },
-    [W_PAWN]   = { 'P', 'P', "♟", "♙", "Pawn",   P_VAL_OPN, P_VAL_MID, P_VAL_END },
-    [W_KNIGHT] = { 'N', 'N', "♞", "♘", "Knight", N_VAL_OPN, N_VAL_MID, N_VAL_END },
-    [W_BISHOP] = { 'B', 'B', "♝", "♗", "Bishop", B_VAL_OPN, B_VAL_MID, B_VAL_END },
-    [W_ROOK]   = { 'R', 'R', "♜", "♖", "Rook",   R_VAL_OPN, R_VAL_MID, R_VAL_END },
-    [W_QUEEN]  = { 'Q', 'Q', "♛", "♕", "Queen",  Q_VAL_OPN, Q_VAL_MID, Q_VAL_END },
-    [W_KING]   = { 'K', 'K', "♚", "♔", "King",   K_VAL_OPN, K_VAL_MID, K_VAL_END },
-    [7]        = { '7', '7', "�", "�", "Inv 7",  0, 0, 0 },
-    [8]        = { '8', '8', "�", "�", "Inv 8",  0, 0, 0 },
-    [B_PAWN]   = { 'P', 'p', "♟", "♟", "Pawn",   P_VAL_OPN, P_VAL_MID, P_VAL_END },
-    [B_KNIGHT] = { 'N', 'n', "♞", "♞", "Knight", P_VAL_OPN, N_VAL_MID, N_VAL_END },
-    [B_BISHOP] = { 'B', 'b', "♝", "♝", "Bishop", P_VAL_OPN, B_VAL_MID, B_VAL_END },
-    [B_ROOK]   = { 'R', 'r', "♜", "♜", "Rook",   P_VAL_OPN, R_VAL_MID, R_VAL_END },
-    [B_QUEEN]  = { 'Q', 'q', "♛", "♛", "Queen",  P_VAL_OPN, Q_VAL_MID, Q_VAL_END },
-    [B_KING]   = { 'K', 'k', "♚", "♚", "King",   P_VAL_OPN, K_VAL_MID, K_VAL_END },
+    /*             Abb  Fen  Sym  SymC Name   start value */
+    [EMPTY]    = { "",  "",  "",  "",  "", 0, 0, 0 },
+    [W_PAWN]   = { "",  "P", "♟", "♙", "Pawn",   P_VAL_OPN, P_VAL_MID, P_VAL_END },
+    [W_KNIGHT] = { "N", "N", "♞", "♘", "Knight", N_VAL_OPN, N_VAL_MID, N_VAL_END },
+    [W_BISHOP] = { "B", "B", "♝", "♗", "Bishop", B_VAL_OPN, B_VAL_MID, B_VAL_END },
+    [W_ROOK]   = { "R", "R", "♜", "♖", "Rook",   R_VAL_OPN, R_VAL_MID, R_VAL_END },
+    [W_QUEEN]  = { "Q", "Q", "♛", "♕", "Queen",  Q_VAL_OPN, Q_VAL_MID, Q_VAL_END },
+    [W_KING]   = { "K", "K", "♚", "♔", "King",   K_VAL_OPN, K_VAL_MID, K_VAL_END },
+    [7]        = { "",  "",  "",  "",  "",  0, 0, 0 },
+    [8]        = { "",  "",  "",  "",  "",  0, 0, 0 },
+    [B_PAWN]   = { "",  "p", "♟", "♟", "Pawn",   P_VAL_OPN, P_VAL_MID, P_VAL_END },
+    [B_KNIGHT] = { "N", "n", "♞", "♞", "Knight", P_VAL_OPN, N_VAL_MID, N_VAL_END },
+    [B_BISHOP] = { "B", "b", "♝", "♝", "Bishop", P_VAL_OPN, B_VAL_MID, B_VAL_END },
+    [B_ROOK]   = { "R", "r", "♜", "♜", "Rook",   P_VAL_OPN, R_VAL_MID, R_VAL_END },
+    [B_QUEEN]  = { "Q", "q", "♛", "♛", "Queen",  P_VAL_OPN, Q_VAL_MID, Q_VAL_END },
+    [B_KING]   = { "K", "k", "♚", "♚", "King",   P_VAL_OPN, K_VAL_MID, K_VAL_END },
 };
 
 const char pieces_str[6+6+1] = "PNBRQKpnbrqk";
@@ -51,14 +51,14 @@ bool piece_ok(piece_t p)
     return !(p & ~(MASK_COLOR | MASK_PIECE)) && pt && (pt <= KING);
 }
 
-char piece_to_char(piece_t p)
+char *piece_to_char(piece_t p)
 {
     return piece_details[p].abbr;
 }
 
-char piece_to_char_color(piece_t p)
+char *piece_to_char_color(piece_t p)
 {
-    return piece_details[p].abbr_color;
+    return piece_details[p].c_abbr;
 }
 
 char *piece_to_sym(piece_t p)
@@ -68,7 +68,7 @@ char *piece_to_sym(piece_t p)
 
 char *piece_to_sym_color(piece_t p)
 {
-    return piece_details[p].sym_color;
+    return piece_details[p].c_sym;
 }
 
 char *piece_to_name(piece_t p)

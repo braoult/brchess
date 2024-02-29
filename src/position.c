@@ -103,7 +103,9 @@ void pos_del(pos_t *pos)
  */
 pos_t *pos_clear(pos_t *pos)
 {
+#   ifdef DEBUG_POS
     printf("size(pos_board=%lu elt=%lu\n", sizeof(pos->board), sizeof(int));
+#   endif
     //for (square square = A1; square <= H8; ++square)
     //    pos->board[square] = EMPTY;
 
@@ -114,7 +116,7 @@ pos_t *pos_clear(pos_t *pos)
     pos->plycount = 0;
     pos->en_passant = SQUARE_NONE;
     pos->castle = 0;
-    memset(pos->board, 0, sizeof(pos->board));
+    memset(pos->board, EMPTY, sizeof(pos->board));
     //pos->curmove = 0;
     //pos->eval = 0;
     //pos->occupied[WHITE] = 0;
@@ -124,7 +126,9 @@ pos_t *pos_clear(pos_t *pos)
             pos->bb[color][piece] = 0;
         pos->controlled[WHITE] = 0;
         pos->controlled[BLACK] = 0;
+        pos->king[color] = SQUARE_NONE;
     }
+    pos->moves.curmove = pos->moves.nmoves = 0;
     //pos->mobility[WHITE] = 0;
     //pos->mobility[BLACK] = 0;
     //pos->moves_generated = false;
@@ -156,12 +160,12 @@ void pos_print(pos_t *pos)
         printf("%c |", rank + '1');
         for (file = 0; file < 8; ++file) {
             pc = board[sq_make(file, rank)];
-            printf(" %s |", piece_to_sym_color(pc));
+            printf(" %s |", pc? piece_to_sym_color(pc): " ");
         }
         printf("\n  +---+---+---+---+---+---+---+---+\n");
     }
     printf("    A   B   C   D   E   F   G   H\n");
-    printf("%s\n", pos2fen(pos, fen));
+    printf("fen %s\n", pos2fen(pos, fen));
     //printf("Turn: %s.\n", IS_WHITE(pos->turn) ? "white" : "black");
     /*
      * printf("Kings: W:%c%c B:%c%c\n",
@@ -185,7 +189,7 @@ void pos_print(pos_t *pos)
 void pos_pieces_print(pos_t *pos)
 {
     int bit, count, cur;
-    char pname;
+    char *pname;
     u64 tmp;
     bitboard_t p;
     for (int color = WHITE; color <= BLACK; ++color) {
@@ -194,7 +198,7 @@ void pos_pieces_print(pos_t *pos)
             count = popcount64(p);
             cur = 0;
             pname = piece_to_char(piece);
-            printf("%c(0)%s", pname, count? ":": "");
+            printf("%s(0)%s", pname, count? ":": "");
             if (count) {
                 bit_for_each64(bit, tmp, p) {
                     char cf = sq_file(bit), cr = sq_rank(bit);
@@ -229,16 +233,29 @@ inline void bitboard_print2_raw(bitboard_t bb1, bitboard_t bb2, char *title)
 */
 
 /**
- * raw_board_print - print simple board (hex values)
+ * pos_print_board_raw - print simple position board (octal/FEN symbol values)
  * @bb: the bitboard
+ * @type: int, 0 for octal, 1 for fen symbol
  */
-void raw_board_print(const pos_t *pos)
+void pos_print_board_raw(const pos_t *pos, int type)
 {
-
-    for (rank_t r = RANK_8; r >= RANK_1; --r) {
-        for (file_t f = FILE_A; f <= FILE_H; ++f)
-            printf("%02o ", pos->board[sq_make(f, r)]);
-        printf(" \n");
+    if (type == 0) {
+        for (rank_t r = RANK_8; r >= RANK_1; --r) {
+            for (file_t f = FILE_A; f <= FILE_H; ++f)
+                printf("%02o ", pos->board[sq_make(f, r)]);
+            printf(" \n");
+        }
+    } else {
+        for (rank_t r = RANK_8; r >= RANK_1; --r) {
+            for (file_t f = FILE_A; f <= FILE_H; ++f) {
+                square_t sq = sq_make(f, r);
+                if (pos->board[sq] == EMPTY)
+                    printf(". ");
+                else
+                    printf("%s ", piece_to_char_color(pos->board[sq]));
+            }
+            printf(" \n");
+        }
     }
     return;
 }

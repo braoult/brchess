@@ -20,7 +20,6 @@
 #include "piece.h"
 #include "board.h"
 #include "bitboard.h"
-#include "position.h"
 
 /*  vectors are clockwise from N */
 static int knight_vector[] = {
@@ -141,26 +140,6 @@ void bitboard_init(void)
         bb_anti[sq] = tmpbb[sq][3];
     }
 
-    /*
-     * for (int i = 0; i < 64; ++i) {
-     *     for (int j = 0; j < 64; ++j) {
-     *         if (bb_between[i][j] != bb_between_excl[i][j]) {
-     *             bitboard_t diff = bb_between_excl[i][j] ^ bb_between[i][j];
-     *             int k = popcount64(bb_between[i][j]) -
-     *                 popcount64(bb_between_excl[i][j]);
-     *             printf("%s-%s diff=%d excl=%s   ",
-     *                    sq_string(i), sq_string(j),
-     *                    k,
-     *                    sq_string(ctz64(diff)));
-     *             if (k == 1 && ctz64(diff) == j)
-     *                 printf("OK\n");
-     *             else
-     *                 printf("NOK\n");
-     *         }
-     *     }
-     * }
-     */
-
     /* 3) knight and king moves */
     for (square_t sq = A1; sq <= H8; ++sq) {
         //rank_t r1 = sq_rank(sq);
@@ -182,10 +161,28 @@ void bitboard_init(void)
     }
 }
 
+
+/**
+ * bb_knight_moves() - get bitboard of knight pseudo-moves
+ * @notmine: bitboard_t of squares not occupied by own pieces
+ * @sq: knight square
+ *
+ * @Return: bitboard of available moves.
+ */
 bitboard_t bb_knight_moves(bitboard_t notmine, square_t sq)
 {
+    //bitboard_print("bb_knight_move mask", bb_knight[sq]);
+    //bitboard_print("bb_knight_move  res", bb_knight[sq] & notmine);
     return bb_knight[sq] & notmine;
 }
+
+/**
+ * bb_king_moves() - get bitboard of king pseudo-moves
+ * @notmine: bitboard_t of squares not occupied by own pieces
+ * @sq: king square
+ *
+ * @Return: bitboard of available moves.
+ */
 bitboard_t bb_king_moves(bitboard_t notmine, square_t sq)
 {
     return bb_king[sq] & notmine;
@@ -258,12 +255,16 @@ void bitboard_print_multi(const char *title, int n, ...)
  * bitboard_rank_sprint() - print an u8 rank binary representation
  * @str: the destination string
  * @bb8: the uchar to print
+ *
+ * @return: @str, filled with ascii representation
  */
 char *bitboard_rank_sprint(char *str, const uchar bb8)
 {
-    for (file_t f = FILE_A; f <= FILE_H; ++f) {
-        *(str+f) = bb8 & mask(f) ? '1': '.';
+    file_t f;
+    for (f = FILE_A; f <= FILE_H; ++f) {
+        *(str + f) = bb8 & mask(f) ? '1': '.';
     }
+    *(str + f) = 0;
     //printf(" 0 1 2 3 4 5 6 7\n");
     //printf("\n");
     return str;

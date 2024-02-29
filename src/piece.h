@@ -70,13 +70,21 @@ typedef enum {
 #define K_VAL_END    20000
 
 /* some default values for pieces
+ * @abbr:   char, piece capital letter (used for game notation)
+ * @abbr_c: char, capital for white, lowercase for black
+ * char *sym;
+ *  char *sym_c;
+ *  char *name;
+ *  s64  opn_value;
+ *  s64  mid_value;
+ *  s64  end_value;
  */
 extern const struct piece_details {
-    char abbr;                                    /* used for game notation */
-    char abbr_color;                              /* lowercase = black */
+    char *abbr;                                   /* used for game notation */
+    char *c_abbr;                                 /* lowercase = black */
     char *sym;                                    /* used for game notation */
-    char *sym_color;                              /* different W & B */
-    char *name;
+    char *c_sym;                                  /* different W & B */
+    char *name;                                   /* piece name */
     s64  opn_value;                               /* value opening */
     s64  mid_value;                               /* value midgame */
     s64  end_value;                               /* value endgame */
@@ -84,7 +92,7 @@ extern const struct piece_details {
 
 extern const char pieces_str[6+6+1];              /* to search from fen/user input */
 
-#define OPPONENT(p)       !(p)
+#define OPPONENT(color)   !(color)
 
 #define MASK_PIECE        0x07                      /* 00000111 */
 #define MASK_COLOR        0x08                      /* 00001000 */
@@ -102,8 +110,8 @@ extern const char pieces_str[6+6+1];              /* to search from fen/user inp
 
 extern bool piece_ok(piece_t p);
 
-extern char piece_to_char(piece_t p);
-extern char piece_to_char_color(piece_t p);
+extern char *piece_to_char(piece_t p);
+extern char *piece_to_char_color(piece_t p);
 extern char *piece_to_sym(piece_t p);
 extern char *piece_to_sym_color(piece_t p);
 extern char *piece_to_name(piece_t p);
