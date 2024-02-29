@@ -1,6 +1,6 @@
-/* chessdefs.h - generic chess definitions.
+/* chessdefs.h - generic/catchall chess definitions.
  *
- * Copyright (C) 2021 Bruno Raoult ("br")
+ * Copyright (C) 2021-2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
  * Some rights reserved. See COPYING.
  *
@@ -48,7 +48,9 @@ typedef enum {
 #define ENDGAME    2
 
 /* forward defs */
-typedef struct _pos_s pos_t;
+typedef struct __pos_s pos_t;
+typedef struct __movelist_s movelist_t;
+
 /* bitboard
  */
 //typedef u64 bitboard_t;

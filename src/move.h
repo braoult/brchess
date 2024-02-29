@@ -15,9 +15,8 @@
 #define MOVE_H
 
 #include "chessdefs.h"
-#include "position.h"
-//#include "pool.h"
 #include "piece.h"
+#include "board.h"
 
 /* move structure:
  * 3     2 2     1 1 1 1 1 1
@@ -52,7 +51,7 @@
 
 static inline move_t move_make(square_t from, square_t to)
 {
-    return (to << 3) | from;
+    return (to << 6) | from;
 }
 
 static inline move_t move_make_promote(square_t from, square_t to, piece_type_t piece)
@@ -60,9 +59,13 @@ static inline move_t move_make_promote(square_t from, square_t to, piece_type_t 
     return move_make(from, to) | M_ENPASSANT | (piece << 15);
 }
 
-static inline move_t move_from(move_t move)
+static inline square_t move_from(move_t move)
 {
-    return move & 56;
+    return move & 077;
+}
+static inline square_t move_to(move_t move)
+{
+    return (move >> 6) & 077;
 }
 
 /* moves_print flags
@@ -75,7 +78,7 @@ static inline move_t move_from(move_t move)
 #define M_PR_SEPARATE  0x40                       /* separate captures */
 #define M_PR_LONG      0x80
 
-typedef struct {
+typedef struct __movelist_s {
     move_t move[MOVES_MAX];
     int nmoves;                                   /* total moves (fill) */
     int curmove;                                  /* current move (use) */
@@ -83,19 +86,20 @@ typedef struct {
 
 //pool_t *moves_pool_init();
 //void moves_pool_stats();
+
 //int move_print(int movenum, move_t *move, move_flags_t flags);
-//void moves_print(pos_t *move, move_flags_t flags);
 
-//void move_del(struct list_head *ptr);
-//int moves_del(pos_t *pos);
+extern void moves_print(pos_t *pos, int flags);
+extern void move_sort_by_sq(pos_t *pos);
 
-int pseudo_moves_castle(pos_t *pos, bool color, bool doit, bool do_king);
+//extern int pseudo_moves_castle(pos_t *pos, bool color, bool doit, bool do_king);
 //int pseudo_moves_gen(pos_t *pos, piece_list_t *piece, bool doit, bool do_king);
 //int pseudo_moves_pawn(pos_t *pos, piece_list_t *piece, bool doit);
 //extern int moves_gen(pos_t *pos, bool color, bool doit, bool do_king);
 //extern int moves_gen_king_moves(pos_t *pos, bool color, bool doit);
 
-//extern void moves_sort(pos_t *pos);
+// extern void moves_sort(pos_t *pos);
+
 //extern void moves_gen_eval_sort(pos_t *pos);
 
 //extern void moves_gen_all(pos_t *pos);
