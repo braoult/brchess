@@ -11,12 +11,18 @@
  *
  */
 
+#include <stdio.h>
+
 #include "bitops.h"
 
+#include "board.h"
 #include "bitboard.h"
-#include "hyperbola-quintessence.h"
 #include "piece.h"
+#include "position.h"
 #include "move.h"
+#include "hyperbola-quintessence.h"
+#include "movegen.h"
+
 
 /**
  * gen_pawn_push() - generate pawn push
@@ -40,115 +46,164 @@
 int gen_all_pseudomoves(pos_t *pos)
 {
     color_t me = pos->turn, enemy = OPPONENT(me);
-    bitboard_t my_pieces = pos->bb[me][ALL_PIECES], not_my_pieces = ~my_pieces,
-        enemy_pieces = pos->bb[enemy][ALL_PIECES];
-    bitboard_t occ = my_pieces | enemy_pieces, empty = ~occ;
-    bitboard_t movebits, from_pawns;
 
-    int tmp1, tmp2, from, to;
-    movelist_t moves = pos->moves;
+    bitboard_t my_pieces     = pos->bb[me][ALL_PIECES];
+    bitboard_t not_my_pieces = ~my_pieces;
+    bitboard_t enemy_pieces  = pos->bb[enemy][ALL_PIECES];
+
+    bitboard_t occ           = my_pieces | enemy_pieces;
+    bitboard_t empty         = ~occ;
+
+    bitboard_t movebits, from_pawns;
+    bitboard_t tmp1, tmp2;
+
+    move_t *moves            = pos->moves.move;
+    int nmoves               = pos->moves.nmoves;
+
+    int from, to;
 
     /* sliding pieces */
     bit_for_each64(from, tmp1, pos->bb[me][BISHOP]) {
         movebits = hyperbola_bishop_moves(occ, from) & not_my_pieces;
         bit_for_each64(to, tmp2, movebits) {
-            moves.move[moves.nmoves++] = move_make(from, to);
+            moves[nmoves++] = move_make(from, to);
         }
-
     }
     bit_for_each64(from, tmp1, pos->bb[me][ROOK]) {
+        // printf("rook=%d/%s\n", from, sq_to_string(from));
         movebits = hyperbola_rook_moves(occ, from) & not_my_pieces;
         bit_for_each64(to, tmp2, movebits) {
-            moves.move[moves.nmoves++] = move_make(from, to);
+            moves[nmoves++] = move_make(from, to);
         }
     }
     /* TODO: remove this one */
     bit_for_each64(from, tmp1, pos->bb[me][QUEEN]) {
         movebits = hyperbola_queen_moves(occ, from) & not_my_pieces;
+        //bitboard_print("bishop", movebits);
+        //movebits = hyperbola_rook_moves(occ, from);
+        //bitboard_print("rook", movebits);
+        //bitboard_print("diag", bb_diag[] movebits);
+        // & not_my_pieces;
         bit_for_each64(to, tmp2, movebits) {
-            moves.move[moves.nmoves++] = move_make(from, to);
+            moves[nmoves++] = move_make(from, to);
         }
     }
 
     /* knight */
+    //bitboard_print("not_my_pieces", not_my_pieces);
     bit_for_each64(from, tmp1, pos->bb[me][KNIGHT]) {
-        movebits = bb_knight_moves(occ, from) & not_my_pieces;
+        //printf("Nfrom=%d=%s\n", from, sq_to_string(from));
+        movebits = bb_knight_moves(not_my_pieces, from);
+        //printf("%lx\n", movebits);
+        //bitboard_print("knight_moves", movebits);
+
         bit_for_each64(to, tmp2, movebits) {
-            moves.move[moves.nmoves++] = move_make(from, to);
+            //printf("Nto=%d=%s\n", to, sq_to_string(to));
+            moves[nmoves++] = move_make(from, to);
         }
     }
 
     /* king */
-    movebits = bb_king_moves(occ, pos->king[me]) & not_my_pieces;
+    from = pos->king[me];
+    movebits = bb_king_moves(not_my_pieces, from);
     bit_for_each64(to, tmp2, movebits) {
-        moves.move[moves.nmoves++] = move_make(from, to);
+        moves[nmoves++] = move_make(from, to);
     }
 
     /* pawn: relative rank and files */
     bitboard_t rel_rank7 = (me == WHITE ? RANK_7bb : RANK_2bb);
     bitboard_t rel_rank3 = (me == WHITE ? RANK_3bb : RANK_6bb);
-    bitboard_t rel_filea = (me == WHITE ? FILE_Abb : FILE_Hbb);
-    bitboard_t rel_fileh = (me == WHITE ? FILE_Hbb : FILE_Abb);
+    //bitboard_t rel_filea = (me == WHITE ? FILE_Abb : FILE_Hbb);
+    //bitboard_t rel_fileh = (me == WHITE ? FILE_Hbb : FILE_Abb);
     int en_passant = pos->en_passant == SQUARE_NONE? 0: pos->en_passant;
     bitboard_t enemy_avail = bb_sq[en_passant] | enemy_pieces;
 
     /* pawn: ranks 2-6 push 1 and 2 squares */
-    movebits = pawn_push(pos->bb[me][PAWN] & ~rel_rank7, me) & empty;
+    movebits = pawn_shift_up(pos->bb[me][PAWN] & ~rel_rank7, me) & empty;
     bit_for_each64(to, tmp1, movebits) {
-        from = pawn_push(to, enemy);              /* reverse push */
-        moves.move[moves.nmoves++] = move_make(from, to);
+        from = pawn_push_up(to, enemy);              /* reverse push */
+        //printf("push %d->%d %s->%s", from, to, sq_to_string(from), sq_to_string(to));
+        moves[nmoves++] = move_make(from, to);
     }
-    movebits = pawn_push(movebits & rel_rank3, me) & empty;
+    movebits = pawn_shift_up(movebits & rel_rank3, me) & empty;
     bit_for_each64(to, tmp1, movebits) {
-        from = pawn_push(pawn_push(to, enemy), enemy);
-        moves.move[moves.nmoves++] = move_make(from, to);
+        from = pawn_push_up(pawn_push_up(to, enemy), enemy);
+        moves[nmoves++] = move_make(from, to);
     }
     /* pawn: rank 7 push */
-    movebits = pawn_push(pos->bb[me][PAWN] & rel_rank7, me) & empty;
+    movebits = pawn_shift_up(pos->bb[me][PAWN] & rel_rank7, me) & empty;
     bit_for_each64(to, tmp1, movebits) {
-        from = pawn_push(to, enemy);              /* reverse push */
-        moves.move[moves.nmoves++] = move_make_promote(from, to, QUEEN);
-        moves.move[moves.nmoves++] = move_make_promote(from, to, ROOK);
-        moves.move[moves.nmoves++] = move_make_promote(from, to, BISHOP);
-        moves.move[moves.nmoves++] = move_make_promote(from, to, KNIGHT);
+        from = pawn_push_up(to, enemy);              /* reverse push */
+        moves[nmoves++] = move_make_promote(from, to, QUEEN);
+        moves[nmoves++] = move_make_promote(from, to, ROOK);
+        moves[nmoves++] = move_make_promote(from, to, BISHOP);
+        moves[nmoves++] = move_make_promote(from, to, KNIGHT);
     }
 
     /* pawn: ranks 2-6 captures left, including en-passant */
-    from_pawns = pos->bb[me][PAWN] & ~rel_rank7 & ~rel_filea;
-    movebits = pawn_take_left(from_pawns, me) & enemy_avail;
+    from_pawns = pos->bb[me][PAWN] & ~rel_rank7; // & ~rel_filea;
+    movebits = pawn_shift_upleft(from_pawns, me) & enemy_avail;
     bit_for_each64(to, tmp1, movebits) {
-        from = pawn_take_left(to, enemy);         /* reverse capture */
-        moves.move[moves.nmoves++] = move_make(from, to);
+        from = pawn_push_upleft(to, enemy);         /* reverse capture */
+        moves[nmoves++] = move_make(from, to);
     }
     /* pawn: rank 7 captures left */
-    from_pawns = pos->bb[me][PAWN] & rel_rank7 & ~rel_filea;
-    movebits = pawn_take_left(from_pawns, me) & enemy_avail;
+    from_pawns = pos->bb[me][PAWN] & rel_rank7; // & ~rel_filea;
+    movebits = pawn_shift_upleft(from_pawns, me) & enemy_avail;
     bit_for_each64(to, tmp1, movebits) {
-        from = pawn_take_left(to, enemy);         /* reverse capture */
-        moves.move[moves.nmoves++] = move_make_promote(from, to, QUEEN);
-        moves.move[moves.nmoves++] = move_make_promote(from, to, ROOK);
-        moves.move[moves.nmoves++] = move_make_promote(from, to, BISHOP);
-        moves.move[moves.nmoves++] = move_make_promote(from, to, KNIGHT);
+        from = pawn_push_upleft(to, enemy);         /* reverse capture */
+        moves[nmoves++] = move_make_promote(from, to, QUEEN);
+        moves[nmoves++] = move_make_promote(from, to, ROOK);
+        moves[nmoves++] = move_make_promote(from, to, BISHOP);
+        moves[nmoves++] = move_make_promote(from, to, KNIGHT);
     }
 
     /* pawn: ranks 2-6 captures right, including en-passant */
-    from_pawns = pos->bb[me][PAWN] & ~rel_rank7 & ~rel_fileh;
-    movebits = pawn_take_right(from_pawns, me) & enemy_avail;
+    from_pawns = pos->bb[me][PAWN] & ~rel_rank7; // & ~rel_fileh;
+    movebits = pawn_shift_upright(from_pawns, me) & enemy_avail;
     bit_for_each64(to, tmp1, movebits) {
-        from = pawn_take_right(to, enemy);
-        moves.move[moves.nmoves++] = move_make(from, to);
+        from = pawn_push_upright(to, enemy);
+        moves[nmoves++] = move_make(from, to);
     }
     /* pawn: rank 7 captures right */
-    from_pawns = pos->bb[me][PAWN] & rel_rank7 & ~rel_fileh;
-    movebits = pawn_take_right(from_pawns, me) & enemy_pieces;
+    from_pawns = pos->bb[me][PAWN] & rel_rank7; // & ~rel_fileh;
+    movebits = pawn_shift_upright(from_pawns, me) & enemy_pieces;
     bit_for_each64(to, tmp1, movebits) {
-        from = pawn_take_right(to, enemy);         /* reverse capture */
-        moves.move[moves.nmoves++] = move_make_promote(from, to, QUEEN);
-        moves.move[moves.nmoves++] = move_make_promote(from, to, ROOK);
-        moves.move[moves.nmoves++] = move_make_promote(from, to, BISHOP);
-        moves.move[moves.nmoves++] = move_make_promote(from, to, KNIGHT);
+        from = pawn_push_upright(to, enemy);         /* reverse capture */
+        moves[nmoves++] = move_make_promote(from, to, QUEEN);
+        moves[nmoves++] = move_make_promote(from, to, ROOK);
+        moves[nmoves++] = move_make_promote(from, to, BISHOP);
+        moves[nmoves++] = move_make_promote(from, to, KNIGHT);
     }
 
+    /* castle - Attention ! We consider that castle flags are correct,
+     * only empty squares between K ans R are tested.
+     */
+    static struct {
+        bitboard_t ooo;
+        bitboard_t oo;
+    } castle_empty[2] = {
+        { B1bb | C1bb | D1bb, F1bb | G1bb },
+        { B8bb | C8bb | D8bb, F8bb | G8bb }
+    };
+    static struct {
+        square_t from;
+        square_t ooo_to;
+        square_t oo_to;
+    } king_move[2] = {
+        { .from=E1, .ooo_to=C1, .oo_to=G1 },
+        { .from=E8, .ooo_to=C8, .oo_to=G8 },
+    };
+    /* so that bit0 is K castle flag, bit1 is Q castle flag */
+    int castle_msk = pos->castle >> (2 * me);
+
+    //int castle_msk = pos->castle >> (2 * color);
+    if (castle_msk & CASTLE_WK && !(occ & castle_empty[me].oo)) {
+        moves[nmoves++] = move_make(king_move[me].from, king_move[me].oo_to);
+    }
+    if (castle_msk & CASTLE_WQ && !(occ & castle_empty[me].ooo)) {
+        moves[nmoves++] = move_make(king_move[me].from, king_move[me].ooo_to);
+    }
     /* TODO
      * DONE. pawn ranks 2-6 advance (1 push, + 2 squares for rank 2)
      * DONE. pawns rank 7 advance + promotions
@@ -160,5 +215,5 @@ int gen_all_pseudomoves(pos_t *pos)
      * add function per piece, and type, for easier debug
      *
      */
-    return moves.nmoves;
+    return (pos->moves.nmoves = nmoves);
 }
