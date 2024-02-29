@@ -92,7 +92,11 @@ CFLAGS    := $(strip $(CFLAGS))
 
 ##################################### archiver/dependency flags
 ARFLAGS   := rcs
-DEPFLAGS  = -MMD -MP -MF $(DEPDIR)/$*.d
+DEPFLAGS   = -MMD -MP -MF $(DEPDIR)/$*.d
+
+##################################### archiver/dependency flags
+ALL_CFLAGS  = $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS)
+ALL_LDFLAGS = $(LDFLAGS) $(LIBS)
 
 ##################################### General targets
 .PHONY: all compile clean cleanall
@@ -187,7 +191,7 @@ cleanobjdir: cleanobj
 # "normal" ones, but do not imply to rebuild target.
 $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR) $(DEPDIR)
 	@echo compiling brchess module: $< "->" $@.
-	@$(CC) -c $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $< -o $@
+	@$(CC) -c $(ALL_CFLAGS) $< -o $@
 
 ##################################### brlib libraries
 .PHONY: cleanbrlib cleanallbrlib brlib
@@ -264,35 +268,39 @@ memcheck: targets
 	@$(VALGRIND) $(VALGRINDFLAGS) $(BINDIR)/brchess
 
 ##################################### test binaries
-TEST           = bin/fen-test bin/bitboard-test bin/movegen-test \
-	bin/mktestdata
+.PHONY: testing test
 
-FENTESTOBJS    = obj/fen.o obj/position.o obj/piece.o obj/bitboard.o \
-	obj/board.o obj/util.o
-BITBOARDOBJS   = obj/fen.o obj/position.o obj/piece.o obj/bitboard.o \
-	obj/board.o obj/hyperbola-quintessence.o
-MOVEGENOBJS    = obj/fen.o obj/position.o obj/piece.o obj/bitboard.o \
-	obj/board.o obj/hyperbola-quintessence.o obj/move.o obj/movegen.o
-MKTESTDATAOBJS = obj/fen.o obj/position.o obj/piece.o obj/bitboard.o \
-	obj/board.o obj/hyperbola-quintessence.o obj/move.o
+TEST          := fen-test bitboard-test movegen-test
+
+FEN_OBJS      := fen.o position.o piece.o bitboard.o board.o util.o
+BB_OBJS       := fen.o position.o piece.o bitboard.o board.o hyperbola-quintessence.o
+MOVEGEN_OBJS  := fen.o position.o piece.o bitboard.o board.o hyperbola-quintessence.o \
+	move.o movegen.o
+
+TEST          := $(addprefix $(BINDIR)/,$(TEST))
+
+FEN_OBJS      := $(addprefix $(OBJDIR)/,$(FEN_OBJS))
+BB_OBJS       := $(addprefix $(OBJDIR)/,$(BB_OBJS))
+MOVEGEN_OBJS  := $(addprefix $(OBJDIR)/,$(MOVEGEN_OBJS))
+
+test:
+	echo TEST=$(TEST)
+	echo FEN_OBJS=$(FEN_OBJS)
 
 testing: $(TEST)
 
-bin/fen-test: test/fen-test.c $(FENTESTOBJS)
-	@echo compiling $@ executable.
-	@$(CC) $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $< $(FENTESTOBJS)  $(LDFLAGS) $(LIBS) -o $@
+bin/fen-test: test/fen-test.c $(FEN_OBJS)
+	@echo compiling $@ test executable.
+	@$(CC) $(ALL_CFLAGS) $< $(FEN_OBJS) $(ALL_LDFLAGS) -o $@
 
-bin/bitboard-test: test/bitboard-test.c $(BITBOARDOBJS)
-	@echo compiling $@ executable.
-	@$(CC) $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $< $(BITBOARDOBJS) $(LDFLAGS) $(LIBS) -o $@
+bin/bitboard-test: test/bitboard-test.c $(BB_OBJS)
+	@echo compiling $@ test executable.
+	@$(CC) $(ALL_CFLAGS) $< $(BB_OBJS) $(ALL_LDFLAGS) -o $@
 
-bin/movegen-test: test/movegen-test.c $(MOVEGENOBJS)
-	@echo compiling $@ executable.
-	@$(CC) $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $< $(MOVEGENOBJS) $(LDFLAGS) $(LIBS) -o $@
+bin/movegen-test: test/movegen-test.c $(MOVEGEN_OBJS)
+	@echo compiling $@ test executable.
+	@$(CC) $(ALL_CFLAGS) $< $(MOVEGEN_OBJS) $(ALL_LDFLAGS) -o $@
 
-bin/mktestdata: test/mktestdata.c $(MKTESTDATAOBJS)
-	@echo compiling $@ executable.
-	@$(CC) $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $< $(MKTESTDATAOBJS) $(LDFLAGS) $(LIBS) -o $@
 ##################################### Makefile debug
 .PHONY: showflags wft
 
