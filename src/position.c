@@ -27,12 +27,7 @@
 #include "fen.h"
 #include "piece.h"
 #include "util.h"
-//#include "eval.h"
-
-//static pool_t *pos_pool;
-
-//const char *rankstr = "12345678";
-//const char *filestr = "ABCDEFGH";
+#include "board.h"
 
 /****************************************************
  * #define BYTE_PRINT "%c%c%c%c%c%c%c%c"            *
@@ -49,7 +44,10 @@
 /**
  * pos_new() - allocate a new position
  *
- * position is not initialized
+ * Position is not initialized.
+ * If BUG_ON compilation is defined, the program will fail.
+ *
+ * @Return: The new position or NULL.
  */
 pos_t *pos_new(void)
 {
@@ -69,7 +67,7 @@ pos_t *pos_new(void)
  * - moves_generated ans moves_counted are unset
  * - check is set to zero
  *
- * @return: The new position.
+ * @Return: The new position.
  *
  * TODO: merge with pos_new - NULL for init, non null for duplicate
  */
@@ -147,24 +145,70 @@ pos_t *pos_clear(pos_t *pos)
  */
 void pos_print(pos_t *pos)
 {
-    int rank, file;
-    piece_t pc, *board = pos->board;
+    //int rank, file;
+    //piece_t *board = pos->board;
     char fen[92];
 
     //piece_list_t *wk = list_first_entry(&pos->pieces[WHITE], piece_list_t, list),
     //    *bk = list_first_entry(&pos->pieces[BLACK], piece_list_t, list);
+    board_print(pos->board);
 
+    /*
+     * printf("  +---+---+---+---+---+---+---+---+\n");
+     * for (rank = 7; rank >= 0; --rank) {
+     *     printf("%c |", rank + '1');
+     *     for (file = 0; file < 8; ++file) {
+     *         pc = board[sq_make(file, rank)];
+     *         printf(" %s |", pc? piece_to_sym_color(pc): " ");
+     *     }
+     *     printf("\n  +---+---+---+---+---+---+---+---+\n");
+     * }
+     * printf("    A   B   C   D   E   F   G   H\n");
+     */
+    printf("fen %s\n", pos2fen(pos, fen));
+    //printf("Turn: %s.\n", IS_WHITE(pos->turn) ? "white" : "black");
+    /*
+     * printf("Kings: W:%c%c B:%c%c\n",
+     *        FILE2C(F88(wk->square)),
+     *        RANK2C(R88(wk->square)),
+     *        FILE2C(F88(bk->square)),
+     *        RANK2C(R88(bk->square)));
+     */
+    //printf("plies=%d clock50=%d\n", pos->plycount, pos->clock_50);
+    //printf("Current move = %d\n", pos->curmove);
+    //printf("Squares controlled: W:%d B:%d\n", popcount64(pos->controlled[WHITE]),
+    //       popcount64(pos->controlled[BLACK]));
+    //printf("Mobility: W:%u B:%u\n", pos->mobility[WHITE],
+    //       pos->mobility[BLACK]);
+}
 
-    printf("  +---+---+---+---+---+---+---+---+\n");
-    for (rank = 7; rank >= 0; --rank) {
-        printf("%c |", rank + '1');
-        for (file = 0; file < 8; ++file) {
-            pc = board[sq_make(file, rank)];
-            printf(" %s |", pc? piece_to_sym_color(pc): " ");
-        }
-        printf("\n  +---+---+---+---+---+---+---+---+\n");
-    }
-    printf("    A   B   C   D   E   F   G   H\n");
+/**
+ * pos_print_mask() - Print position and fen on stdout, with highlighted squares.
+ * @pos:  &position
+ * @mask: mask of highlighted squares.
+ */
+void pos_print_mask(pos_t *pos, bitboard_t mask)
+{
+    //int rank, file;
+    //piece_t pc, *board = pos->board;
+    char fen[92];
+
+    //piece_list_t *wk = list_first_entry(&pos->pieces[WHITE], piece_list_t, list),
+    //    *bk = list_first_entry(&pos->pieces[BLACK], piece_list_t, list);
+    board_print_mask(pos->board, mask);
+
+    /*
+     * printf("  +---+---+---+---+---+---+---+---+\n");
+     * for (rank = 7; rank >= 0; --rank) {
+     *     printf("%c |", rank + '1');
+     *     for (file = 0; file < 8; ++file) {
+     *         pc = board[sq_make(file, rank)];
+     *         printf(" %s |", pc? piece_to_sym_color(pc): " ");
+     *     }
+     *     printf("\n  +---+---+---+---+---+---+---+---+\n");
+     * }
+     * printf("    A   B   C   D   E   F   G   H\n");
+     */
     printf("fen %s\n", pos2fen(pos, fen));
     //printf("Turn: %s.\n", IS_WHITE(pos->turn) ? "white" : "black");
     /*

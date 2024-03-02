@@ -10,7 +10,7 @@
 int main(int ac, char**av)
 {
     pos_t *pos;
-
+    bitboard_t mask = A1bb | C3bb | A8bb | G7bb | H8bb | H1bb;
     const char *fen;
     char revfen[128];
     int comp;
@@ -26,6 +26,9 @@ int main(int ac, char**av)
         fen2pos(pos, fen);
     }
     pos_print(pos);
+    pos_print_mask(pos, mask);
+    printf("ULL=#%lx %#lx %#lx %#lx #%lx\n", A5bb, H5bb, H6bb, H7bb, H8bb);
+    printf("ULL=%llx %llx %llx\n", mask(A5),  mask(H7), mask(H8));
 
     pos2fen(pos, revfen);
     //printf("reverse fen=[%s]\n", pos2fen(pos, NULL));

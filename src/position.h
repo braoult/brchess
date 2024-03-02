@@ -23,6 +23,7 @@
 #include "bitboard.h"
 #include "piece.h"
 #include "move.h"
+#include "board.h"
 
 typedef struct __pos_s {
     u64 node_count;                               /* evaluated nodes */
@@ -97,6 +98,7 @@ extern void pos_del(pos_t *pos);
 extern pos_t *pos_clear(pos_t *pos);
 
 extern void pos_print(pos_t *pos);
+extern void pos_print_mask(pos_t *pos, bitboard_t mask);
 extern void pos_pieces_print(pos_t *pos);
 
 extern void pos_print_board_raw(const pos_t *pos, int type);

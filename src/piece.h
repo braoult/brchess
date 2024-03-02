@@ -35,7 +35,7 @@ typedef enum {
     PIECE_TYPE_MAX = 7                            /* bit 4 */
 } piece_type_t;
 
-typedef enum {
+typedef enum __piece_e {
     EMPTY = 0,
     NO_PIECE = 0,
     W_PAWN = PAWN, W_KNIGHT, W_BISHOP, W_ROOK, W_QUEEN, W_KING,

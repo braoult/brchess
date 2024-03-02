@@ -21,7 +21,7 @@
 #include "board.h"
 #include "piece.h"
 
-typedef u64 bitboard_t;
+//typedef u64 bitboard_t;
 
 /* mapping square -> bitboard */
 extern bitboard_t bb_sq[64];
@@ -39,6 +39,8 @@ extern bitboard_t bb_rank[64], bb_file[64], bb_diag[64], bb_anti[64];
 /* knight and king moves */
 extern bitboard_t bb_knight[64], bb_king[64];
 
+/* Unsure if it will work with all compilers. Use #define instead ?
+ */
 enum {
     A1bb = mask(A1), A2bb = mask(A2), A3bb = mask(A3), A4bb = mask(A4),
     A5bb = mask(A5), A6bb = mask(A6), A7bb = mask(A7), A8bb = mask(A8),

@@ -72,6 +72,8 @@ CPPFLAGS  += -DDEBUG_EVAL                                   # eval functions
 CPPFLAGS  += -DDEBUG_PIECE                                  # piece list management
 CPPFLAGS  += -DDEBUG_SEARCH                                 # move search
 
+CPPFLAGS  += -DDIAGRAM_SYM                                  # diagram with symbols
+
 # remove extraneous spaces (due to spaces before comments)
 CPPFLAGS  := $(strip $(CPPFLAGS))
 
@@ -248,9 +250,9 @@ $(CCLSROOT):
 # also, if cclsfile is newer than sources, no need to clean objects file
 # (and to run bear).
 # maybe run cleanobj cleanlibobj in commands ?
-$(CCLSFILE): cleanobj cleanbrlib $(SRC) $(LIBSRC) | $(CCLSROOT)
+$(CCLSFILE): cleanobj cleanbrlib libs | $(CCLSROOT)
 	@echo "Generating ccls compile commands file ($@)."
-	@$(BEAR) -- $(MAKE) compile testing
+	@$(BEAR) -- $(MAKE) testing
 
 ##################################### valgrind (mem check)
 .PHONY: memcheck

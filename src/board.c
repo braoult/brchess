@@ -11,10 +11,12 @@
  *
  */
 
+#include <stdio.h>
 #include <ctype.h>
 
 #include "brlib.h"
 #include "board.h"
+#include "bitboard.h"
 
 static const char *sq_strings[] = {
     "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
@@ -49,4 +51,58 @@ square_t sq_from_string(const char *sqstr)
     file_t f = C2FILE(sqstr[0]);
     rank_t r = C2RANK(sqstr[1]);
     return sq_coord_ok(f) && sq_coord_ok(r) ? sq_make(f, r): SQUARE_NONE;
+}
+
+/**
+ * board_print() - Print a board
+ * @board:  &board_t to print
+ */
+void board_print(piece_t *board)
+{
+    printf("  +---+---+---+---+---+---+---+---+\n");
+    for (int rank = 7; rank >= 0; --rank) {
+        printf("%c |", rank + '1');
+        for (int file = 0; file < 8; ++file) {
+            piece_t pc = board[sq_make(file, rank)];
+#           ifdef DIAGRAM_SYM
+            printf(" %s |", pc? piece_to_sym_color(pc): " ");
+#           else
+            printf(" %s |", pc? piece_to_sym_color(pc): " ");
+#           endif
+        }
+        printf("\n  +---+---+---+---+---+---+---+---+\n");
+    }
+    printf("    A   B   C   D   E   F   G   H\n");
+}
+
+/**
+ * board_print_mask() - Print a board position with some reversed squares
+ * @board:  &board_t to print
+ * @mask:   a bitboard indicating reverse color displayed squares
+ *
+ * Squares corresponding to @mask will be displayed in reverse colors.
+ */
+void board_print_mask(piece_t *board, bitboard_t mask)
+{
+    // 6: blink
+#   define REVERSE "\e[7m▌"
+#   define RESET   "▐\e[0m"
+    printf("  +---+---+---+---+---+---+---+---+\n");
+    for (int rank = 7; rank >= 0; --rank) {
+        printf("%c |", rank + '1');
+        for (int file = 0; file < 8; ++file) {
+            square_t sq = sq_make(file, rank);
+            piece_t pc = board[sq];
+            bitboard_t set = mask(sq) & mask;
+            printf("%s", set? REVERSE : " ");
+#           ifdef DIAGRAM_SYM
+            printf("%s", pc? piece_to_sym_color(pc): " ");
+#           else
+            printf("%s", pc? piece_to_char_color(pc): " ");
+#           endif
+            printf("%s|", set? RESET : " ");
+        }
+        printf("\n  +---+---+---+---+---+---+---+---+\n");
+    }
+    printf("    A   B   C   D   E   F   G   H\n");
 }
