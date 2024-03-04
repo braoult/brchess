@@ -1,4 +1,4 @@
-/* movegen.h - move generation
+/* move-gen.h - move generation
  *
  * Copyright (C) 2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.

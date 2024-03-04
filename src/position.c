@@ -28,18 +28,7 @@
 #include "piece.h"
 #include "util.h"
 #include "board.h"
-
-/****************************************************
- * #define BYTE_PRINT "%c%c%c%c%c%c%c%c"            *
- * #define BYTE2BIN(b) ((b) & 0x01 ? '1' : '0'),  \ *
- *         ((b) & 0x02 ? '1' : '0'),              \ *
- *         ((b) & 0x04 ? '1' : '0'),              \ *
- *         ((b) & 0x08 ? '1' : '0'),              \ *
- *         ((b) & 0x10 ? '1' : '0'),              \ *
- *         ((b) & 0x20 ? '1' : '0'),              \ *
- *         ((b) & 0x40 ? '1' : '0'),              \ *
- *         ((b) & 0x80 ? '1' : '0')                 *
- ****************************************************/
+#include "attack.h"
 
 /**
  * pos_new() - allocate a new position
@@ -71,7 +60,7 @@ pos_t *pos_new(void)
  *
  * TODO: merge with pos_new - NULL for init, non null for duplicate
  */
-pos_t *pos_dup(pos_t *pos)
+pos_t *pos_dup(const pos_t *pos)
 {
     pos_t *newpos = safe_malloc(sizeof(pos_t));
 
@@ -104,82 +93,143 @@ pos_t *pos_clear(pos_t *pos)
 #   ifdef DEBUG_POS
     printf("size(pos_board=%lu elt=%lu\n", sizeof(pos->board), sizeof(int));
 #   endif
-    //for (square square = A1; square <= H8; ++square)
-    //    pos->board[square] = EMPTY;
-
-    SET_WHITE(pos->turn);
     pos->node_count = 0;
-    pos->turn = 0;
+    pos->turn = WHITE;
     pos->clock_50 = 0;
     pos->plycount = 0;
     pos->en_passant = SQUARE_NONE;
     pos->castle = 0;
-    memset(pos->board, EMPTY, sizeof(pos->board));
-    //pos->curmove = 0;
-    //pos->eval = 0;
-    //pos->occupied[WHITE] = 0;
-    //pos->occupied[BLACK] = 0;
+
     for (color_t color = WHITE; color <= BLACK; ++color) {
         for (piece_type_t piece = 0; piece <= KING; ++piece)
             pos->bb[color][piece] = 0;
-        pos->controlled[WHITE] = 0;
-        pos->controlled[BLACK] = 0;
+        pos->controlled[color] = 0;
         pos->king[color] = SQUARE_NONE;
     }
-    pos->moves.curmove = pos->moves.nmoves = 0;
-    //pos->mobility[WHITE] = 0;
-    //pos->mobility[BLACK] = 0;
-    //pos->moves_generated = false;
-    //pos->moves_counted = false;
-    /* remove pieces / moves */
-    //pieces_del(pos, WHITE);
-    //pieces_del(pos, BLACK);
-    //moves_del(pos);
+
+    for (square_t sq = A1; sq <= H8; ++sq)
+        pos->board[sq] = EMPTY;
+    pos->moves.curmove = 0;
+    pos->moves.nmoves = 0;
 
     return pos;
+}
+
+/**
+ * pos_checkers() - find all checkers on a king.
+ * @pos:   &position
+ * @color: king color
+ *
+ * Get a bitboard of all checkers on @color king.
+ * Just a wrapper over @sq_attackers().
+ *
+ * @return: a bitboard of attackers.
+ */
+bitboard_t pos_checkers(const pos_t *pos, const color_t color)
+{
+    return sq_attackers(pos, pos->king[color], OPPONENT(color));
+}
+
+/**
+ * pos_checkers2str() - convert checkers to string.
+ * @pos: &position
+ * @str: destination string (should be at least 2*3 + 1 = 7 length)
+ *
+ * @return: The string.
+ */
+char *pos_checkers2str(const pos_t *pos, char *str)
+{
+    int sq, tmp;
+    char *p = str;
+    bit_for_each64(sq, tmp, pos->checkers) {
+        const char *sqstr = sq_to_string(sq);
+        *p++ = sqstr[0];
+        *p++ = sqstr[1];
+        *p++ = ' ';
+    }
+    *p = 0;
+    return str;
+}
+
+/**
+ * pos_check() - extensive position consistenci check.
+ * @pos:    &position
+ * @strict: if not zero, call bug_on() on any error.
+ *
+ * Check (hopefully) if position is valid:
+ * - pawns on first or 8th rank
+ * - number of pawns per color > 8
+ * - total number of pieces per color > 16 or zero
+ * - number of kings per color != 1
+ * - discrepancy between bitboards per piece and ALL_PIECES per color
+ * - discrepancy between bitboards and board
+ * - side-to-move already checking opponent king.
+ *
+ * In case of errors, and @abort is true, @bug_on() is called, and program will
+ * be terminated.
+ * This function should be called with @abort == 0 during initialization phase
+ * (eg after fen parsing), and with @abort != 0 otherwise (as we have some data
+ * corruption).
+ *
+ * TODO: add more checks
+ * - en-prise king for side to move.
+ *
+ * @Return: 0 if no error detected
+ *          the number of detected error if @abort == 0.
+ *          this function does not return if @abort != 0 and errors are found.
+ */
+int pos_check(const pos_t *pos, const int fatal)
+{
+    int n, count = 0, bbcount = 0, error = 0;
+
+    /* pawns on 1st ot 8th rank */
+    n = popcount64((pos->bb[WHITE][PAWN] | pos->bb[BLACK][PAWN]) &
+                   (RANK_1bb | RANK_8bb));
+    error += warn_on(n != 0);
+
+    for (color_t color = WHITE; color <= BLACK; ++color) {
+        /* pawn count */
+        n = popcount64(pos->bb[color][PAWN]);
+        error += warn_on(n > 8);
+        /* king count */
+        n = popcount64(pos->bb[color][KING]);
+        error += warn_on(n != 1);
+        /* pieces count */
+        n = popcount64(pos->bb[color][ALL_PIECES]);
+        error += warn_on(n == 0 || n > 16);
+        bbcount += n;
+    }
+    for (square_t sq = 0; sq < 64; ++sq) {
+        piece_t piece = pos->board[sq];
+        bitboard_t match;
+        if (piece == EMPTY)
+            continue;
+        color_t c = COLOR(piece);
+        piece_type_t p = PIECE(piece);
+        match = pos->bb[c][p] & mask(sq);
+        error += warn_on(!match);
+        count++;
+    }
+    /* occupied occupation is different from bitboards */
+    error += warn_on(count != bbcount);
+    /* is color to play in check ? */
+    error += warn_on(pos_checkers(pos, OPPONENT(pos->turn)));
+
+    bug_on(fatal && error);
+    return error;
 }
 
 /**
  * pos_print() - Print position and fen on stdout.
  * @pos:  &position
  */
-void pos_print(pos_t *pos)
+void pos_print(const pos_t *pos)
 {
-    //int rank, file;
-    //piece_t *board = pos->board;
-    char fen[92];
+    char str[92];
 
-    //piece_list_t *wk = list_first_entry(&pos->pieces[WHITE], piece_list_t, list),
-    //    *bk = list_first_entry(&pos->pieces[BLACK], piece_list_t, list);
     board_print(pos->board);
-
-    /*
-     * printf("  +---+---+---+---+---+---+---+---+\n");
-     * for (rank = 7; rank >= 0; --rank) {
-     *     printf("%c |", rank + '1');
-     *     for (file = 0; file < 8; ++file) {
-     *         pc = board[sq_make(file, rank)];
-     *         printf(" %s |", pc? piece_to_sym_color(pc): " ");
-     *     }
-     *     printf("\n  +---+---+---+---+---+---+---+---+\n");
-     * }
-     * printf("    A   B   C   D   E   F   G   H\n");
-     */
-    printf("fen %s\n", pos2fen(pos, fen));
-    //printf("Turn: %s.\n", IS_WHITE(pos->turn) ? "white" : "black");
-    /*
-     * printf("Kings: W:%c%c B:%c%c\n",
-     *        FILE2C(F88(wk->square)),
-     *        RANK2C(R88(wk->square)),
-     *        FILE2C(F88(bk->square)),
-     *        RANK2C(R88(bk->square)));
-     */
-    //printf("plies=%d clock50=%d\n", pos->plycount, pos->clock_50);
-    //printf("Current move = %d\n", pos->curmove);
-    //printf("Squares controlled: W:%d B:%d\n", popcount64(pos->controlled[WHITE]),
-    //       popcount64(pos->controlled[BLACK]));
-    //printf("Mobility: W:%u B:%u\n", pos->mobility[WHITE],
-    //       pos->mobility[BLACK]);
+    printf("fen %s\n", pos2fen(pos, str));
+    printf("checkers %s\n", pos_checkers2str(pos, str));
 }
 
 /**
@@ -187,50 +237,30 @@ void pos_print(pos_t *pos)
  * @pos:  &position
  * @mask: mask of highlighted squares.
  */
-void pos_print_mask(pos_t *pos, bitboard_t mask)
+void pos_print_mask(const pos_t *pos, const bitboard_t mask)
 {
-    //int rank, file;
-    //piece_t pc, *board = pos->board;
     char fen[92];
 
-    //piece_list_t *wk = list_first_entry(&pos->pieces[WHITE], piece_list_t, list),
-    //    *bk = list_first_entry(&pos->pieces[BLACK], piece_list_t, list);
     board_print_mask(pos->board, mask);
-
-    /*
-     * printf("  +---+---+---+---+---+---+---+---+\n");
-     * for (rank = 7; rank >= 0; --rank) {
-     *     printf("%c |", rank + '1');
-     *     for (file = 0; file < 8; ++file) {
-     *         pc = board[sq_make(file, rank)];
-     *         printf(" %s |", pc? piece_to_sym_color(pc): " ");
-     *     }
-     *     printf("\n  +---+---+---+---+---+---+---+---+\n");
-     * }
-     * printf("    A   B   C   D   E   F   G   H\n");
-     */
     printf("fen %s\n", pos2fen(pos, fen));
-    //printf("Turn: %s.\n", IS_WHITE(pos->turn) ? "white" : "black");
-    /*
-     * printf("Kings: W:%c%c B:%c%c\n",
-     *        FILE2C(F88(wk->square)),
-     *        RANK2C(R88(wk->square)),
-     *        FILE2C(F88(bk->square)),
-     *        RANK2C(R88(bk->square)));
-     */
-    //printf("plies=%d clock50=%d\n", pos->plycount, pos->clock_50);
-    //printf("Current move = %d\n", pos->curmove);
-    //printf("Squares controlled: W:%d B:%d\n", popcount64(pos->controlled[WHITE]),
-    //       popcount64(pos->controlled[BLACK]));
-    //printf("Mobility: W:%u B:%u\n", pos->mobility[WHITE],
-    //       pos->mobility[BLACK]);
 }
 
 /**
- * pos_pieces_print() - Print position pieces
+ * pos_print_board_raw - print simple position board (octal/FEN symbol values)
+ * @bb: the bitboard
+ * @type: int, 0 for octal, 1 for fen symbol
+ */
+void pos_print_raw(const pos_t *pos, const int type)
+{
+    board_print_raw(pos->board, type);
+    return;
+}
+
+/**
+ * pos_print_pieces() - Print position pieces
  * @pos:  &position
  */
-void pos_pieces_print(pos_t *pos)
+void pos_print_pieces(const pos_t *pos)
 {
     int bit, count, cur;
     char *pname;
@@ -254,123 +284,5 @@ void pos_pieces_print(pos_t *pos)
             printf(" ");
         }
         printf("\n");
-        //printf("White pieces (%d): \t", popcount64(pos->occupied[WHITE]));
-        //piece_list_print(&pos->pieces[WHITE]);
-        //printf("Black pieces (%d): \t", popcount64(pos->occupied[BLACK]));
-        //piece_list_print(&pos->pieces[BLACK]);
     }
 }
-
-
-/*
-inline void bitboard_print2_raw(bitboard_t bb1, bitboard_t bb2, char *title)
-{
-    int i;
-    printf("%s%s", title? title: "", title? ":\n": "");
-
-    printf("\tW: %#018lx\tB: %#018lx\n", bb1, bb2);
-    for (i=56; i>=0; i-=8)
-        printf("\t"BYTE_PRINT"\t\t"BYTE_PRINT"\n",
-               BYTE2BIN(bb1>>i),
-               BYTE2BIN(bb2>>i));
-}
-*/
-
-/**
- * pos_print_board_raw - print simple position board (octal/FEN symbol values)
- * @bb: the bitboard
- * @type: int, 0 for octal, 1 for fen symbol
- */
-void pos_print_board_raw(const pos_t *pos, int type)
-{
-    if (type == 0) {
-        for (rank_t r = RANK_8; r >= RANK_1; --r) {
-            for (file_t f = FILE_A; f <= FILE_H; ++f)
-                printf("%02o ", pos->board[sq_make(f, r)]);
-            printf(" \n");
-        }
-    } else {
-        for (rank_t r = RANK_8; r >= RANK_1; --r) {
-            for (file_t f = FILE_A; f <= FILE_H; ++f) {
-                square_t sq = sq_make(f, r);
-                if (pos->board[sq] == EMPTY)
-                    printf(". ");
-                else
-                    printf("%s ", piece_to_char_color(pos->board[sq]));
-            }
-            printf(" \n");
-        }
-    }
-    return;
-}
-
-/**
- * pos_bitboards_print() - Print position bitboards
- * @pos:  &position
- */
-//void pos_bitboards_print(pos_t *pos)
-//{
-//    printf("Bitboards occupied :\n");
-//    bitboard_print2(pos->occupied[WHITE], pos->occupied[BLACK]);
-//    printf("Bitboards controlled :\n");
-//    bitboard_print2(pos->controlled[WHITE], pos->controlled[BLACK]);
-//
-//}
-
-/**
- * pos_check() - extensive position consistenci check.
- * @pos:  &position
- */
-/*
- * void pos_check(position *pos)
- * {
- *     int rank, file;
- *     piece_t piece;
- *     board_t *board = pos->board;
- *
- *     /\* check that board and bitboard reflect same information *\/
- *     for (rank = 7; rank >= 0; --rank) {
- *         for (file = 0; file < 8; ++file) {
- *             piece_list_t *ppiece;
- *             printf("checking %c%c ", file+'a', rank+'1');
- *
- *             piece = board[SQ88(file, rank)].piece;
- *             ppiece= board[SQ88(file, rank)].s_piece;
- *             printf("piece=%s ", P_CSYM(piece));
- *             if (ppiece)
- *                 printf("ppiece=%s/sq=%#x ", P_CSYM(ppiece->piece), ppiece->square);
- *             switch(PIECE(piece)) {
- *                 case PAWN:
- *                     printf("pawn" );
- *                     break;
- *                 case KNIGHT:
- *                     printf("knight ");
- *                     break;
- *                 case BISHOP:
- *                     printf("bishop ");
- *                     break;
- *                 case ROOK:
- *                     printf("rook ");
- *                     break;
- *                 case QUEEN:
- *                     printf("queen ");
- *                     break;
- *                 case KING:
- *                     printf("king ");
- *                     break;
- *             }
- *             printf("\n");
- *         }
- *     }
- * }
- */
-
-/*
- * void pos_del(pos_t *pos)
- * {
- *     pieces_del(pos, WHITE);
- *     pieces_del(pos, BLACK);
- *     moves_del(pos);
- *     pool_add(pos_pool, pos);
- * }
- */

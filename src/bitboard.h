@@ -118,7 +118,9 @@ static __always_inline bitboard_t shift_nw(const bitboard_t bb)
 #define pawn_shift_up(bb, c)      ((c) == WHITE ? shift_n(bb): shift_s(bb))
 #define pawn_shift_upleft(bb, c)  ((c) == WHITE ? shift_nw(bb): shift_se(bb))
 #define pawn_shift_upright(bb, c) ((c) == WHITE ? shift_ne(bb): shift_sw(bb))
-/* pawn move (for single pawn) */
+/* pawn move (for single pawn) - NO SQUARE CONTROL HERE !
+ * Need to make functions with control instead.
+ */
 #define pawn_push_up(sq, c)       ((sq) + ((c) == WHITE ? NORTH:      SOUTH))
 #define pawn_push_upleft(sq, c)   ((sq) + ((c) == WHITE ? NORTH_WEST: SOUTH_EAST))
 #define pawn_push_upright(sq, c)  ((sq) + ((c) == WHITE ? NORTH_EAST: SOUTH_WEST))

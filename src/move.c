@@ -115,7 +115,7 @@ void moves_print(pos_t *pos, __unused int flags)
 }
 
 
-static int _moves_comp_square(const void *p1, const void *p2)
+static int _moves_cmp_bysquare(const void *p1, const void *p2)
 {
     move_t m1 = *(move_t *)p1;
     move_t m2 = *(move_t *)p2;
@@ -129,7 +129,7 @@ static int _moves_comp_square(const void *p1, const void *p2)
     /* f1 == f2 */
     if (t1 < t2) return -1;
     if (t1 > t2) return 1;
-    return 0;                                     /* DUP BUG ! */
+    return 0;
 }
 /**
  * move_sort_by_sq() - sort moves by from/to squares ascending
@@ -139,7 +139,7 @@ static int _moves_comp_square(const void *p1, const void *p2)
  */
 void move_sort_by_sq(pos_t *pos)
 {
-    qsort(pos->moves.move, pos->moves.nmoves, sizeof(move_t), _moves_comp_square);
+    qsort(pos->moves.move, pos->moves.nmoves, sizeof(move_t), _moves_cmp_bysquare);
 }
 
 /*

@@ -1,4 +1,4 @@
-# Makefile - GNU make only.
+# Makefile - brchess Makefile, **GNU make only**
 #
 # Copyright (C) 2021-2023 Bruno Raoult ("br")
 # Licensed under the GNU General Public License v3.0 or later.
@@ -58,19 +58,19 @@ CPPFLAGS  := -I$(BRINCDIR) -I$(INCDIR)
 
 CPPFLAGS  += -DNDEBUG                                       # assert
 
-CPPFLAGS  += -DBUG_ON                                       # bug.h
-CPPFLAGS  += -DWARN_ON                                      # bug.h
-#CPPFLAGS  += -DDEBUG                                       # global - unused
+CPPFLAGS  += -DBUG_ON                                       # brlib bug.h
+CPPFLAGS  += -DWARN_ON                                      # brlib bug.h
 
-CPPFLAGS  += -DDEBUG_DEBUG                                  # enable log() functions
+#CPPFLAGS  += -DDEBUG                                        # global - unused
+#CPPFLAGS  += -DDEBUG_DEBUG                                  # enable log() functions
 #CPPFLAGS  += -DDEBUG_DEBUG_C                                # enable log() settings
-CPPFLAGS  += -DDEBUG_POOL                                   # memory pools management
+#CPPFLAGS  += -DDEBUG_POOL                                   # memory pools management
 #CPPFLAGS  += -DDEBUG_FEN                                    # FEN decoding
-#CPPFLAGS  += -DDEBUG_POS				    # position.c
-CPPFLAGS  += -DDEBUG_MOVE                                   # move generation
-CPPFLAGS  += -DDEBUG_EVAL                                   # eval functions
-CPPFLAGS  += -DDEBUG_PIECE                                  # piece list management
-CPPFLAGS  += -DDEBUG_SEARCH                                 # move search
+#CPPFLAGS  += -DDEBUG_POS				     # position.c
+#CPPFLAGS  += -DDEBUG_MOVE                                   # move generation
+#CPPFLAGS  += -DDEBUG_EVAL                                   # eval functions
+#CPPFLAGS  += -DDEBUG_PIECE                                  # piece list management
+#CPPFLAGS  += -DDEBUG_SEARCH                                 # move search
 
 CPPFLAGS  += -DDIAGRAM_SYM                                  # diagram with symbols
 
@@ -272,18 +272,23 @@ memcheck: targets
 ##################################### test binaries
 .PHONY: testing test
 
-TEST          := fen-test bitboard-test movegen-test
+TEST          := fen-test bitboard-test movegen-test attack-test
 
-FEN_OBJS      := fen.o position.o piece.o bitboard.o board.o util.o
-BB_OBJS       := fen.o position.o piece.o bitboard.o board.o hyperbola-quintessence.o
+FEN_OBJS      := fen.o position.o piece.o bitboard.o board.o hyperbola-quintessence.o \
+	attack.o
+BB_OBJS       := fen.o position.o piece.o bitboard.o board.o hyperbola-quintessence.o \
+	attack.o
 MOVEGEN_OBJS  := fen.o position.o piece.o bitboard.o board.o hyperbola-quintessence.o \
-	move.o movegen.o
+	attack.o move.o movegen.o
+ATTACK_OBJS   := fen.o position.o piece.o bitboard.o board.o hyperbola-quintessence.o \
+	 attack.o move.o movegen.o
 
 TEST          := $(addprefix $(BINDIR)/,$(TEST))
 
 FEN_OBJS      := $(addprefix $(OBJDIR)/,$(FEN_OBJS))
 BB_OBJS       := $(addprefix $(OBJDIR)/,$(BB_OBJS))
 MOVEGEN_OBJS  := $(addprefix $(OBJDIR)/,$(MOVEGEN_OBJS))
+ATTACK_OBJS   := $(addprefix $(OBJDIR)/,$(ATTACK_OBJS))
 
 test:
 	echo TEST=$(TEST)
@@ -291,17 +296,21 @@ test:
 
 testing: $(TEST)
 
-bin/fen-test: test/fen-test.c $(FEN_OBJS)
+bin/fen-test: test/fen-test.c test/common-test.h $(FEN_OBJS)
 	@echo compiling $@ test executable.
 	@$(CC) $(ALL_CFLAGS) $< $(FEN_OBJS) $(ALL_LDFLAGS) -o $@
 
-bin/bitboard-test: test/bitboard-test.c $(BB_OBJS)
+bin/bitboard-test: test/bitboard-test.c test/common-test.h $(BB_OBJS)
 	@echo compiling $@ test executable.
 	@$(CC) $(ALL_CFLAGS) $< $(BB_OBJS) $(ALL_LDFLAGS) -o $@
 
-bin/movegen-test: test/movegen-test.c $(MOVEGEN_OBJS)
+bin/movegen-test: test/movegen-test.c test/common-test.h $(MOVEGEN_OBJS)
 	@echo compiling $@ test executable.
 	@$(CC) $(ALL_CFLAGS) $< $(MOVEGEN_OBJS) $(ALL_LDFLAGS) -o $@
+
+bin/attack-test: test/attack-test.c test/common-test.h $(ATTACK_OBJS)
+	@echo compiling $@ test executable.
+	@$(CC) $(ALL_CFLAGS) $< $(ATTACK_OBJS) $(ALL_LDFLAGS) -o $@
 
 ##################################### Makefile debug
 .PHONY: showflags wft

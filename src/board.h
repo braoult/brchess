@@ -65,7 +65,8 @@ static __always_inline rank_t sq_rank(square_t square)
 extern const char *sq_to_string(const square_t sq);
 extern square_t sq_from_string(const char *sq_string);
 
-extern void board_print(piece_t *board);
-extern void board_print_mask(piece_t *board, bitboard_t mask);
+extern void board_print(const piece_t *board);
+extern void board_print_mask(const piece_t *board, const bitboard_t mask);
+extern void board_print_raw(const piece_t *board, const int type);
 
 #endif  /* _BOARD_H */

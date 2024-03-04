@@ -1,0 +1,188 @@
+/* common-test.h - common static vars/funcs test
+ *
+ * Copyright (C) 2024 Bruno Raoult ("br")
+ * Licensed under the GNU General Public License v3.0 or later.
+ * Some rights reserved. See COPYING.
+ *
+ * You should have received a copy of the GNU General Public License along with this
+ * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.html>.
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later <https://spdx.org/licenses/GPL-3.0-or-later.html>
+ *
+ */
+
+#include <stdio.h>
+#include "chessdefs.h"
+/* when below FENs are in a struct with selection per test */
+#define FEN      1
+#define BITBOARD 2
+#define MOVEGEN  4
+
+
+struct fentest {
+    uint modules;
+    char *comment;
+    char *fen;
+} fentest[] = {
+//static char *fentest[] = {
+    /* tests rank movegen bug - FIXED
+     */
+    //"4k3/pppppppp/8/8/8/8/PPPPPPPP/2BRK3 w - - 0 1",
+    //"4k3/pppppppp/8/8/8/8/PPPPPPPP/1B1R1K2 w - - 0 1",
+    { MOVEGEN, "onli pawn captures",
+      "4k3/8/2p1p3/2PpP3/8/pp4pp/PP4PP/4K3 w - d6 0 1" },
+    { FEN          , "king in check",
+      "4k3/8/8/8/7b/8/8/4K3 w - - 0 1" },
+
+    /* illegal positions (en-prise king, wrong e.p. or castle flags, ...),
+     * sometimes crash Stockfish
+     */
+    { FEN          , "illegal EP and castle flags, fix-able by fen parser, SF crash",
+      "4k3/8/8/8/7B/8/8/4K3 w KQkq e6 0 1" },
+    { FEN          , "illegal, SF crash",
+      "4k3/8/8/8/7b/8/8/4K3 b - - 0 1" },
+    { FEN          , "illegal, SF crash",
+      "2r1k3/3B4/8/8/8/8/8/4K3 w - - 0 1" },
+    { FEN          , "illegal, SF crash",
+      "2r1k3/3P4/8/8/8/8/8/4K3 w - - 0 1" },
+
+    // First game moves
+    { FEN | MOVEGEN, "initial pos",
+      "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" },
+    { FEN | MOVEGEN, "1.e4",
+      "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1" },
+    { FEN | MOVEGEN, "1.Nh3",
+      "rnbqkbnr/pppppppp/8/8/8/7N/PPPPPPPP/RNBQKB1R b KQkq - 1 1" },
+    { FEN | MOVEGEN, "1.e4 e5 2.Nf3 Nc6",
+      "r1bqkbnr/pp1ppppp/2n5/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 1" },
+
+    // castling test
+    // both can castle queen only
+    { FEN | MOVEGEN, "",
+      "r3k2r/8/3B4/8/8/3b4/8/R3K2R w KQkq - 0 1" },
+    { FEN | MOVEGEN, "",
+      "r3k2r/8/3BB3/8/8/3bb3/8/R3K2R w KQkq - 0 1" },
+    { FEN | MOVEGEN, "",
+      "r2bkb1r/8/8/8/8/3bb3/8/R2BKB1R w KQkq - 0 1" },
+    // 4 castle possible, only K+R
+    { FEN | MOVEGEN, "",
+      "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1" },
+    // only kings on A1/A8, white to play
+    { FEN | MOVEGEN, "",
+      "k7/8/8/8/8/8/8/K7 w - - 0 1" },
+    // only one move possible (Pf2xBg3)
+    { FEN | MOVEGEN, "",
+      "k7/8/8/1p1p4/pPpPp3/P1PpPpb1/NBNP1P2/KBB1B3 w - - 0 1" },
+    // only 2 moves possible (Ph5xg6 e.p., Ph5-h6)
+    { FEN | MOVEGEN, "",
+      "k7/8/8/1p1p2pP/pPpPp3/P1PpPp2/NBNP1P2/KBB1B3 w - g6 0 1" },
+    // 2 Kings, W/B/ pawns on 7th for promotion
+    { FEN | MOVEGEN, "",
+      "k4n2/4P3/8/8/8/8/4p3/K4N2 w - - 0 1" },
+    // white castled, and can e.p. on c6 black can castle
+    // white is a pawn down
+    // white has 36 moves: P=11 + 1 e.p. N=6+3 B=5+5 R=1 Q=3 K=1 + 1 e.p.
+    // black has 33 moves: P=11 N=2+7 B=5 R=3 Q=3 K=1 + castle
+    { FEN | MOVEGEN, "",
+      "rnbqk2r/pp1pbpp1/7p/2pPp3/4n3/3B1N2/PPP2PPP/RNBQ1RK1 w kq c6 0 7" },
+
+    { FEN | MOVEGEN, "",
+      "4k3/4p3/8/b7/1BR1p2p/1Q3P2/5N2/4K3 w - - 0 1" },
+    { FEN | MOVEGEN, "",
+      "r1bq1rk1/pppp1ppp/2n2n2/4p3/2B1P3/3PPN2/PPP3PP/RN1QK2R b KQ - 1 7" },
+    { FEN | MOVEGEN, "",
+      "6k1/6pp/R2p4/p1p5/8/1P1r3P/6P1/6K1 b - - 3 3" },
+
+    // below tests are from:
+    // - Rodent IV
+    // - https://www.chessprogramming.net/perfect-perft/
+    { FEN | MOVEGEN, "",
+      "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1" },
+    { FEN | MOVEGEN, "",
+      "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1" },
+    { FEN | MOVEGEN, "",
+      "4rrk1/pp1n3p/3q2pQ/2p1pb2/2PP4/2P3N1/P2B2PP/4RRK1 b - - 7 19" },
+    { FEN | MOVEGEN, "",
+      "rq3rk1/ppp2ppp/1bnpb3/3N2B1/3NP3/7P/PPPQ1PP1/2KR3R w - - 7 14" },
+    { FEN | MOVEGEN, "",
+      "r1bq1r1k/1pp1n1pp/1p1p4/4p2Q/4Pp2/1BNP4/PPP2PPP/3R1RK1 w - - 2 14" },
+    { FEN | MOVEGEN, "",
+      "r3r1k1/2p2ppp/p1p1bn2/8/1q2P3/2NPQN2/PPP3PP/R4RK1 b - - 2 15" },
+    { FEN | MOVEGEN, "",
+      "1rbqk1nr/p3ppbp/2np2p1/2p5/1p2PP2/3PB1P1/PPPQ2BP/R2NK1NR b KQk - 0 1" },
+    { FEN | MOVEGEN, "",
+      "r1bqk2r/pp1p1ppp/2n1pn2/2p5/1bPP4/2NBP3/PP2NPPP/R1BQK2R b KQkq - 0 1" },
+    { FEN | MOVEGEN, "",
+      "rnb1kb1r/ppp2ppp/1q2p3/4P3/2P1Q3/5N2/PP1P1PPP/R1B1KB1R b KQkq - 0 1" },
+    { FEN | MOVEGEN, "",
+      "r1b2rk1/pp2nppp/1b2p3/3p4/3N1P2/2P2NP1/PP3PBP/R3R1K1 b - - 0 1" },
+    { FEN | MOVEGEN, "",
+      "n1q1r1k1/3b3n/p2p1bp1/P1pPp2p/2P1P3/2NBB2P/3Q1PK1/1R4N1 b - - 0 1" },
+    { FEN | MOVEGEN, "",
+      "r1bq1r1k/b1p1npp1/p2p3p/1p6/3PP3/1B2NN2/PP3PPP/R2Q1RK1 w - - 1 16" },
+    { FEN | MOVEGEN, "",
+      "3r1rk1/p5pp/bpp1pp2/8/q1PP1P2/b3P3/P2NQRPP/1R2B1K1 b - - 6 22" },
+    { FEN | MOVEGEN, "",
+      "r1q2rk1/2p1bppp/2Pp4/p6b/Q1PNp3/4B3/PP1R1PPP/2K4R w - - 2 18" },
+    { FEN | MOVEGEN, "",
+      "4k2r/1pb2ppp/1p2p3/1R1p4/3P4/2r1PN2/P4PPP/1R4K1 b - - 3 22" },
+    { FEN | MOVEGEN, "",
+      "3q2k1/pb3p1p/4pbp1/2r5/PpN2N2/1P2P2P/5PP1/Q2R2K1 b - - 4 26" },
+    { FEN | MOVEGEN, "",
+      "2r5/8/1n6/1P1p1pkp/p2P4/R1P1PKP1/8/1R6 w - - 0 1" },
+    { FEN | MOVEGEN, "",
+      "r2q1rk1/1b1nbppp/4p3/3pP3/p1pP4/PpP2N1P/1P3PP1/R1BQRNK1 b - - 0 1" },
+    { FEN | MOVEGEN, "",
+      "6k1/5pp1/7p/p1p2n1P/P4N2/6P1/1P3P1K/8 w - - 0 35" },
+    { FEN | MOVEGEN, "",
+      "r4rk1/1pp1q1pp/p2p4/3Pn3/1PP1Pp2/P7/3QB1PP/2R2RK1 b - - 0 1" },
+
+    { FEN | MOVEGEN, "",
+      "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1" },
+    { FEN | MOVEGEN, "",
+      "1k6/1b6/8/8/7R/8/8/4K2R b K - 0 1" },
+    { FEN | MOVEGEN, "",
+      "3k4/3p4/8/K1P4r/8/8/8/8 b - - 0 1" },          // Illegal ep move #1
+    { FEN | MOVEGEN, "",
+      "8/8/4k3/8/2p5/8/B2P2K1/8 w - - 0 1" },         // Illegal ep move #2
+    { FEN | MOVEGEN, "",
+      "8/8/1k6/2b5/2pP4/8/5K2/8 b - d3 0 1" },        // EP Capture Checks Opponent
+    { FEN | MOVEGEN, "",
+      "5k2/8/8/8/8/8/8/4K2R w K - 0 1" },             // Short Castling Gives Check
+    { FEN | MOVEGEN, "",
+      "3k4/8/8/8/8/8/8/R3K3 w Q - 0 1" },             // Long Castling Gives Check
+    { FEN | MOVEGEN, "",
+      "r3k2r/1b4bq/8/8/8/8/7B/R3K2R w KQkq - 0 1" },  // Castle Rights
+    { FEN | MOVEGEN, "",
+      "r3k2r/8/3Q4/8/8/5q2/8/R3K2R b KQkq - 0 1" },   // Castling Prevented
+    { FEN | MOVEGEN, "",
+      "2K2r2/4P3/8/8/8/8/8/3k4 w - - 0 1" },          // Promote out of Check
+    { FEN | MOVEGEN, "",
+      "8/8/1P2K3/8/2n5/1q6/8/5k2 b - - 0 1" },        // Discovered Check
+    { FEN | MOVEGEN, "",
+      "4k3/1P6/8/8/8/8/K7/8 w - - 0 1" },             // Promote to give check
+    { FEN | MOVEGEN, "",
+      "8/P1k5/K7/8/8/8/8/8 w - - 0 1" },              // Under Promote to give check
+    { FEN | MOVEGEN, "",
+      "K1k5/8/P7/8/8/8/8/8 w - - 0 1" },              // Self Stalemate
+    { FEN | MOVEGEN, "",
+      "8/k1P5/8/1K6/8/8/8/8 w - - 0 1" },             // Stalemate & Checkmate
+    { FEN | MOVEGEN, "",
+      "8/8/2k5/5q2/5n2/8/5K2/8 b - - 0 1" },          // Stalemate & Checkmate
+
+    { 0, NULL, NULL }
+};
+
+static int cur = 0;
+
+static char* next_fen(uint module)
+{
+    while (fentest[cur].fen && !(fentest[cur].modules & module))
+        cur++;
+    return fentest[cur].fen ? fentest[cur++].fen: NULL;
+}
+
+static __unused char* cur_comment()
+{
+    return fentest[cur].comment;
+}

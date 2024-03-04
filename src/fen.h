@@ -14,7 +14,7 @@
 #ifndef FEN_H
 #define FEN_H
 
-#include "position.h"
+#include "chessdefs.h"
 
 #define FENSTRLEN 92                              /* secure FEN string size */
 

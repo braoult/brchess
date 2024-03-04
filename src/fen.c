@@ -1,4 +1,4 @@
-/* fen.c - fen notation.
+/* fen.c - fen parsing/generation/test.
  *
  * Copyright (C) 2021-2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
@@ -22,8 +22,8 @@
 
 #include "chessdefs.h"
 #include "util.h"
-#include "piece.h"
-#include "bitboard.h"
+//#include "piece.h"
+//#include "bitboard.h"
 #include "position.h"
 #include "fen.h"
 
@@ -61,19 +61,18 @@ static const char *castle_str = "KQkq";
 #define SKIP_BLANK(p) for(;isspace(*(p)); (p)++)
 
 /**
- * fen_test(pos_t *pos) - test (and try to fix) fen-generated position.
+ * fen_check(pos_t *pos) - test (and try to fix) fen-generated position.
  * @pos: position
  *
- * fen_test() tests the following:
- * - fatal: number of pawns > 8
- * - fatal: number of pieces > 16
- * - fatal: number of kings != 1
- * - fixable: inconsistent castle flags (if K & R are not in correct position)
- * - fixable: inconsistent en-passant square (turn, bad pawn position)
+ * Test and fix the following:
+ * - inconsistent castle flags (if K & R are not in correct position)
+ * - inconsistent en-passant square (turn, bad pawn position)
+ *
+ * pos_check() is also called, leading to fatal errors if something is wrong.
  *
  * @return: 0 if OK, 1 if OK after fix, -1 if fatal issue.
  */
-static int fen_test(pos_t *pos)
+static int fen_check(pos_t *pos)
 {
     char *colstr[2] = { "white", "black"};
     int error = 0, warning = 0;
@@ -82,24 +81,25 @@ static int fen_test(pos_t *pos)
     if (pos->en_passant != SQUARE_NONE) {
         rank_t eprank = sq_rank(pos->en_passant);
         file_t epfile = sq_file(pos->en_passant);
-        rank_t rank5 = pos->turn == WHITE? RANK_5: RANK_4;
-        rank_t rank6 = pos->turn == WHITE? RANK_6: RANK_3;
-        rank_t rank7 = pos->turn == WHITE? RANK_7: RANK_2;
+        rank_t rank5 = REL_RANK(RANK_5, pos->turn);
+        rank_t rank6 = REL_RANK(RANK_6, pos->turn);
+        rank_t rank7 = REL_RANK(RANK_7, pos->turn);
         piece_t pawn = pos->turn == WHITE? B_PAWN: W_PAWN;
         if (warn(eprank != rank6 ||
                  pos->board[sq_make(epfile, rank5)] != pawn ||
                  pos->board[sq_make(epfile, rank6)] != EMPTY ||
                  pos->board[sq_make(epfile, rank7)] != EMPTY,
                  "fen warn: wrong en-passant settings. (fixed)\n")) {
+#           ifdef DEBUG_FEN
             printf("ep5=%o ep6=%o ep7=%o\n", sq_make(epfile, rank5),
-                   sq_make(epfile, rank6), sq_make(epfile, rank6));
+                   sq_make(epfile, rank6), sq_make(epfile, rank7));
+#           endif
             warning++;
             pos->en_passant = SQUARE_NONE;
         }
     }
 
     for (int color = WHITE; color <= BLACK; ++color) {
-        int n;
         rank_t rank1 = color == WHITE? RANK_1: RANK_8;
 
         /* castling */
@@ -130,18 +130,12 @@ static int fen_test(pos_t *pos)
             }
         }
 
-        /* piece, pawn, anf king count */
-        n = popcount64(pos->bb[color][PAWN]);
-        error += warn(n > 8,
-                      "fen err: %s has %d pawns\n", colstr[color], n);
-        n = popcount64(pos->bb[color][KING]);
-        error += warn(n != 1,
-                      "fen err: %s has %d kings\n", colstr[color], n);
-        n = popcount64(pos->bb[color][ALL_PIECES]);
-        error += warn(n > 16,
-                      "fen err: %s has %d pieces\n", colstr[color], n);
     }
-    return error ? -1: warning ? 1: 0;
+    if (!(error = pos_check(pos, 0))) {
+        /* TODO: Should it really be here ? */
+        pos->checkers = pos_checkers(pos, pos->turn);
+    }
+    return error ? -1: warning;
 }
 
 /**
@@ -259,13 +253,13 @@ end:
              err_line, err_pos, err_char, err_char)) {
         return NULL;
     }
-    if (fen_test(&tmppos) >= 0) {
-        if (!pos)
-            pos = pos_new();
-        *pos = tmppos;
-    }
+    if (fen_check(&tmppos) < 0)
+        return NULL;
+    if (!pos)
+        pos = pos_new();
+    *pos = tmppos;
 #   ifdef DEBUG_FEN
-    pos_print_board_raw(&tmppos, 1);
+    pos_print_raw(&tmppos, 1);
 #   endif
 
     return pos;

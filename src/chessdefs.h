@@ -16,19 +16,21 @@
 
 #include "brlib.h"                                /* brlib types */
 
-#define ONE            1ull
-#define C64(const_u64) const_u64##ULL
-#define mask(i)        ( (unsigned long long) (ONE << (i)) )
+#define ONE              1ull
+#define C64(const_u64)   const_u64##ULL
+#define mask(i)          ( (unsigned long long) (ONE << (i)) )
 //typedef ushort board;
 
-#define BOARDSIZE    (8*8)
-/* from human to machine */
-#define C2FILE(c)    (tolower(c) - 'a')
-#define C2RANK(c)    (tolower(c) - '1')
-/* from machine to human */
-#define FILE2C(f)    ((f) + 'a')
-#define RANK2C(r)    ((r) + '1')
+#define BOARDSIZE        (8*8)
+/* from human to machin  e */
+#define C2FILE(c)        (tolower(c) - 'a')
+#define C2RANK(c)        (tolower(c) - '1')
+/* from machine to huma  n */
+#define FILE2C(f)        ((f) + 'a')
+#define RANK2C(r)        ((r) + '1')
 
+/* relative rank */
+#define REL_RANK(r, c)   ((7 * (c)) ^ r)
 /* castle_t bits structure
  */
 typedef enum {

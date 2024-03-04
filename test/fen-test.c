@@ -1,39 +1,43 @@
-//#include <stdio.h>
+/* fen-test.c - basic fen tests.
+ *
+ * Copyright (C) 2024 Bruno Raoult ("br")
+ * Licensed under the GNU General Public License v3.0 or later.
+ * Some rights reserved. See COPYING.
+ *
+ * You should have received a copy of the GNU General Public License along with this
+ * program. If not, see <https://www.gnu.org/licenses/gpl-3.0-standalone.html>.
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later <https://spdx.org/licenses/GPL-3.0-or-later.html>
+ *
+ */
 
-#include "bug.h"
+#include <stdio.h>
 
 #include "chessdefs.h"
 #include "bitboard.h"
 #include "position.h"
 #include "fen.h"
 
-int main(int ac, char**av)
+#include "common-test.h"
+
+int main(__unused int ac, __unused char**av)
 {
     pos_t *pos;
-    bitboard_t mask = A1bb | C3bb | A8bb | G7bb | H8bb | H1bb;
     const char *fen;
     char revfen[128];
-    int comp;
-    //debug_init(5, stderr, true);
-    //pos_pool_init();
-    bitboard_init();
-    pos = pos_new();
-    if (ac == 1) {
-        fen = startfen;
-        startpos(pos);
-    } else {
-        fen = av[1];
-        fen2pos(pos, fen);
-    }
-    pos_print(pos);
-    pos_print_mask(pos, mask);
-    printf("ULL=#%lx %#lx %#lx %#lx #%lx\n", A5bb, H5bb, H6bb, H7bb, H8bb);
-    printf("ULL=%llx %llx %llx\n", mask(A5),  mask(H7), mask(H8));
 
-    pos2fen(pos, revfen);
-    //printf("reverse fen=[%s]\n", pos2fen(pos, NULL));
-    comp = strcmp(fen, revfen);
-    printf("compare=%d - %s\n", comp, comp? "NOK": "OK");
-    pos_print_board_raw(pos, 0);
-    pos_print_board_raw(pos, 1);
+    bitboard_init();
+
+    while ((fen = next_fen(FEN))) {
+        if (!(pos = fen2pos(NULL, fen))) {
+            printf("fen = [%s] **INVALID\n", fen);
+        } else {
+            pos_print_raw(pos, 1);
+            pos2fen(pos, revfen);
+            printf("fen = [%s]\nrev = [%s]", fen, revfen);
+            if (strcmp(fen, revfen))
+                printf("  **FIXED\n");
+            pos_del(pos);
+        }
+    }
 }

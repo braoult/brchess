@@ -1,4 +1,4 @@
-/* movegen.c - move generation
+/* move-gen.c - move generation
  *
  * Copyright (C) 2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
@@ -21,7 +21,7 @@
 #include "position.h"
 #include "move.h"
 #include "hyperbola-quintessence.h"
-#include "movegen.h"
+#include "move-gen.h"
 
 
 /**
@@ -111,8 +111,8 @@ int gen_all_pseudomoves(pos_t *pos)
     }
 
     /* pawn: relative rank and files */
-    bitboard_t rel_rank7 = (me == WHITE ? RANK_7bb : RANK_2bb);
-    bitboard_t rel_rank3 = (me == WHITE ? RANK_3bb : RANK_6bb);
+    bitboard_t rel_rank7 = me == WHITE ? RANK_7bb : RANK_2bb;
+    bitboard_t rel_rank3 = me == WHITE ? RANK_3bb : RANK_6bb;
     //bitboard_t rel_filea = (me == WHITE ? FILE_Abb : FILE_Hbb);
     //bitboard_t rel_fileh = (me == WHITE ? FILE_Hbb : FILE_Abb);
     int en_passant = pos->en_passant == SQUARE_NONE? 0: pos->en_passant;

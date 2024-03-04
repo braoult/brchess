@@ -35,22 +35,11 @@ typedef struct __pos_s {
     square_t en_passant;
     castle_rights_t castle;
 
-    //eval_t eval;
-    //int check[2];
-    //int eval_simple_phase;
-    //eval_t eval_simple;
-    //move_t *bestmove;
-    //bool moves_generated;
-    //bool moves_counted;
-
     bitboard_t bb[2][PIECE_TYPE_MAX];             /* bb[0][PAWN], bb[1][ALL_PIECES] */
-    bitboard_t controlled[2];
-    //u16 mobility[2];
-                                                  //struct list_head pieces[2];                   /* pieces list, King is first */
-    //struct list_head moves[2];
+    bitboard_t controlled[2];                     /* unsure */
+    bitboard_t checkers;                          /* opponent checkers */
     piece_t board[BOARDSIZE];
     movelist_t moves;
-    //int nmoves;
 } pos_t;
 
 /**
@@ -93,18 +82,20 @@ static inline void pos_clr_sq(pos_t *pos, square_t square)
 //void bitboard_print2(bitboard_t bb1, bitboard_t bb2, char *title);
 
 extern pos_t *pos_new();
-extern pos_t *pos_dup(pos_t *pos);
+extern pos_t *pos_dup(const pos_t *pos);
 extern void pos_del(pos_t *pos);
 extern pos_t *pos_clear(pos_t *pos);
 
-extern void pos_print(pos_t *pos);
-extern void pos_print_mask(pos_t *pos, bitboard_t mask);
-extern void pos_pieces_print(pos_t *pos);
+extern bitboard_t pos_checkers(const pos_t *pos, const color_t color);
+extern char *pos_checkers2str(const pos_t *pos, char *str);
 
-extern void pos_print_board_raw(const pos_t *pos, int type);
+extern int pos_check(const pos_t *pos, const int strict);
 
-//extern pos_t *pos_startpos(pos_t *pos);
+extern void pos_print(const pos_t *pos);
+extern void pos_print_mask(const pos_t *pos, const bitboard_t mask);
+extern void pos_print_raw(const pos_t *pos, const int type);
 
-//void pos_check(position *pos);
+extern void pos_print_pieces(const pos_t *pos);
+
 
 #endif  /* POSITION_H */

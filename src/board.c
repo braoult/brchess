@@ -1,4 +1,4 @@
-/* board.c - 8x8 board.
+/* board.c - 8x8 functions.
  *
  * Copyright (C) 2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
@@ -57,7 +57,7 @@ square_t sq_from_string(const char *sqstr)
  * board_print() - Print a board
  * @board:  &board_t to print
  */
-void board_print(piece_t *board)
+void board_print(const piece_t *board)
 {
     printf("  +---+---+---+---+---+---+---+---+\n");
     for (int rank = 7; rank >= 0; --rank) {
@@ -82,7 +82,7 @@ void board_print(piece_t *board)
  *
  * Squares corresponding to @mask will be displayed in reverse colors.
  */
-void board_print_mask(piece_t *board, bitboard_t mask)
+void board_print_mask(const piece_t *board, const bitboard_t mask)
 {
     // 6: blink
 #   define REVERSE "\e[7m▌"
@@ -105,4 +105,24 @@ void board_print_mask(piece_t *board, bitboard_t mask)
         printf("\n  +---+---+---+---+---+---+---+---+\n");
     }
     printf("    A   B   C   D   E   F   G   H\n");
+}
+
+/**
+ * board_print_raw - print raw (octal or FEN symbol) board
+ * @bb: the bitboard
+ * @type: int, 0 for octal, 1 for fen symbol
+ */
+void board_print_raw(const piece_t *board, const int type)
+{
+    for (rank_t r = RANK_8; r >= RANK_1; --r) {
+        for (file_t f = FILE_A; f <= FILE_H; ++f) {
+            piece_t p = board[sq_make(f, r)];
+            if (type) {
+                printf("%s ", p == EMPTY? ".": piece_to_char_color(p));
+            } else {
+                printf("%02o ", p);
+            }
+        }
+        printf("\n");
+    }
 }
