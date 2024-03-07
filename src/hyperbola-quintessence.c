@@ -132,17 +132,17 @@ static bitboard_t hyperbola_moves(const bitboard_t pieces, const square_t sq,
 
 static bitboard_t hyperbola_file_moves(bitboard_t occ, square_t sq)
 {
-    return hyperbola_moves(occ, sq, bb_file[sq]);
+    return hyperbola_moves(occ, sq, bb_sqfile[sq]);
 }
 
 static bitboard_t hyperbola_diag_moves(bitboard_t occ, square_t sq)
 {
-    return hyperbola_moves(occ, sq, bb_diag[sq]);
+    return hyperbola_moves(occ, sq, bb_sqdiag[sq]);
 }
 
 static bitboard_t hyperbola_anti_moves(bitboard_t occ, square_t sq)
 {
-    return hyperbola_moves(occ, sq, bb_anti[sq]);
+    return hyperbola_moves(occ, sq, bb_sqanti[sq]);
 }
 
 bitboard_t hyperbola_bishop_moves(bitboard_t occ, square_t sq)

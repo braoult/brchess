@@ -35,58 +35,108 @@
  * T on @sq could attack a white T piece.
  *
  * @Return: a bitboard of attackers.
- *
  */
+
+// #define DEBUG_ATTACK_ATTACKERS1
+
 bitboard_t sq_attackers(const pos_t *pos, const square_t sq, const color_t c)
 {
-    bitboard_t attackers = 0;
+    bitboard_t attackers = 0, tmp;
     bitboard_t sqbb = mask(sq);
-    bitboard_t c_pieces = pos->bb[c][ALL_PIECES];
-    bitboard_t occ = c_pieces | pos->bb[OPPONENT(c)][ALL_PIECES];
+    bitboard_t occ = pos_occ(pos);
     bitboard_t to;
     color_t opp = OPPONENT(c);
 
     /* pawn */
     to =  pos->bb[c][PAWN];
-    attackers |= pawn_shift_upleft(sqbb, opp) & to;
-#   ifdef DEBUG_ATTACK
-    bitboard_print("sq_attackers after pawn upleft", attackers);
+    tmp = pawn_shift_upleft(sqbb, opp) & to;
+    attackers |= tmp;
+#   ifdef DEBUG_ATTACK_ATTACKERS1
+    bb_print("att pawn upleft", tmp);
 #   endif
-    attackers |= pawn_shift_upright(sqbb, opp) & to;
-#   ifdef DEBUG_ATTACK
-    bitboard_print("sq_attackers pawn upright", attackers);
+    tmp = pawn_shift_upright(sqbb, opp) & to;
+    attackers |= tmp;
+#   ifdef DEBUG_ATTACK_ATTACKERS1
+    bb_print("att pawn upright", tmp);
 #   endif
 
     /* knight & king */
     to = pos->bb[c][KNIGHT];
-    attackers |= bb_knight_moves(to, sq);
-#   ifdef DEBUG_ATTACK
-    bitboard_print("sq_attackers after knight", attackers);
+    tmp = bb_knight_moves(to, sq);
+    attackers |= tmp;
+#   ifdef DEBUG_ATTACK_ATTACKERS1
+    bb_print("att knight", tmp);
 #   endif
     to = pos->bb[c][KING];
-    attackers |= bb_king_moves(to, sq);
-#   ifdef DEBUG_ATTACK
-    bitboard_print("sq_attackers after king", attackers);
+    tmp = bb_king_moves(to, sq);
+    attackers |= tmp;
+#   ifdef DEBUG_ATTACK_ATTACKERS1
+    bb_print("att king", tmp);
 #   endif
 
     /* bishop / queen */
     to = pos->bb[c][BISHOP] | pos->bb[c][QUEEN];
-    attackers |= hyperbola_bishop_moves(occ, sq) & to;
-#   ifdef DEBUG_ATTACK
-    bitboard_print("sq_attackers after bishop/queen", attackers);
+    tmp = hyperbola_bishop_moves(occ, sq) & to;
+    attackers |= tmp;
+#   ifdef DEBUG_ATTACK_ATTACKERS1
+    bb_print("att bishop/queen", tmp);
 #   endif
 
     /* rook / queen */
     to = pos->bb[c][ROOK] | pos->bb[c][QUEEN];
-#   ifdef DEBUG_ATTACK
-    bitboard_print("sq_attackers after queen", attackers);
-#   endif
-    attackers |= hyperbola_rook_moves(occ, sq) & to;
-#   ifdef DEBUG_ATTACK
-    bitboard_print("sq_attackers after rook/queen", attackers);
+    tmp = hyperbola_rook_moves(occ, sq) & to;
+    attackers |= tmp;
+#   ifdef DEBUG_ATTACK_ATTACKERS1
+    bb_print("att rook/queen", tmp);
+    bb_print("ATTACKERS", attackers);
+    printf("attackers=%lx\n", attackers);
 #   endif
 
     return attackers;
+}
+
+/**
+ * sq_pinners() - find pinners on a square
+ * @pos: position
+ * @sq:  square to test
+ * @c:   attacker color
+ *
+ * Find all @c pieces which are separated from @sq by only one piece (of
+ * any color).
+ *
+ * @Return: a bitboard of attackers.
+ */
+bitboard_t sq_pinners(const pos_t *pos, const square_t sq, const color_t c)
+{
+    bitboard_t attackers, pinners = 0;
+    bitboard_t occ = pos_occ(pos);
+    bitboard_t maybe_pinner, tmp, lines;
+
+    /* bishop type */
+    attackers = pos->bb[c][BISHOP] | pos->bb[c][QUEEN];
+    /* occupancy on sq diag and antidiag */
+    lines = (bb_sqdiag[sq] | bb_sqanti[sq]) & occ;
+    bit_for_each64(maybe_pinner, tmp, attackers) {
+        bitboard_t between = bb_between_excl[maybe_pinner][sq];
+        /* keep only squares between AND on sq diag/anti */
+        if (popcount64(between & lines) == 1)
+            pinners |= mask(maybe_pinner);
+    }
+
+    /* same for rook type */
+    attackers = pos->bb[c][ROOK] | pos->bb[c][QUEEN];
+    lines = (bb_sqrank[sq] | bb_sqfile[sq]) & occ;
+    bit_for_each64(maybe_pinner, tmp, attackers) {
+        bitboard_t between = bb_between_excl[maybe_pinner][sq];
+        if (popcount64(between & lines) == 1)
+            pinners |= mask(maybe_pinner);
+    }
+#   ifdef DEBUG_ATTACK_ATTACKERS1
+    char str[32];
+    printf("pinners : %s\n", pos_pinners2str(pos, str, sizeof(str)));
+    printf("pinners : %lx\n", pinners);
+#   endif
+    return pinners;
 }
 
 /**

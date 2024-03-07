@@ -19,6 +19,7 @@
 #include "move.h"
 #include "position.h"
 
+
 /*
  * /\**
  *  * move_print() - print a move
@@ -114,7 +115,6 @@ void moves_print(pos_t *pos, __unused int flags)
     printf("\n");
 }
 
-
 static int _moves_cmp_bysquare(const void *p1, const void *p2)
 {
     move_t m1 = *(move_t *)p1;
@@ -131,6 +131,7 @@ static int _moves_cmp_bysquare(const void *p1, const void *p2)
     if (t1 > t2) return 1;
     return 0;
 }
+
 /**
  * move_sort_by_sq() - sort moves by from/to squares ascending
  * @pos: position.

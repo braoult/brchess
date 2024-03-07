@@ -21,10 +21,7 @@
 #include "piece.h"
 #include "move.h"
 
-/**
- * gen_all_pseudomoves() - generate all pseudo moves
- *
- */
+bool pseudo_is_legal(pos_t *pos, move_t move);
 int gen_all_pseudomoves(pos_t *pos);
 
 #endif  /* MOVEGEN_H */

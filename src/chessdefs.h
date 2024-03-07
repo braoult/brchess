@@ -16,21 +16,14 @@
 
 #include "brlib.h"                                /* brlib types */
 
-#define ONE              1ull
-#define C64(const_u64)   const_u64##ULL
-#define mask(i)          ( (unsigned long long) (ONE << (i)) )
-//typedef ushort board;
+#define ONE                1ull
+#define C64(const_u64)     const_u64##ULL
+#define mask(i)            ( (u64) (ONE << (i)) )
 
-#define BOARDSIZE        (8*8)
-/* from human to machin  e */
-#define C2FILE(c)        (tolower(c) - 'a')
-#define C2RANK(c)        (tolower(c) - '1')
-/* from machine to huma  n */
-#define FILE2C(f)        ((f) + 'a')
-#define RANK2C(r)        ((r) + '1')
-
+#define BOARDSIZE          (8*8)
 /* relative rank */
-#define REL_RANK(r, c)   ((7 * (c)) ^ r)
+#define SQ_REL_RANK(r, c)  (rank_t)((7 * (c)) ^ r)
+
 /* castle_t bits structure
  */
 typedef enum {
@@ -38,10 +31,20 @@ typedef enum {
     CASTLE_WQ = (1 << 1),                         /* 0x02 00000010 */
     CASTLE_BK = (1 << 2),                         /* 0x04 00000100 */
     CASTLE_BQ = (1 << 3),                         /* 0x08 00001000 */
+
+    CASTLE_W  = (CASTLE_WK | CASTLE_WQ),          /* 00000011 W castle mask */
+    CASTLE_B  = (CASTLE_BK | CASTLE_BQ),          /* 00001100 B castle mask */
+
+    CASTLE_K  = (1 << 0),                         /* generic K/Q, after doing : */
+    CASTLE_Q  = (1 << 1),                         /* flags >> (2 * color)       */
 } castle_rights_t;
 
-#define CASTLE_W        (CASTLE_WK | CASTLE_WQ)   /* 00000011 W castle mask */
-#define CASTLE_B        (CASTLE_BK | CASTLE_BQ)   /* 00001100 B castle mask */
+/* determine is oo or ooo is possible with castle flags f and color c
+ */
+#define NORM_CASTLE(f, c) ((f) >> (2 * (c)))      /* shift  flags to bits 0/1 */
+#define CAN_OO(f, c)     (NORM_CASTLE(f, c) & CASTLE_K)
+#define CAN_OOO(f, c)    (NORM_CASTLE(f, c) & CASTLE_Q)
+#define CAN_CASTLE(f, c) (CAN_OO(f, c) | CAN_OOO(f, c))
 
 /* game phases
  */

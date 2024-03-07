@@ -82,7 +82,9 @@ static void send_stockfish_fen(FILE *desc, pos_t *pos, char *fen)
     int count, __unused mycount = 0, fishcount;
     size_t alloc = 0;
     ssize_t buflen;
+
     pos_clear(pos);
+
     move_t *moves = pos->moves.move;
     int nmoves = pos->moves.nmoves;
     //char nodescount[] = "Nodes searched";
@@ -187,24 +189,24 @@ int main(int __unused ac, __unused char**av)
 {
     int i = 0;
     FILE *outfd;
-    pos_t *pos, *fishpos = pos_new();
     char *fen;
+    pos_t *pos, *fishpos = pos_new();
     //bitboard_t wrong = 0x5088000040, tmp, loop;
     //bit_for_each64(loop, tmp, )
-
+    //printf("fishpos 1=%p\n", fishpos);
     bitboard_init();
     hyperbola_init();
     outfd = open_stockfish();
 
     while ((fen = next_fen(MOVEGEN))) {
         //printf(">>>>> %s\n", test[i]);
-        printf("original fen %d: [%s]\n", i, fen);
+        //printf("fishpos 2=%p\n", fishpos);
+        printf("original fen %d: [%p][%s]\n", i, fen, fen);
         if (!(pos = fen2pos(NULL, fen))) {
             printf("wrong fen %d: [%s]\n", i, fen);
             continue;
         }
         pos_print(pos);
-        fflush(stdout);
 
         /* print movelists */
         send_stockfish_fen(outfd, fishpos, fen);
@@ -227,7 +229,6 @@ int main(int __unused ac, __unused char**av)
         // fflush(stdout);
 
         /* compare movelists */
-        printf("\n");
         compare_moves(fishpos, pos);
         //pos_print_board_raw(pos, 1);
         //printf("%s\n", pos2fen(pos, str));

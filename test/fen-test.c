@@ -26,17 +26,23 @@ int main(__unused int ac, __unused char**av)
     const char *fen;
     char revfen[128];
 
+    setlinebuf(stdout);                           /* line-buffered stdout */
+
     bitboard_init();
 
     while ((fen = next_fen(FEN))) {
         if (!(pos = fen2pos(NULL, fen))) {
-            printf("fen = [%s] **INVALID\n", fen);
+            printf("[%s] **INVALID\n", fen);
         } else {
-            pos_print_raw(pos, 1);
+            pos_print(pos);
             pos2fen(pos, revfen);
-            printf("fen = [%s]\nrev = [%s]", fen, revfen);
-            if (strcmp(fen, revfen))
-                printf("  **FIXED\n");
+            if (!strcmp(fen, revfen)) {
+                printf("[%s] OK\n", fen);
+            } else {
+                //printf("fen = [%s]\nrev = [%s]", fen, revfen);
+                //pos_print_raw(pos, 1);
+                printf("[%s] -> [%s] **FIXED\n", fen, revfen);
+            }
             pos_del(pos);
         }
     }

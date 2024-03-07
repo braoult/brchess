@@ -19,5 +19,5 @@
 
 extern bitboard_t sq_attackers(const pos_t *pos, const square_t sq, const color_t c);
 extern bitboard_t sq_attackers_all(const pos_t *pos, const square_t sq);
-
+extern bitboard_t sq_pinners(const pos_t *pos, const square_t sq, const color_t c);
 #endif

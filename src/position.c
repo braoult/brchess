@@ -111,7 +111,8 @@ pos_t *pos_clear(pos_t *pos)
         pos->board[sq] = EMPTY;
     pos->moves.curmove = 0;
     pos->moves.nmoves = 0;
-
+    pos->checkers = 0;
+    pos->pinners = 0;
     return pos;
 }
 
@@ -131,24 +132,18 @@ bitboard_t pos_checkers(const pos_t *pos, const color_t color)
 }
 
 /**
- * pos_checkers2str() - convert checkers to string.
- * @pos: &position
- * @str: destination string (should be at least 2*3 + 1 = 7 length)
+ * pos_pinners() - find all pinners on a king.
+ * @pos:   &position
+ * @color: king color
  *
- * @return: The string.
+ * Get a bitboard of all pinners on @color king.
+ * Just a wrapper over @sq_pinners().
+ *
+ * @return: a bitboard of pinners.
  */
-char *pos_checkers2str(const pos_t *pos, char *str)
+bitboard_t pos_pinners(const pos_t *pos, const color_t color)
 {
-    int sq, tmp;
-    char *p = str;
-    bit_for_each64(sq, tmp, pos->checkers) {
-        const char *sqstr = sq_to_string(sq);
-        *p++ = sqstr[0];
-        *p++ = sqstr[1];
-        *p++ = ' ';
-    }
-    *p = 0;
-    return str;
+    return sq_pinners(pos, pos->king[color], OPPONENT(color));
 }
 
 /**
@@ -164,6 +159,7 @@ char *pos_checkers2str(const pos_t *pos, char *str)
  * - discrepancy between bitboards per piece and ALL_PIECES per color
  * - discrepancy between bitboards and board
  * - side-to-move already checking opponent king.
+ * - side to move in check more than twice
  *
  * In case of errors, and @abort is true, @bug_on() is called, and program will
  * be terminated.
@@ -171,8 +167,8 @@ char *pos_checkers2str(const pos_t *pos, char *str)
  * (eg after fen parsing), and with @abort != 0 otherwise (as we have some data
  * corruption).
  *
- * TODO: add more checks
- * - en-prise king for side to move.
+ * TODO: add more checks:
+ * - kings attacking each other
  *
  * @Return: 0 if no error detected
  *          the number of detected error if @abort == 0.
@@ -212,8 +208,10 @@ int pos_check(const pos_t *pos, const int fatal)
     }
     /* occupied occupation is different from bitboards */
     error += warn_on(count != bbcount);
-    /* is color to play in check ? */
+    /* is opponent already in check ? */
     error += warn_on(pos_checkers(pos, OPPONENT(pos->turn)));
+    /* is color to play in check more than twice ? */
+    error += warn_on(popcount64(pos_checkers(pos, OPPONENT(pos->turn))) > 2);
 
     bug_on(fatal && error);
     return error;
@@ -225,11 +223,12 @@ int pos_check(const pos_t *pos, const int fatal)
  */
 void pos_print(const pos_t *pos)
 {
-    char str[92];
+    char str[128];
 
     board_print(pos->board);
     printf("fen %s\n", pos2fen(pos, str));
-    printf("checkers %s\n", pos_checkers2str(pos, str));
+    printf("checkers: %s\n", pos_checkers2str(pos, str, sizeof(str)));
+    printf("pinners : %s\n", pos_pinners2str(pos, str, sizeof(str)));
 }
 
 /**

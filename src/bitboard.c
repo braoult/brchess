@@ -21,6 +21,13 @@
 #include "board.h"
 #include "bitboard.h"
 
+bitboard_t bb_sq[64];
+bitboard_t bb_sqrank[64], bb_sqfile[64], bb_sqdiag[64], bb_sqanti[64];
+bitboard_t bb_between_excl[64][64];
+bitboard_t bb_between[64][64];
+
+bitboard_t bb_knight[64], bb_king[64];
+
 /*  vectors are clockwise from N */
 static int knight_vector[] = {
     NORTH_EAST + NORTH, NORTH_EAST + EAST,
@@ -32,14 +39,6 @@ static int king_vector[8] = {
     NORTH, NORTH_EAST, EAST, SOUTH_EAST,
     SOUTH, SOUTH_WEST, WEST, NORTH_WEST
 };
-
-bitboard_t bb_sq[64];
-bitboard_t bb_rank[64], bb_file[64], bb_diag[64], bb_anti[64];
-bitboard_t bb_between_excl[64][64];
-bitboard_t bb_between[64][64];
-
-bitboard_t bb_knight[64], bb_king[64];
-bitboard_t bb_pawn_push[2][64], bb_bpawn_attack[2][64], bb_pawn_ep[2][64];
 
 /**
  * bitboard_between_excl() - get bitboard of squares between two squares.
@@ -81,12 +80,13 @@ bitboard_t bitboard_between_excl(square_t sq1, square_t sq2)
  *
  * Generate the following bitboards :
  *   bb_sq[64]: square to bitboard
+ *   bb_sqrank[64]: square to rank
+ *   bb_sqfile[64]: square to file
+ *   bb_sqdiag[64]: square to diagonal
+ *   bb_sqanti[64]: square to antidiagonal
+ *
  *   bb_between_excl[64][64]: strict squares between two squares
  *   bb_between[64][64]: squares between two squares including second square
- *   bb_rank[64]: square to rank
- *   bb_file[64]: square to file
- *   bb_diagonal[64]: square to diagonal
- *   bb_antidiagonal[64]: square to antidiagonal
  *
  * And the following pseudo move masks:
  *   bb_knight[64]: knight moves
@@ -134,10 +134,10 @@ void bitboard_init(void)
         }
     }
     for (square_t sq = 0; sq < 64; ++sq) {
-        bb_file[sq] = tmpbb[sq][0];
-        bb_rank[sq] = tmpbb[sq][1];
-        bb_diag[sq] = tmpbb[sq][2];
-        bb_anti[sq] = tmpbb[sq][3];
+        bb_sqfile[sq] = tmpbb[sq][0];
+        bb_sqrank[sq] = tmpbb[sq][1];
+        bb_sqdiag[sq] = tmpbb[sq][2];
+        bb_sqanti[sq] = tmpbb[sq][3];
     }
 
     /* 3) knight and king moves */
@@ -189,11 +189,11 @@ bitboard_t bb_king_moves(bitboard_t notmine, square_t sq)
 }
 
 /**
- * bitboard_print() - print simple bitboard representation
+ * bb_print() - print simple bitboard representation
  * @title: a string or NULL
  * @bitboard: the bitboard
  */
-void bitboard_print(const char *title, const bitboard_t bitboard)
+void bb_print(const char *title, const bitboard_t bitboard)
 {
     //char c = p? p: 'X';
     if (title)
@@ -210,14 +210,14 @@ void bitboard_print(const char *title, const bitboard_t bitboard)
 }
 
 /**
- * bitboard_print_multi() - print multiple bitboards horizontally
+ * bb_print_multi() - print multiple bitboards horizontally
  * @title: a string or NULL
  * @n: number of bitboards
  * @bb_ptr...: pointers to bitboards
  *
  * @n is the number of bitboards to print. If @n > 10, it is reduced to 10
  */
-void bitboard_print_multi(const char *title, int n, ...)
+void bb_print_multi(const char *title, int n, ...)
 {
     bitboard_t bb[8];
     va_list ap;
@@ -252,13 +252,13 @@ void bitboard_print_multi(const char *title, int n, ...)
 }
 
 /**
- * bitboard_rank_sprint() - print an u8 rank binary representation
+ * bb_rank_sprint() - print an u8 rank binary representation
  * @str: the destination string
  * @bb8: the uchar to print
  *
  * @return: @str, filled with ascii representation
  */
-char *bitboard_rank_sprint(char *str, const uchar bb8)
+char *bb_rank_sprint(char *str, const uchar bb8)
 {
     file_t f;
     for (f = FILE_A; f <= FILE_H; ++f) {
@@ -267,5 +267,45 @@ char *bitboard_rank_sprint(char *str, const uchar bb8)
     *(str + f) = 0;
     //printf(" 0 1 2 3 4 5 6 7\n");
     //printf("\n");
+    return str;
+}
+
+/**
+ * bb_sq2str() - convert bitboard to a string with a list of squares.
+ * @bb:  bitboard
+ * @str: destination string
+ * @len: max @str length
+ *
+ * @str will be filled with the list of string representation of @bb, up to @len
+ * characters.
+ * 3 characters are used per square, so, for example, @str len should be :
+ * - For a valid position checkers (two checkers max): 2*3 + 1 = 7.
+ * - For a valid position pinners (8 pinners): 8*3 + 1 = 25.
+ * - for a full bitboard: 64*3 + 1 = 193.
+ *
+ * If @len is not enough to fill all moves, the last fitting move is replaced by "...".
+ *
+ * @return: The string.
+ */
+char *bb_sq2str(const bitboard_t bb, char *str, const int len)
+{
+    bitboard_t tmp, sq;
+    int nocc = popcount64(bb);
+    int needed = 3 * nocc + 1;
+    int willdo = (int) len >= needed ? nocc: (len - 1) / 3 - 1;
+    int current = 0;
+
+    //printf("sq2str bb=%lx len=%d willdo=%d\n", bb, len, willdo);
+    bit_for_each64(sq, tmp, bb) {
+        if (current == willdo) {
+            strcpy(str + current * 3, "...");
+        } else {
+            strcpy(str + current * 3, sq_to_string(sq));
+            str[current * 3 + 2] = ' ';
+        }
+        if (++current > willdo)
+            break;
+    }
+    str[current * 3] = 0;
     return str;
 }

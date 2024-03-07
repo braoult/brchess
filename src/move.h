@@ -37,8 +37,8 @@
 #define M_FLAGS_BEG 18
 #define M_HAS_FLAGS mask(M_FLAGS_BEG + 0)         /* probably unused */
 #define M_CAPTURE   mask(M_FLAGS_BEG + 1)
-#define M_ENPASSANT mask(M_FLAGS_BEG + 2)
-#define M_PROMOTION mask(M_FLAGS_BEG + 3)
+#define M_EPASSANT  mask(M_FLAGS_BEG + 2)
+#define M_PROMOTE   mask(M_FLAGS_BEG + 3)
 #define M_CASTLE_K  mask(M_FLAGS_BEG + 4)
 #define M_CASTLE_Q  mask(M_FLAGS_BEG + 5)
 #define M_CHECK     mask(M_FLAGS_BEG + 6)         /* probably unknown/useless */
@@ -54,9 +54,14 @@ static inline move_t move_make(square_t from, square_t to)
     return (to << 6) | from;
 }
 
+static inline move_t move_make_flags(square_t from, square_t to, int flags)
+{
+    return move_make(from, to) | flags;
+}
+
 static inline move_t move_make_promote(square_t from, square_t to, piece_type_t piece)
 {
-    return move_make(from, to) | M_ENPASSANT | (piece << 15);
+    return move_make(from, to) | M_PROMOTE | (piece << 15);
 }
 
 static inline square_t move_from(move_t move)

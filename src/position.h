@@ -38,6 +38,7 @@ typedef struct __pos_s {
     bitboard_t bb[2][PIECE_TYPE_MAX];             /* bb[0][PAWN], bb[1][ALL_PIECES] */
     bitboard_t controlled[2];                     /* unsure */
     bitboard_t checkers;                          /* opponent checkers */
+    bitboard_t pinners;                           /* opponent pinners */
     piece_t board[BOARDSIZE];
     movelist_t moves;
 } pos_t;
@@ -50,7 +51,7 @@ typedef struct __pos_s {
  *
  * Both position board and bitboards are modified.
  */
-static inline void pos_set_sq(pos_t *pos, square_t square, piece_t piece)
+static __always_inline void pos_set_sq(pos_t *pos, square_t square, piece_t piece)
 {
     color_t color = COLOR(piece);
     piece_type_t type = PIECE(piece);
@@ -68,7 +69,7 @@ static inline void pos_set_sq(pos_t *pos, square_t square, piece_t piece)
  *
  * Both position board and bitboards are modified.
  */
-static inline void pos_clr_sq(pos_t *pos, square_t square)
+static __always_inline void pos_clr_sq(pos_t *pos, square_t square)
 {
     piece_t piece = pos->board[square];
     piece_type_t type = PIECE(piece);
@@ -77,6 +78,58 @@ static inline void pos_clr_sq(pos_t *pos, square_t square)
     pos->bb[color][type] &= ~mask(square);
     pos->bb[color][ALL_PIECES] &= ~mask(square);
 }
+
+/**
+ * pos_occ() - get position occupation (all pieces)
+ * @pos: position
+ *
+ * @return: occupation bitboard.
+ */
+static __always_inline bitboard_t pos_occ(const pos_t *pos)
+{
+    return pos->bb[WHITE][ALL_PIECES] | pos->bb[BLACK][ALL_PIECES];
+}
+
+/**
+ * pos_between_occ() - find occupation between two squares.
+ * @pos:   position
+ * @sq1:   square 1
+ * @sq2:   square 2
+ *
+ * @return: bitboard of @betw if between @sq1 and @sq2.
+ */
+static __always_inline bitboard_t pos_between_occ(const pos_t *pos,
+                                                  const square_t sq1, const square_t sq2)
+{
+    return bb_between_excl[sq1][sq2] & pos_occ(pos);
+}
+
+/**
+ * pos_between_count() - count occupied squares between two squares.
+ * @pos:   position
+ * @sq1:   square 1
+ * @sq2:   square 2
+ *
+ * @return: bitboard of @betw if between @sq1 and @sq2.
+ */
+static __always_inline int pos_between_count(const pos_t *pos,
+                                             const square_t sq1, const square_t sq2)
+{
+    return bb_between_excl[sq1][sq2] & pos_occ(pos);
+}
+
+/**
+ * pos_checkers2str() - get of string of checkers.
+ * @pos:   position
+ * @str:   destination string
+ * @len:   max @str len.
+ *
+ * A wrapper over @bb_sq2str() for checkers bitmap.
+ *
+ * @return: @str.
+ */
+#define pos_checkers2str(pos, str, len)  bb_sq2str((pos)->checkers, (str), (len))
+#define pos_pinners2str(pos, str, len)   bb_sq2str((pos)->pinners, (str), (len))
 
 //void bitboard_print(bitboard_t bb, char *title);
 //void bitboard_print2(bitboard_t bb1, bitboard_t bb2, char *title);
@@ -87,7 +140,9 @@ extern void pos_del(pos_t *pos);
 extern pos_t *pos_clear(pos_t *pos);
 
 extern bitboard_t pos_checkers(const pos_t *pos, const color_t color);
-extern char *pos_checkers2str(const pos_t *pos, char *str);
+extern bitboard_t pos_pinners(const pos_t *pos, const color_t color);
+//extern char *pos_checkers2str(const pos_t *pos, char *str);
+//extern char *pos_pinners2str(const pos_t *pos, char *str);
 
 extern int pos_check(const pos_t *pos, const int strict);
 

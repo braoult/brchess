@@ -12,6 +12,7 @@
 
 SHELL     := /bin/bash
 CC        := gcc
+#CC        := clang
 LD        := ld
 BEAR      := bear
 TOUCH     := touch
@@ -40,15 +41,13 @@ OBJ       := $(addprefix $(OBJDIR)/,$(SRC_FN:.c=.o))
 TSTSRC    := $(wildcard $(TSTDIR)/*.c)
 
 LIB       := br_$(shell uname -m)			    # library name
+LIBS      := $(strip -l$(LIB) -lreadline)
 
 DEP_FN    := $(SRC_FN)
 DEP       := $(addprefix $(DEPDIR)/,$(DEP_FN:.c=.d))
 
 TARGET_FN := brchess
 TARGET    := $(addprefix $(BINDIR)/,$(TARGET_FN))
-
-LDFLAGS   := -L$(BRLIBDIR)
-LIBS      := $(strip -l$(LIB) -lreadline)
 
 ASMFILES  := $(SRC:.c=.s) $(TSTSRC:.c=.s)
 CPPFILES  := $(SRC:.c=.i) $(TSTSRC:.c=.i)
@@ -68,6 +67,12 @@ CPPFLAGS  += -DWARN_ON                                      # brlib bug.h
 #CPPFLAGS  += -DDEBUG_FEN                                    # FEN decoding
 #CPPFLAGS  += -DDEBUG_POS				     # position.c
 #CPPFLAGS  += -DDEBUG_MOVE                                   # move generation
+
+# attack.c
+#CPPFLAGS  += -DDEBUG_ATTACK_ATTACKERS1			     # sq_attackers details
+CPPFLAGS  += -DDEBUG_ATTACK_ATTACKERS			    # sq_attackers
+CPPFLAGS  += -DDEBUG_ATTACK_PINNERS			    # sq_pinners details
+
 #CPPFLAGS  += -DDEBUG_EVAL                                   # eval functions
 #CPPFLAGS  += -DDEBUG_PIECE                                  # piece list management
 #CPPFLAGS  += -DDEBUG_SEARCH                                 # move search
@@ -79,6 +84,7 @@ CPPFLAGS  := $(strip $(CPPFLAGS))
 
 ##################################### compiler flags
 CFLAGS    := -std=gnu11
+#CFLAGS    += -flto
 CFLAGS    += -O1
 CFLAGS    += -g
 CFLAGS    += -Wall
@@ -91,6 +97,12 @@ CFLAGS    += -Wmissing-declarations
 # CFLAGS += -mno-tbm
 
 CFLAGS    := $(strip $(CFLAGS))
+
+##################################### linker flags
+LDFLAGS   := -L$(BRLIBDIR)
+#LDFLAGS   += -flto
+
+LDFLAGS   := $(strip $(LDFLAGS))
 
 ##################################### archiver/dependency flags
 ARFLAGS   := rcs
@@ -193,7 +205,7 @@ cleanobjdir: cleanobj
 # "normal" ones, but do not imply to rebuild target.
 $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR) $(DEPDIR)
 	@echo compiling brchess module: $< "->" $@.
-	@$(CC) -c $(ALL_CFLAGS) $< -o $@
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
 
 ##################################### brlib libraries
 .PHONY: cleanbrlib cleanallbrlib brlib
@@ -279,9 +291,9 @@ FEN_OBJS      := fen.o position.o piece.o bitboard.o board.o hyperbola-quintesse
 BB_OBJS       := fen.o position.o piece.o bitboard.o board.o hyperbola-quintessence.o \
 	attack.o
 MOVEGEN_OBJS  := fen.o position.o piece.o bitboard.o board.o hyperbola-quintessence.o \
-	attack.o move.o movegen.o
+	attack.o move.o move-gen.o
 ATTACK_OBJS   := fen.o position.o piece.o bitboard.o board.o hyperbola-quintessence.o \
-	 attack.o move.o movegen.o
+	 attack.o move.o move-gen.o
 
 TEST          := $(addprefix $(BINDIR)/,$(TEST))
 

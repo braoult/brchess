@@ -81,9 +81,9 @@ static int fen_check(pos_t *pos)
     if (pos->en_passant != SQUARE_NONE) {
         rank_t eprank = sq_rank(pos->en_passant);
         file_t epfile = sq_file(pos->en_passant);
-        rank_t rank5 = REL_RANK(RANK_5, pos->turn);
-        rank_t rank6 = REL_RANK(RANK_6, pos->turn);
-        rank_t rank7 = REL_RANK(RANK_7, pos->turn);
+        rank_t rank5 = SQ_REL_RANK(RANK_5, pos->turn);
+        rank_t rank6 = SQ_REL_RANK(RANK_6, pos->turn);
+        rank_t rank7 = SQ_REL_RANK(RANK_7, pos->turn);
         piece_t pawn = pos->turn == WHITE? B_PAWN: W_PAWN;
         if (warn(eprank != rank6 ||
                  pos->board[sq_make(epfile, rank5)] != pawn ||
@@ -129,11 +129,11 @@ static int fen_check(pos_t *pos)
                 pos->castle &= ~castle_q;
             }
         }
-
     }
     if (!(error = pos_check(pos, 0))) {
         /* TODO: Should it really be here ? */
         pos->checkers = pos_checkers(pos, pos->turn);
+        pos->pinners  = pos_pinners(pos, pos->turn);
     }
     return error ? -1: warning;
 }
@@ -256,8 +256,10 @@ end:
     if (fen_check(&tmppos) < 0)
         return NULL;
     if (!pos)
-        pos = pos_new();
-    *pos = tmppos;
+        pos = pos_dup(&tmppos);
+    //puts("prout 1");
+    //pos_print_raw(&tmppos, 1);
+    //puts("prout 2");
 #   ifdef DEBUG_FEN
     pos_print_raw(&tmppos, 1);
 #   endif

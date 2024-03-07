@@ -20,6 +20,13 @@
 #include "piece.h"
 #include "bitboard.h"
 
+/* from human to machine */
+#define C2FILE(c)          (tolower(c) - 'a')
+#define C2RANK(c)          (tolower(c) - '1')
+/* from machine to human */
+#define FILE2C(f)          ((f) + 'a')
+#define RANK2C(r)          ((r) + '1')
+
 /* a square is defined as
  * rrrfff
  */
