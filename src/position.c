@@ -147,41 +147,41 @@ bitboard_t pos_pinners(const pos_t *pos, const color_t color)
 }
 
 /**
- * pos_check() - extensive position consistenci check.
+ * pos_check() - extensive position consistency check.
  * @pos:    &position
- * @strict: if not zero, call bug_on() on any error.
+ * @strict: if true, call bug_on() on any error.
  *
- * Check (hopefully) if position is valid:
- * - pawns on first or 8th rank
- * - number of pawns per color > 8
- * - total number of pieces per color > 16 or zero
- * - number of kings per color != 1
- * - discrepancy between bitboards per piece and ALL_PIECES per color
- * - discrepancy between bitboards and board
- * - side-to-move already checking opponent king.
- * - side to move in check more than twice
+ * Perform some validity check on position @pos:
+ * - pawns on 1st or 8th rank
+ * - number of pawns > 8 (per color)
+ * - total number of pieces > 16 or zero (per color)
+ * - number of kings != 1 (per color)
+ * - discrepancy between board and king (per color)
+ * - discrepancy between piece bitboards and ALL_PIECES bitboards (per color)
+ * - discrepancy between bitboards and board (per color)
+ * - side-to-move already checking opponent king
+ * - side-to-move in check more than twice
+ * - kings distance is 1
  *
- * In case of errors, and @abort is true, @bug_on() is called, and program will
+ * In case of errors, and @strict is true, @bug_on() is called, and program will
  * be terminated.
- * This function should be called with @abort == 0 during initialization phase
- * (eg after fen parsing), and with @abort != 0 otherwise (as we have some data
+ * This function should be called with @strict == false during initialization phase
+ * (eg after fen parsing), and with @strict == true otherwise (as we have some data
  * corruption).
  *
  * TODO: add more checks:
  * - kings attacking each other
  *
- * @Return: 0 if no error detected
- *          the number of detected error if @abort == 0.
- *          this function does not return if @abort != 0 and errors are found.
+ * @Return: Number of detected error (only if @strict is false).
  */
-int pos_check(const pos_t *pos, const int fatal)
+int pos_check(const pos_t *pos, const bool strict)
 {
     int n, count = 0, bbcount = 0, error = 0;
+    bitboard_t tmp;
 
     /* pawns on 1st ot 8th rank */
-    n = popcount64((pos->bb[WHITE][PAWN] | pos->bb[BLACK][PAWN]) &
-                   (RANK_1bb | RANK_8bb));
-    error += warn_on(n != 0);
+    tmp = (pos->bb[WHITE][PAWN] | pos->bb[BLACK][PAWN]) & (RANK_1bb | RANK_8bb);
+    error += warn_on(tmp);
 
     for (color_t color = WHITE; color <= BLACK; ++color) {
         /* pawn count */
@@ -190,6 +190,8 @@ int pos_check(const pos_t *pos, const int fatal)
         /* king count */
         n = popcount64(pos->bb[color][KING]);
         error += warn_on(n != 1);
+        /* king mismatch with board */
+        error += warn_on(PIECE(pos->board[pos->king[color]]) != KING);
         /* pieces count */
         n = popcount64(pos->bb[color][ALL_PIECES]);
         error += warn_on(n == 0 || n > 16);
@@ -212,8 +214,10 @@ int pos_check(const pos_t *pos, const int fatal)
     error += warn_on(pos_checkers(pos, OPPONENT(pos->turn)));
     /* is color to play in check more than twice ? */
     error += warn_on(popcount64(pos_checkers(pos, OPPONENT(pos->turn))) > 2);
+    /* kings distance is less than 2 */
+    error += warn_on(sq_dist(pos->king[WHITE], pos->king[BLACK]) < 2);
 
-    bug_on(fatal && error);
+    bug_on(strict && error);
     return error;
 }
 
