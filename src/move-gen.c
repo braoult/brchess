@@ -28,18 +28,6 @@
 
 
 /**
- * gen_castle() - generate c
- * @pos: position
- *
- * Generate all pseudo pawn pushes.
- */
-//int gen_pawn_push(pos_t *pos, bitboard_t occ)
-//{
-
-
-//}
-
-/**
  * pseudo_is_legal() - check if a move is legal.
  * @pos:  position
  * @move: move_t
@@ -47,10 +35,11 @@
  * We check all possible invalid moves:
  * (1) King:
  *  - K moves to a controlled square
- *  - Castling:
- *     - K passes a controlled square   - already done in pseudomove gen
+ * (1) Castling:
+ *  - K passes a controlled square   - already done in pseudomove gen
  *
- * (2) En-passant:
+ *
+ * (3) En-passant:
  *  - pinned taking pawn, done in (3)
  *  - taking and taken pawn on same rank than king, discovered check on rank
  *
@@ -103,10 +92,21 @@ bool pseudo_is_legal(pos_t *pos, move_t move)
  * gen_all_pseudomoves() - generate all pseudo moves
  * @pos: position
  *
- * Generate all moves, no check is done on validity due to castle rules,
- * or check (pinned pieces, etc...).
+ * Generate all @pos pseudo moves for player-to-move.
+ * The @pos->moves table is filled with the moves.
  *
- * @return: The number of moves.
+ * Only a few validity checks are done here (i.e. moves are not generated):
+ *  - castling, if king is in check
+ *  - castling, if king passes an enemy-controlled square (not final square).
+ * When immediately known, a few move flags are also applied in these cases:
+ *  - castling: M_CASTLE_{K,Q}
+ *  - pawn capture (incl. en-passant): M_CAPTURE
+ *  - promotion: M_PROMOTION
+ *  - promotion and capture
+ *
+ * TODO: move code to specific functions (especially castling, pawn push/capture)
+ *
+ * @Return: The total number of moves.
  */
 int gen_all_pseudomoves(pos_t *pos)
 {
@@ -127,7 +127,7 @@ int gen_all_pseudomoves(pos_t *pos)
 
     int from, to;
 
-    /* king */
+    /* king - MUST BE FIRST ! */
     from = pos->king[us];
     movebits = bb_king_moves(not_my_pieces, from);
     bit_for_each64(to, tmp2, movebits) {
@@ -187,11 +187,28 @@ int gen_all_pseudomoves(pos_t *pos)
         //printf("push %d->%d %s->%s", from, to, sq_to_string(from), sq_to_string(to));
         moves[nmoves++] = move_make(from, to);
     }
+    /* possible second push */
     movebits = pawn_shift_up(movebits & rel_rank3, us) & empty;
     bit_for_each64(to, tmp1, movebits) {
         from = pawn_push_up(pawn_push_up(to, them), them);
         moves[nmoves++] = move_make(from, to);
     }
+
+    /* pawn: ranks 2-6 captures left, including en-passant */
+    from_pawns = pos->bb[us][PAWN] & ~rel_rank7; // & ~rel_filea;
+    movebits = pawn_shift_upleft(from_pawns, us) & enemy_avail;
+    bit_for_each64(to, tmp1, movebits) {
+        from = pawn_push_upleft(to, them);         /* reverse capture */
+        moves[nmoves++] = move_make_capture(from, to);
+    }
+    /* pawn: ranks 2-6 captures right, including en-passant */
+    from_pawns = pos->bb[us][PAWN] & ~rel_rank7; // & ~rel_fileh;
+    movebits = pawn_shift_upright(from_pawns, us) & enemy_avail;
+    bit_for_each64(to, tmp1, movebits) {
+        from = pawn_push_upright(to, them);
+        moves[nmoves++] = move_make_capture(from, to);
+    }
+
     /* pawn: rank 7 push */
     movebits = pawn_shift_up(pos->bb[us][PAWN] & rel_rank7, us) & empty;
     bit_for_each64(to, tmp1, movebits) {
@@ -201,44 +218,28 @@ int gen_all_pseudomoves(pos_t *pos)
         moves[nmoves++] = move_make_promote(from, to, BISHOP);
         moves[nmoves++] = move_make_promote(from, to, KNIGHT);
     }
-
-    /* pawn: ranks 2-6 captures left, including en-passant */
-    from_pawns = pos->bb[us][PAWN] & ~rel_rank7; // & ~rel_filea;
-    movebits = pawn_shift_upleft(from_pawns, us) & enemy_avail;
-    bit_for_each64(to, tmp1, movebits) {
-        from = pawn_push_upleft(to, them);         /* reverse capture */
-        moves[nmoves++] = move_make(from, to);
-    }
-    /* pawn: rank 7 captures left */
+    /* pawn promotion: rank 7 captures left */
     from_pawns = pos->bb[us][PAWN] & rel_rank7; // & ~rel_filea;
     movebits = pawn_shift_upleft(from_pawns, us) & enemy_avail;
     bit_for_each64(to, tmp1, movebits) {
         from = pawn_push_upleft(to, them);         /* reverse capture */
-        moves[nmoves++] = move_make_promote(from, to, QUEEN);
-        moves[nmoves++] = move_make_promote(from, to, ROOK);
-        moves[nmoves++] = move_make_promote(from, to, BISHOP);
-        moves[nmoves++] = move_make_promote(from, to, KNIGHT);
-    }
-
-    /* pawn: ranks 2-6 captures right, including en-passant */
-    from_pawns = pos->bb[us][PAWN] & ~rel_rank7; // & ~rel_fileh;
-    movebits = pawn_shift_upright(from_pawns, us) & enemy_avail;
-    bit_for_each64(to, tmp1, movebits) {
-        from = pawn_push_upright(to, them);
-        moves[nmoves++] = move_make(from, to);
+        moves[nmoves++] = move_make_promote_capture(from, to, QUEEN);
+        moves[nmoves++] = move_make_promote_capture(from, to, ROOK);
+        moves[nmoves++] = move_make_promote_capture(from, to, BISHOP);
+        moves[nmoves++] = move_make_promote_capture(from, to, KNIGHT);
     }
     /* pawn: rank 7 captures right */
     from_pawns = pos->bb[us][PAWN] & rel_rank7; // & ~rel_fileh;
     movebits = pawn_shift_upright(from_pawns, us) & enemy_pieces;
     bit_for_each64(to, tmp1, movebits) {
         from = pawn_push_upright(to, them);         /* reverse capture */
-        moves[nmoves++] = move_make_promote(from, to, QUEEN);
-        moves[nmoves++] = move_make_promote(from, to, ROOK);
-        moves[nmoves++] = move_make_promote(from, to, BISHOP);
-        moves[nmoves++] = move_make_promote(from, to, KNIGHT);
+        moves[nmoves++] = move_make_promote_capture(from, to, QUEEN);
+        moves[nmoves++] = move_make_promote_capture(from, to, ROOK);
+        moves[nmoves++] = move_make_promote_capture(from, to, BISHOP);
+        moves[nmoves++] = move_make_promote_capture(from, to, KNIGHT);
     }
 
-    /* castle - Attention ! We consider that castle flags are correct,
+    /* castle - Attention ! Castling flags are assumed correct
      */
     if (!pos->checkers) {
         bitboard_t rel_rank1 = BB_REL_RANK(RANK_1, us);
