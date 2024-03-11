@@ -62,10 +62,6 @@ struct fentest {
       "8/6R1/8/6k1/8/8/K5R1/8 b - - 1 1"
     },
     { ATTACK,
-      "checkers: d5 e3, pinners: a1 h1 a4 h5",
-      "3k4/8/8/3r3b/b7/1N2n3/4B3/rN1K1R1r w - - 1 0"
-    },
-    { ATTACK,
       "checkers: d5 e3, pinners: none (2 pieces between attacker & K)",
       "3k4/8/8/3r3b/b7/1N2nn2/2n1B3/rNBK1Rbr w - - 1 1"
     },

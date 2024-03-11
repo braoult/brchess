@@ -207,7 +207,6 @@ int main(int __unused ac, __unused char**av)
             continue;
         }
         pos_print(pos);
-
         /* print movelists */
         send_stockfish_fen(outfd, fishpos, fen);
         gen_all_pseudomoves(pos);

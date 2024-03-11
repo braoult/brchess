@@ -144,7 +144,7 @@ extern bitboard_t pos_pinners(const pos_t *pos, const color_t color);
 //extern char *pos_checkers2str(const pos_t *pos, char *str);
 //extern char *pos_pinners2str(const pos_t *pos, char *str);
 
-extern int pos_check(const pos_t *pos, const int strict);
+extern int pos_check(const pos_t *pos, const bool strict);
 
 extern void pos_print(const pos_t *pos);
 extern void pos_print_mask(const pos_t *pos, const bitboard_t mask);
