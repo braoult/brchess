@@ -17,9 +17,17 @@
 #include "board.h"
 #include "bitboard.h"
 
-void hyperbola_init(void);
-extern bitboard_t hyperbola_bishop_moves(bitboard_t occ, square_t sq);
-extern bitboard_t hyperbola_rook_moves(bitboard_t occ, square_t sq);
-extern bitboard_t hyperbola_queen_moves(bitboard_t occ, square_t sq);
+extern void hyperbola_init(void);
+
+extern bitboard_t hyperbola_rank_moves(const bitboard_t occ, const square_t sq);
+extern bitboard_t hyperbola_moves(const bitboard_t pieces, const square_t sq,
+                                  const bitboard_t mask);
+extern bitboard_t hyperbola_file_moves(const bitboard_t occ, const square_t sq);
+extern bitboard_t hyperbola_diag_moves(const bitboard_t occ, const square_t sq);
+extern bitboard_t hyperbola_anti_moves(const bitboard_t occ, const square_t sq);
+
+extern bitboard_t hyperbola_bishop_moves(const bitboard_t occ, const square_t sq);
+extern bitboard_t hyperbola_rook_moves(const bitboard_t occ, const square_t sq);
+extern bitboard_t hyperbola_queen_moves(const bitboard_t occ, const square_t sq);
 
 #endif  /* _HYPERBOLA_QUINTESSENCE_H */

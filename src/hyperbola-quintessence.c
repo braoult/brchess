@@ -86,15 +86,16 @@ void hyperbola_init()
 }
 
 /**
- * hyperbola_rank_moves() - generate rank moves for a sliding piece.
+ * hyperbola_rank_moves() - get rank moves for a sliding piece.
  * @pieces: occupation bitboard
  * @sq: piece square
  *
- * Rank attacks are not handled by HQ, so we do it with a
+ * Rank attacks are not handled by HQ, so this function uses a pre-calculated
+ * rank attacks table (@bb_rank_attacks).
  *
- * @Return: The moves mask for piece
+ * @Return: bitboard of @piece available pseudo-moves.
  */
-static bitboard_t hyperbola_rank_moves(bitboard_t occ, square_t sq)
+bitboard_t hyperbola_rank_moves(bitboard_t occ, square_t sq)
 {
     u32 rank = sq & SQ_RANKMASK;
     u32 file = sq & SQ_FILEMASK;
@@ -109,16 +110,19 @@ static bitboard_t hyperbola_rank_moves(bitboard_t occ, square_t sq)
 }
 
 /**
- * hyperbola_moves() - generate hyperbola moves mask for a given sliding piece
+ * hyperbola_moves() - get hyperbola pseudo-moves for a sliding piece
  * @pieces: occupation bitboard
  * @sq: piece square
- * @mask: mask considered
+ * @mask: the appropriate mask (pre-calculated)
  *
- * See https://www.chessprogramming.org/Hyperbola_Quintessence
+ * This function can be used for files, diagonal, and anti-diagonal attacks.
+ * @mask is the corresponding pre-calculated table (@bb_sqfile, @bb_sqdiag,
+ * or @bb_sqanti).
+ * See https://www.chessprogramming.org/Hyperbola_Quintessence for details.
  *
- * @Return: The moves mask for piece
+ * @Return: bitboard of piece available pseudo-moves.
  */
-static bitboard_t hyperbola_moves(const bitboard_t pieces, const square_t sq,
+bitboard_t hyperbola_moves(const bitboard_t pieces, const square_t sq,
                                    const bitboard_t mask)
 {
     bitboard_t o = pieces & mask;
@@ -130,32 +134,77 @@ static bitboard_t hyperbola_moves(const bitboard_t pieces, const square_t sq,
         & mask;
 }
 
-static bitboard_t hyperbola_file_moves(bitboard_t occ, square_t sq)
+/**
+ * hyperbola_file_moves() - get file pseudo-moves for a sliding piece.
+ * @pieces: occupation bitboard
+ * @sq: piece square
+ *
+ * @Return: bitboard of piece available pseudo-moves on its file.
+ */
+bitboard_t hyperbola_file_moves(const bitboard_t occ, const square_t sq)
 {
     return hyperbola_moves(occ, sq, bb_sqfile[sq]);
 }
 
-static bitboard_t hyperbola_diag_moves(bitboard_t occ, square_t sq)
+/**
+ * hyperbola_diag_moves() - get diagonal pseudo-moves for a sliding piece.
+ * @pieces: occupation bitboard
+ * @sq: piece square
+ *
+ * @Return: bitboard of piece available pseudo-moves on its diagonal.
+ */
+bitboard_t hyperbola_diag_moves(const bitboard_t occ, const square_t sq)
 {
     return hyperbola_moves(occ, sq, bb_sqdiag[sq]);
 }
 
-static bitboard_t hyperbola_anti_moves(bitboard_t occ, square_t sq)
+/**
+ * hyperbola_anti_moves() - get anti-diagonal pseudo-moves for a sliding piece.
+ * @pieces: occupation bitboard
+ * @sq: piece square
+ *
+ * @Return: bitboard of piece available pseudo-moves on its anti-diagonal.
+ */
+bitboard_t hyperbola_anti_moves(const bitboard_t occ, const square_t sq)
 {
     return hyperbola_moves(occ, sq, bb_sqanti[sq]);
 }
 
-bitboard_t hyperbola_bishop_moves(bitboard_t occ, square_t sq)
+/**
+ * hyperbola_bishop_moves() - get bitboard of bishop pseudo-moves
+ * @occ: occupation bitboard
+ * @sq: bishop square
+ *
+ * @Return: bitboard of bishop available pseudo-moves.
+ */
+bitboard_t hyperbola_bishop_moves(const bitboard_t occ, const square_t sq)
 {
     return hyperbola_diag_moves(occ, sq) | hyperbola_anti_moves(occ, sq);
 }
 
-bitboard_t hyperbola_rook_moves(bitboard_t occ, square_t sq)
+/**
+ * hyperbola_rook_moves() - get bitboard of rook pseudo-moves
+ * @occ: occupation bitboard
+ * @sq: rook square
+ *
+ * @Return: bitboard of rook available pseudo-moves.
+ */
+bitboard_t hyperbola_rook_moves(const bitboard_t occ, const square_t sq)
 {
     return hyperbola_file_moves(occ, sq) | hyperbola_rank_moves(occ, sq);
 }
 
-bitboard_t hyperbola_queen_moves(bitboard_t occ, square_t sq)
+/**
+ * hyperbola_queen_moves() - get bitboard of queen pseudo-moves
+ * @occ: occupation bitboard
+ * @sq: queen square
+ *
+ * This function is a wrapper over @hyperbola_bishop_moves() and
+ * @hyperbola_rook_moves().
+ *
+ * @Return: bitboard of queen available pseudo-moves.
+ */
+bitboard_t hyperbola_queen_moves(const bitboard_t occ, const square_t sq)
 {
     return hyperbola_bishop_moves(occ, sq) | hyperbola_rook_moves(occ, sq);
 }
