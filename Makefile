@@ -205,7 +205,7 @@ cleanobjdir: cleanobj
 # "normal" ones, but do not imply to rebuild target.
 $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR) $(DEPDIR)
 	@echo compiling brchess module: $< "->" $@.
-	$(CC) -c $(ALL_CFLAGS) $< -o $@
+	@$(CC) -c $(ALL_CFLAGS) $< -o $@
 
 ##################################### brlib libraries
 .PHONY: cleanbrlib cleanallbrlib brlib
@@ -231,7 +231,7 @@ cleanbindir:
 	$(call rmdir,$(BINDIR),binaries)
 
 $(TARGET): libs $(OBJ) | $(BINDIR)
-	@echo generating $@ executable.
+	@echo generating $@.
 	$(CC) $(LDFLAGS) $(OBJ) $(LIBS) -o $@
 
 ##################################### pre-processed (.i) and assembler (.s) output
@@ -241,11 +241,11 @@ cleanasmcpp:
 	@$(call rmfiles,$(ASMFILES) $(CPPFILES),asm and pre-processed)
 
 %.i: %.c
-	@echo generating $@
+	@echo generating $@ (cpp processed).
 	@$(CC) -E $(CPPFLAGS) $(CFLAGS) $< -o $@
 
 %.s: %.c
-	@echo generating $@
+	@echo generating $@ (asm).
 	@$(CC) -S -fverbose-asm $(CPPFLAGS) $(CFLAGS) $< -o $@
 
 ##################################### LSP (ccls)

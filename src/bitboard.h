@@ -21,8 +21,6 @@
 #include "board.h"
 #include "piece.h"
 
-//typedef u64 bitboard_t;
-
 /* mapping square -> bitboard */
 extern bitboard_t bb_sq[64];
 /* squares between sq1 and sq2, exclusing both */
@@ -30,12 +28,17 @@ extern bitboard_t bb_between_excl[64][64];
 /* squares between sq1 and sq2, including sq2 */
 extern bitboard_t bb_between[64][64];
 
-/* bb_sqrank[64]: square to rank
+/**
+ * bb_sqrank[64]: square to rank
  * bb_sqfile[64]: square to file
  * bb_sqdiag[64]: square to diagonal
  * bb_sqanti[64]: square to antidiagonal
  */
 extern bitboard_t bb_sqrank[64], bb_sqfile[64], bb_sqdiag[64], bb_sqanti[64];
+
+/* line (rank, file, diagonal or anti-diagonal) between two squares */
+extern bitboard_t bb_line[64][64];
+
 /* knight and king moves */
 extern bitboard_t bb_knight[64], bb_king[64];
 
@@ -192,17 +195,24 @@ static __always_inline bitboard_t bb_file(int file)
 
 /**
  * bb_sq_aligned() - check if two squares are aligned (same file or rank).
- * @sq1:  square 1
- * @sq2:  square 2
+ * @sq1, @sq2:  the two squares.
  *
- * @sq2 is included in return value, to be non zero if the two squares
- * are neighbors.
- *
- * @return: bitboard of squares between @sq1 and @sq2, including @sq2.
+ * @return: true if @sq1 and @sq2 are on same line, false otherwise.
  */
-static __always_inline bitboard_t bb_sq_aligned(square_t sq1, square_t sq2)
+static __always_inline bool bb_sq_aligned(square_t sq1, square_t sq2)
 {
-    return bb_between[sq1][sq2];
+    return bb_line[sq1][sq2];
+}
+
+/**
+ * bb_sq_aligned3() - check if 3 squares are aligned (same file or rank).
+ * @sq1, @sq2, @sq3:  the three squares.
+ *
+ * @return: true if @sq1, @sq2, and @sq3 are aligned, false otherwise.
+ */
+static __always_inline bool bb_sq_aligned3(square_t sq1, square_t sq2, square_t sq3)
+{
+    return bb_line[sq1][sq2] & mask(sq3);
 }
 
 /**

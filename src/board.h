@@ -59,14 +59,28 @@ static __always_inline rank_t sq_rank(square_t square)
 #define sq_ok(sq)       ((sq) >= A1 && (sq) <= H8)
 #define sq_coord_ok(c)  ((c) >= 0 && (c) < 8)
 
-/* Chebyshev distance: max( |r2 - r1|, |f2 - f1| )
+/**
+ * sq_dist() - Chebyshev (king) distance between two squares (macro).
+ * @sq1, @sq2: The two squares.
+ *
  * See: https://www.chessprogramming.org/Distance
+ * Distance is max( |r2 - r1|, |f2 - f1| )
+ *
+ * @Return: the Chebyshev distance.
  */
 #define sq_dist(sq1, sq2) (max(abs(sq_file(sq2) - sq_file(sq1)),  \
                                abs(sq_rank(sq2) - sq_rank(sq1))))
-/* Manhattan distance: |r2 - r1| + |f2 - f1|
+
+/**
+ * sq_taxi() - Manhattan (taxi) distance between two squares (macro).
+ * @sq1, @sq2: The two squares.
+ *
+ * See: https://www.chessprogramming.org/Distance
+ * Distance is |r2 - r1| + |f2 - f1|.
+ *
+ * @Return: the Manhattan distance.
  */
-#define sq_manh(sq1, sq2) (abs(sq_file(sq2) - sq_file(sq1)) +     \
+#define sq_taxi(sq1, sq2) (abs(sq_file(sq2) - sq_file(sq1)) +     \
                            abs(sq_rank(sq2) - sq_rank(sq1)))
 
 extern const char *sq_to_string(const square_t sq);

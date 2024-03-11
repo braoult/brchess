@@ -25,6 +25,7 @@ bitboard_t bb_sq[64];
 bitboard_t bb_sqrank[64], bb_sqfile[64], bb_sqdiag[64], bb_sqanti[64];
 bitboard_t bb_between_excl[64][64];
 bitboard_t bb_between[64][64];
+bitboard_t bb_line[64][64];
 
 bitboard_t bb_knight[64], bb_king[64];
 
@@ -59,7 +60,7 @@ bitboard_t bitboard_between_excl(square_t sq1, square_t sq2)
 
     btwn_bits  =  (m1 << sq1) ^ (m1 << sq2);      /* includes sq1 and sq2 */
     rank_diff  = ((sq2 | 7) - sq1) >> 3,          /* signed */
-    file_diff  =  (sq2 & 7) - (sq1 & 7);          /* signed */
+        file_diff  =  (sq2 & 7) - (sq1 & 7);          /* signed */
 
     anti_diff  =  rank_diff  + file_diff;
     rank_diff  =  rank_diff  & 15;
@@ -138,6 +139,24 @@ void bitboard_init(void)
         bb_sqrank[sq] = tmpbb[sq][1];
         bb_sqdiag[sq] = tmpbb[sq][2];
         bb_sqanti[sq] = tmpbb[sq][3];
+    }
+    for (square_t sq1 = 0; sq1 < 64; ++sq1) {
+        for (square_t sq2 = 0; sq2 < 64; ++sq2) {
+            if (sq1 != sq2) {
+                if (bb_sqfile[sq1] == bb_sqfile[sq2])
+                    bb_line[sq1][sq2] = bb_sqfile[sq1];
+                else if (bb_sqrank[sq1] == bb_sqrank[sq2])
+                    bb_line[sq1][sq2] = bb_sqrank[sq1];
+                else if (bb_sqdiag[sq1] == bb_sqdiag[sq2])
+                    bb_line[sq1][sq2] = bb_sqdiag[sq1];
+                else if (bb_sqanti[sq1] == bb_sqanti[sq2])
+                    bb_line[sq1][sq2] = bb_sqanti[sq1];
+
+                //if (bb_line[sq1][sq2]) {
+                //    printf("bb_line[%d][%d] = %16lx\n", sq1, sq2, bb_line[sq1][sq2]);
+                //}
+            }
+        }
     }
 
     /* 3) knight and king moves */
