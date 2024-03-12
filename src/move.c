@@ -89,8 +89,8 @@
  */
 
 /**
- * move_print() - print a move
- * @pos: position
+ * moves_print() - print movelist moves.
+ * @moves: &movelist_t moves list
  * @flags: moves selection and display options.
  *
  * Possible flags are:
@@ -101,15 +101,12 @@
  * M_PR_NL:    print a newline after move
  * M_PR_EVAL:  print move eval
  */
-void moves_print(pos_t *pos, __unused int flags)
+void moves_print(movelist_t *moves, __unused int flags)
 {
-    move_t *moves = pos->moves.move;
-    int nmoves = pos->moves.nmoves;
-
-    printf("%2d:", nmoves);
-    for (int m = 0; m < nmoves; ++m) {
-        square_t from = move_from(moves[m]);
-        square_t to   = move_to(moves[m]);
+    printf("%2d:", moves->nmoves);
+    for (int m = 0; m < moves->nmoves; ++m) {
+        square_t from = move_from(moves->move[m]);
+        square_t to   = move_to(moves->move[m]);
         printf(" %s-%s", sq_to_string(from), sq_to_string(to));
     }
     printf("\n");
@@ -133,14 +130,14 @@ static int _moves_cmp_bysquare(const void *p1, const void *p2)
 }
 
 /**
- * move_sort_by_sq() - sort moves by from/to squares ascending
- * @pos: position.
+ * move_sort_by_sq() - sort moves list by from/to squares ascending
+ * @moves: &movelist_t
  *
  * Used for perft, for easier comparison.
  */
-void move_sort_by_sq(pos_t *pos)
+void move_sort_by_sq(movelist_t *moves)
 {
-    qsort(pos->moves.move, pos->moves.nmoves, sizeof(move_t), _moves_cmp_bysquare);
+    qsort(moves->move, moves->nmoves, sizeof(move_t), _moves_cmp_bysquare);
 }
 
 /*

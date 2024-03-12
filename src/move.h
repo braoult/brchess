@@ -127,8 +127,8 @@ static inline move_t move_make_promote_capture(square_t from, square_t to,
 
 //int move_print(int movenum, move_t *move, move_flags_t flags);
 
-extern void moves_print(pos_t *pos, int flags);
-extern void move_sort_by_sq(pos_t *pos);
+extern void moves_print(movelist_t *moves, int flags);
+extern void move_sort_by_sq(movelist_t *moves);
 
 //extern int pseudo_moves_castle(pos_t *pos, bool color, bool doit, bool do_king);
 //int pseudo_moves_gen(pos_t *pos, piece_list_t *piece, bool doit, bool do_king);
