@@ -132,18 +132,46 @@ bitboard_t pos_checkers(const pos_t *pos, const color_t color)
 }
 
 /**
- * pos_pinners() - find all pinners on a king.
+ * pos_king_pinners() - get the "pinners" on a king "pinners".
  * @pos:   &position
- * @color: king color
+ * @color: king color.
  *
- * Get a bitboard of all pinners on @color king.
- * Just a wrapper over @sq_pinners().
+ * get position "pinners" on @color king. Here, pinner means a piece separated from king
+ * by one piece (any color) only.
+ * This is just a wrapper over @sq_pinners().
  *
- * @return: a bitboard of pinners.
+ * @return: pinners bitboard.
  */
-bitboard_t pos_pinners(const pos_t *pos, const color_t color)
+bitboard_t pos_king_pinners(const pos_t *pos, const color_t color)
 {
-    return sq_pinners(pos, pos->king[color], OPPONENT(color));
+    return sq_pinners(pos, pos->king[color], OPPONENT(pos->turn));
+}
+
+/**
+ * pos_king_blockers() - get the pin blockers on a king.
+ * @pos:   &position
+ * @color: king color.
+ * @pinners: pinners bitboard.
+ *
+ * get @pinners blockers pieces on @color king.
+ *
+ * @return: blockers bitboard.
+ */
+bitboard_t pos_king_blockers(const pos_t *pos, const color_t color, const bitboard_t pinners)
+{
+    bitboard_t tmp, blockers = 0, occ = pos_occ(pos);
+    square_t pinner, king = pos->king[color];
+
+    bit_for_each64(pinner, tmp, pinners) {
+        bitboard_t blocker = bb_between_excl[pinner][king] & occ;
+        warn_on(popcount64(blocker) != 1);
+        if (popcount64(blocker) != 1) {
+            printf("n blockers = %d\n", popcount64(blocker));
+            bb_print("blockers", blocker);
+        }
+        blockers |= blocker;
+    }
+    return blockers;
 }
 
 /**
@@ -233,6 +261,7 @@ void pos_print(const pos_t *pos)
     printf("fen %s\n", pos2fen(pos, str));
     printf("checkers: %s\n", pos_checkers2str(pos, str, sizeof(str)));
     printf("pinners : %s\n", pos_pinners2str(pos, str, sizeof(str)));
+    printf("blockers: %s\n", pos_blockers2str(pos, str, sizeof(str)));
 }
 
 /**

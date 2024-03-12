@@ -133,7 +133,8 @@ static int fen_check(pos_t *pos)
     if (!(error = pos_check(pos, 0))) {
         /* TODO: Should it really be here ? */
         pos->checkers = pos_checkers(pos, pos->turn);
-        pos->pinners  = pos_pinners(pos, pos->turn);
+        pos->pinners = pos_king_pinners(pos, pos->turn);
+        pos->blockers = pos_king_blockers(pos, pos->turn, pos->pinners);
     }
     return error ? -1: warning;
 }

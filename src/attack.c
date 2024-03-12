@@ -20,6 +20,9 @@
 #include "hyperbola-quintessence.h"
 #include "attack.h"
 
+
+// #define DEBUG_ATTACK_ATTACKERS1
+
 /**
  * sq_attackers() - find attackers on a square
  * @pos: position
@@ -36,9 +39,6 @@
  *
  * @Return: a bitboard of attackers.
  */
-
-// #define DEBUG_ATTACK_ATTACKERS1
-
 bitboard_t sq_attackers(const pos_t *pos, const square_t sq, const color_t c)
 {
     bitboard_t attackers = 0, tmp;
@@ -96,24 +96,24 @@ bitboard_t sq_attackers(const pos_t *pos, const square_t sq, const color_t c)
 }
 
 /**
- * sq_pinners() - find pinners on a square
+ * sq_pinners() - get "pinners" on a square
  * @pos: position
  * @sq:  square to test
- * @c:   attacker color
+ * @color:   attacker color
  *
  * Find all @c pieces which are separated from @sq by only one piece (of
  * any color).
  *
- * @Return: a bitboard of attackers.
+ * @Return: bitboard of pinners.
  */
-bitboard_t sq_pinners(const pos_t *pos, const square_t sq, const color_t c)
+bitboard_t sq_pinners(const pos_t *pos, const square_t sq, const color_t color)
 {
     bitboard_t attackers, pinners = 0;
     bitboard_t occ = pos_occ(pos);
     bitboard_t maybe_pinner, tmp, lines;
 
     /* bishop type */
-    attackers = pos->bb[c][BISHOP] | pos->bb[c][QUEEN];
+    attackers = pos->bb[color][BISHOP] | pos->bb[color][QUEEN];
     /* occupancy on sq diag and antidiag */
     lines = (bb_sqdiag[sq] | bb_sqanti[sq]) & occ;
     bit_for_each64(maybe_pinner, tmp, attackers) {
@@ -124,7 +124,7 @@ bitboard_t sq_pinners(const pos_t *pos, const square_t sq, const color_t c)
     }
 
     /* same for rook type */
-    attackers = pos->bb[c][ROOK] | pos->bb[c][QUEEN];
+    attackers = pos->bb[color][ROOK] | pos->bb[color][QUEEN];
     lines = (bb_sqrank[sq] | bb_sqfile[sq]) & occ;
     bit_for_each64(maybe_pinner, tmp, attackers) {
         bitboard_t between = bb_between_excl[maybe_pinner][sq];

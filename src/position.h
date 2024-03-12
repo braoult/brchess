@@ -39,9 +39,12 @@ typedef struct __pos_s {
     bitboard_t controlled[2];                     /* unsure */
     bitboard_t checkers;                          /* opponent checkers */
     bitboard_t pinners;                           /* opponent pinners */
+    bitboard_t blockers;                          /* pieces blocking pin */
     piece_t board[BOARDSIZE];
     movelist_t moves;
 } pos_t;
+
+#define pos_pinned(p)                  (p->blockers & p->bb[p->turn][ALL_PIECES])
 
 /**
  * pos_set_sq - unconditionally set a piece on a square
@@ -120,7 +123,7 @@ static __always_inline int pos_between_count(const pos_t *pos,
 
 /**
  * pos_checkers2str() - get of string of checkers.
- * @pos:   position
+ * @p:   position
  * @str:   destination string
  * @len:   max @str len.
  *
@@ -128,8 +131,9 @@ static __always_inline int pos_between_count(const pos_t *pos,
  *
  * @return: @str.
  */
-#define pos_checkers2str(pos, str, len)  bb_sq2str((pos)->checkers, (str), (len))
-#define pos_pinners2str(pos, str, len)   bb_sq2str((pos)->pinners, (str), (len))
+#define pos_checkers2str(p, str, len)  bb_sq2str(p->checkers, str, len)
+#define pos_pinners2str(p, str, len)   bb_sq2str(p->pinners, str, len)
+#define pos_blockers2str(p, str, len)  bb_sq2str(p->blockers, str, len)
 
 //void bitboard_print(bitboard_t bb, char *title);
 //void bitboard_print2(bitboard_t bb1, bitboard_t bb2, char *title);
@@ -140,7 +144,9 @@ extern void pos_del(pos_t *pos);
 extern pos_t *pos_clear(pos_t *pos);
 
 extern bitboard_t pos_checkers(const pos_t *pos, const color_t color);
-extern bitboard_t pos_pinners(const pos_t *pos, const color_t color);
+extern bitboard_t pos_king_pinners(const pos_t *pos, const color_t color);
+extern bitboard_t pos_king_blockers(const pos_t *pos, const color_t color, const bitboard_t );
+//extern bitboard_t set_king_pinners_blockers(pos_t *pos);
 //extern char *pos_checkers2str(const pos_t *pos, char *str);
 //extern char *pos_pinners2str(const pos_t *pos, char *str);
 
