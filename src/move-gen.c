@@ -30,66 +30,59 @@
 /**
  * pseudo_is_legal() - check if a move is legal.
  * @pos:  position
- * @move: move_t
- *
- * We check all possible invalid moves:
- * (1) King:
- *  - K moves to a controlled square
- * (1) Castling:
- *  - K passes a controlled square   - already done in pseudomove gen
- *
- *
- * (3) En-passant:
- *  - pinned taking pawn, done in (3)
- *  - taking and taken pawn on same rank than king, discovered check on rank
- *
- * (3) Pinned pieces:
- *  - if destination square quits "pinned line"
+ * @move: move_t to verify
  *
  * @return: true if move is valid, false otherwise.
  */
 bool pseudo_is_legal(pos_t *pos, move_t move)
 {
-    int from = move_from(move);
-    int to = move_to(move);
-    int us = pos->turn;
-    int them = OPPONENT(us);
-    int piece = pos->board[from];
+    color_t us = pos->turn, them = OPPONENT(us);
+    square_t from = move_from(move), to = move_to(move);
+    int piece = PIECE(pos->board[from]), sq;
+    bitboard_t tmp;
 
-    /* (1) - castling, skipped */
+    /* (1) - King
+     * For castling, we already tested intermediate squares attacks
+     * in pseudo move generation, so we only care destination square here.
+     */
+    if (piece == KING)
+        return !sq_attackers(pos, to, them);
 
-    /* (2) - King */
-    if (piece == KING) {
-        /* For castling, we already intermediate and destination squares
-         * attacks in pseudo move generation, so we only care destination
-         * square here.
-         */
-        return sq_attackers(pos, to, them) ? false: true;
+    /* (2) - pinned pieces
+     * We verify here that pinned piece P stays on line King-P.
+     */
+    if (mask(from) & pos->blockers & pos->bb[us][ALL_PIECES]) {
+        bitboard_t line = bb_line[from][pos->king[us]];
+        return line & mask(to);                   /* to is not on pin line */
     }
 
-    /* 3 - en-passant */
-
-
-    /*
-     * if (bb_test(pins, from) && !bb_test(Ray[king][from], to))
-     *         return false;
-     * // En-passant special case: also illegal if self-check through the en-passant captured pawn
-     * if (to == pos->epSquare && piece == PAWN) {
-     *     const int us = pos->turn, them = opposite(us);
-     *     bitboard_t occ = pos_pieces(pos);
-     *     bb_clear(&occ, from);
-     *     bb_set(&occ, to);
-     *     bb_clear(&occ, to + push_inc(them));
-     *     return !(bb_rook_attacks(king, occ) & pos_pieces_cpp(pos, them, ROOK, QUEEN)) &&
-     *         !(bb_bishop_attacks(king, occ) & pos_pieces_cpp(pos, them, BISHOP, QUEEN));
-     * } else
-     *     return true;
+    /* (3) - En-passant
+     * We only care the situation where our King and enemy R/Q are on
+     * from rank ()
      */
+    if (move & M_CAPTURE && PIECE(pos->board[to]) == EMPTY) {
+         /* from square rank bitboard */
+        bitboard_t rank5 = bb_sqrank[sq_rank(from)];
+        /* enemy rooks/queens on from rank */
+        bitboard_t rooks = (pos->bb[them][ROOK] | pos->bb[them][QUEEN]) & rank5;
+
+        if ((pos->bb[us][KING] & rank5) && rooks) { /* K and enemy R/Q on rank */
+            /* captured pawn square (beside from square) */
+            square_t captured = sq_make(sq_file(pos->en_passant), sq_rank(from));
+            /* occupation bitboard without the two "disappearing" pawns */
+            bitboard_t occ = pos_occ(pos) ^ mask(from) ^ mask(captured);
+
+            bit_for_each64(sq, tmp, rooks)        /* check all rooks/queens */
+                if (hyperbola_rank_moves(occ, sq) & pos->bb[us][KING])
+                    return false;
+        }
+        return true;
+    }
     return true;
 }
 
 /**
- * gen_all_pseudomoves() - generate all pseudo moves
+ * pos_gen_pseudomoves() - generate position pseudo-legal moves
  * @pos: position
  *
  * Generate all @pos pseudo moves for player-to-move.
@@ -108,9 +101,10 @@ bool pseudo_is_legal(pos_t *pos, move_t move)
  *
  * @Return: The total number of moves.
  */
-int gen_all_pseudomoves(pos_t *pos)
+int pos_gen_pseudomoves(pos_t *pos)
 {
-    color_t us = pos->turn, them = OPPONENT(us);
+    color_t us               = pos->turn;
+    color_t them             = OPPONENT(us);
 
     bitboard_t my_pieces     = pos->bb[us][ALL_PIECES];
     bitboard_t not_my_pieces = ~my_pieces;
@@ -276,4 +270,25 @@ int gen_all_pseudomoves(pos_t *pos)
      *
      */
     return (pos->moves.nmoves = nmoves);
+}
+
+/**
+ * pos_legalmoves() - generate position legal moves from pseudo-legal ones.
+ * @pos:  position
+ * @dest: address where to store legal moves
+ *
+ * The pseudo-legal moves must be already calculated before calling this function.
+ *
+ * @Return: @dest
+ */
+movelist_t *pos_legalmoves(pos_t *pos, movelist_t *dest)
+{
+    int pseudo;
+    movelist_t *src = &pos->moves;
+    dest->nmoves = 0;
+    for (pseudo = 0; pseudo < src->nmoves; ++pseudo) {
+        if (pseudo_is_legal(pos, src->move[pseudo]))
+            dest->move[dest->nmoves++] = src->move[pseudo];
+    }
+    return dest;
 }
