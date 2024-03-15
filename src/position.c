@@ -128,7 +128,8 @@ pos_t *pos_clear(pos_t *pos)
  */
 bitboard_t pos_checkers(const pos_t *pos, const color_t color)
 {
-    return sq_attackers(pos, pos->king[color], OPPONENT(color));
+    bitboard_t occ = pos_occ(pos);
+    return sq_attackers(pos, occ, pos->king[color], OPPONENT(color));
 }
 
 /**
@@ -303,7 +304,7 @@ void pos_print_pieces(const pos_t *pos)
             p = pos->bb[color][piece];
             count = popcount64(p);
             cur = 0;
-            pname = piece_to_char(piece);
+            pname = piece_to_cap(piece);
             printf("%s(0)%s", pname, count? ":": "");
             if (count) {
                 bit_for_each64(bit, tmp, p) {
@@ -311,7 +312,6 @@ void pos_print_pieces(const pos_t *pos)
                     printf("%s%c%c", cur? ",": "", FILE2C(cf), RANK2C(cr));
                     cur++;
                 }
-
             }
             printf(" ");
         }
