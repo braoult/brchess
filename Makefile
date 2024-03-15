@@ -64,9 +64,11 @@ CPPFLAGS  += -DWARN_ON                                      # brlib bug.h
 #CPPFLAGS  += -DDEBUG_DEBUG                                  # enable log() functions
 #CPPFLAGS  += -DDEBUG_DEBUG_C                                # enable log() settings
 #CPPFLAGS  += -DDEBUG_POOL                                   # memory pools management
-#CPPFLAGS  += -DDEBUG_FEN                                    # FEN decoding
 #CPPFLAGS  += -DDEBUG_POS				     # position.c
 #CPPFLAGS  += -DDEBUG_MOVE                                   # move generation
+
+# fen.c
+#CPPFLAGS  += -DDEBUG_FEN                                    # FEN decoding
 
 # attack.c
 #CPPFLAGS  += -DDEBUG_ATTACK_ATTACKERS1			     # sq_attackers details
@@ -284,8 +286,9 @@ memcheck: targets
 ##################################### test binaries
 .PHONY: testing test
 
-TEST          := fen-test bitboard-test movegen-test attack-test
+TEST          :=piece-test fen-test bitboard-test movegen-test attack-test
 
+PIECE_OBJS    := piece.o
 FEN_OBJS      := fen.o position.o piece.o bitboard.o board.o hyperbola-quintessence.o \
 	attack.o
 BB_OBJS       := fen.o position.o piece.o bitboard.o board.o hyperbola-quintessence.o \
@@ -297,6 +300,7 @@ ATTACK_OBJS   := fen.o position.o piece.o bitboard.o board.o hyperbola-quintesse
 
 TEST          := $(addprefix $(BINDIR)/,$(TEST))
 
+PIECE_OBJS    := $(addprefix $(OBJDIR)/,$(PIECE_OBJS))
 FEN_OBJS      := $(addprefix $(OBJDIR)/,$(FEN_OBJS))
 BB_OBJS       := $(addprefix $(OBJDIR)/,$(BB_OBJS))
 MOVEGEN_OBJS  := $(addprefix $(OBJDIR)/,$(MOVEGEN_OBJS))
@@ -307,6 +311,10 @@ test:
 	echo FEN_OBJS=$(FEN_OBJS)
 
 testing: $(TEST)
+
+bin/piece-test: test/piece-test.c $(FEN_OBJS)
+	@echo compiling $@ test executable.
+	@$(CC) $(ALL_CFLAGS) $< $(FEN_OBJS) $(ALL_LDFLAGS) -o $@
 
 bin/fen-test: test/fen-test.c test/common-test.h $(FEN_OBJS)
 	@echo compiling $@ test executable.

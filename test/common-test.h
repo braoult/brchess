@@ -35,6 +35,41 @@ struct fentest {
      */
     //"4k3/pppppppp/8/8/8/8/PPPPPPPP/2BRK3 w - - 0 1",
     //"4k3/pppppppp/8/8/8/8/PPPPPPPP/1B1R1K2 w - - 0 1",
+    { MOVEGEN,
+      "illegal white e.p.",
+      "3k4/8/8/2qpPK2/8/8/8/8 w - d6 0 1",
+    },
+    { MOVEGEN,
+      "illegal black e.p.",
+      "8/8/8/8/2QPpk2/8/8/3K4 b - d3 0 1",
+    },
+
+    { MOVEGEN,
+      "illegal white e.p.",
+      "3k4/8/5K2/3pP3/8/2b5/8/8 w - d6 0 1",
+    },
+    { MOVEGEN,
+      "illegal black e.p.",
+      "8/8/2B5/8/3Pp3/5k2/8/3K4 b - d3 0 1",
+    },
+
+    { MOVEGEN,
+      "legal white e.p.",
+      "1K1k4/8/8/3pP3/8/6b1/8/8 w - d6 0 1",
+    },
+    { MOVEGEN,
+      "legal black e.p.",
+      "8/8/6B1/8/3Pp3/8/8/1k1K4 b - d3 0 1",
+    },
+
+    { MOVEGEN,
+      "white mate.",
+      "1nbqkbn1/ppp1pppp/8/r1rpP1K1/8/8/PPPP1PPP/RNBQ1BNR w - d6 0 1",
+    },
+    { MOVEGEN,
+      "illegal e.p.",
+      "1nbqkbn1/ppp1pppp/8/r1rpP1K1/8/8/PPPP1PPP/RNBQ1BNR w - d6 0 1",
+    },
     { ATTACK,
       "checkers: a1 h1",
       "1k6/8/8/8/8/8/8/r2K3r w - - 1 1"
@@ -163,7 +198,7 @@ struct fentest {
       "6k1/6pp/R2p4/p1p5/8/1P1r3P/6P1/6K1 b - - 3 3"
     },
 
-    // below tests are from:
+    // some of tests below are from:
     // - Rodent IV
     // - https://www.chessprogramming.net/perfect-perft/
     { FEN | MOVEGEN,
@@ -173,6 +208,10 @@ struct fentest {
     { FEN | MOVEGEN,
       "",
       "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1"
+    },
+    { FEN | MOVEGEN,
+      "",
+      "8/2p5/3p4/Kp5r/1R3p1k/8/4P1P1/8 w - - 0 1"
     },
     { FEN | MOVEGEN,
       "",
