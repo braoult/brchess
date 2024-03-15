@@ -117,20 +117,4 @@ char *move_str(char *dst, const move_t move, __unused const int flags);
 void moves_print(movelist_t *moves, int flags);
 void move_sort_by_sq(movelist_t *moves);
 
-//extern int pseudo_moves_castle(pos_t *pos, bool color, bool doit, bool do_king);
-//int pseudo_moves_gen(pos_t *pos, piece_list_t *piece, bool doit, bool do_king);
-//int pseudo_moves_pawn(pos_t *pos, piece_list_t *piece, bool doit);
-//extern int moves_gen(pos_t *pos, bool color, bool doit, bool do_king);
-//extern int moves_gen_king_moves(pos_t *pos, bool color, bool doit);
-
-// extern void moves_sort(pos_t *pos);
-
-//extern void moves_gen_eval_sort(pos_t *pos);
-
-//extern void moves_gen_all(pos_t *pos);
-//extern void moves_gen_all_nomoves(pos_t *pos);
-
-//extern pos_t *move_do(pos_t *pos, move_t *move);
-//extern void move_undo(pos_t *pos, move_t *move);
-
 #endif  /* MOVE_H */
