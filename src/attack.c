@@ -26,6 +26,7 @@
 /**
  * sq_attackers() - find attackers on a square
  * @pos: position
+ * @occ: occupation mask used
  * @sq:  square to test
  * @c:   attacker color
  *
@@ -39,11 +40,11 @@
  *
  * @Return: a bitboard of attackers.
  */
-bitboard_t sq_attackers(const pos_t *pos, const square_t sq, const color_t c)
+bitboard_t sq_attackers(const pos_t *pos, const bitboard_t occ, const square_t sq, const color_t c)
 {
     bitboard_t attackers = 0, tmp;
     bitboard_t sqbb = mask(sq);
-    bitboard_t occ = pos_occ(pos);
+    //bitboard_t occ = pos_occ(pos);
     bitboard_t to;
     color_t opp = OPPONENT(c);
 
@@ -151,5 +152,6 @@ bitboard_t sq_pinners(const pos_t *pos, const square_t sq, const color_t color)
  */
 bitboard_t sq_attackers_all(const pos_t *pos, const square_t sq)
 {
-    return sq_attackers(pos, sq, WHITE) | sq_attackers(pos, sq, BLACK);
+    bitboard_t occ = pos_occ(pos);
+    return sq_attackers(pos, occ, sq, WHITE) | sq_attackers(pos, occ, sq, BLACK);
 }
