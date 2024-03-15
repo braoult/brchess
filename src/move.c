@@ -89,6 +89,35 @@
  */
 
 /**
+ * move_str() - get a move string
+ * @dst: destination memory
+ * @move: move
+ * @flags: moves selection and display options.
+ *
+ * Possible flags are:
+ * M_PR_CAPT:  print move if capture
+ * M_PR_NCAPT: print move if non capture
+ * M_PR_NUM:   print also move number
+ * M_PR_LONG:  print long notation
+ * M_PR_NL:    print a newline after move
+ * M_PR_EVAL:  print move eval
+ */
+char *move_str(char *dst, const move_t move, __unused const int flags)
+{
+    square_t from = move_from(move);
+    square_t to   = move_to(move);
+    int len;
+    sprintf(dst, "%s-%s%n", sq_to_string(from), sq_to_string(to), &len);
+
+    if (move & M_PROMOTION) {
+        piece_t promoted = move_promoted(move);
+        sprintf(dst + len, "=%s", piece_to_low(promoted));
+    }
+    return dst;
+}
+
+
+/**
  * moves_print() - print movelist moves.
  * @moves: &movelist_t moves list
  * @flags: moves selection and display options.
@@ -103,12 +132,10 @@
  */
 void moves_print(movelist_t *moves, __unused int flags)
 {
-    printf("%2d:", moves->nmoves);
-    for (int m = 0; m < moves->nmoves; ++m) {
-        square_t from = move_from(moves->move[m]);
-        square_t to   = move_to(moves->move[m]);
-        printf(" %s-%s", sq_to_string(from), sq_to_string(to));
-    }
+    char str[16];
+    //printf("%2d:", moves->nmoves);
+    for (int m = 0; m < moves->nmoves; ++m)
+        printf("%s ", move_str(str, moves->move[m], flags));
     printf("\n");
 }
 
@@ -120,12 +147,16 @@ static int _moves_cmp_bysquare(const void *p1, const void *p2)
     square_t t1 = move_to(m1);
     square_t f2 = move_from(m2);
     square_t t2 = move_to(m2);
-
+    piece_t prom1 = move_promoted(m1);
+    piece_t prom2 = move_promoted(m2);
     if (f1 < f2) return -1;
     if (f1 > f2) return 1;
     /* f1 == f2 */
     if (t1 < t2) return -1;
     if (t1 > t2) return 1;
+    /* t1 == t2 */
+    if (prom1 < prom2) return -1;
+    if (prom1 > prom2) return 1;
     return 0;
 }
 
