@@ -37,43 +37,62 @@
 bool pseudo_is_legal(pos_t *pos, move_t move)
 {
     color_t us = pos->turn, them = OPPONENT(us);
-    square_t from = move_from(move), to = move_to(move);
-    int piece = PIECE(pos->board[from]), sq;
-    bitboard_t tmp;
+    square_t from = move_from(move), to = move_to(move), king = pos->king[us], sq;
+    piece_type_t piece = PIECE(pos->board[from]);
+    bitboard_t kingbb = pos->bb[us][KING], tmp;
 
     /* (1) - King
      * For castling, we already tested intermediate squares attacks
      * in pseudo move generation, so we only care destination square here.
+     * Attention: We need to exclude king from occupation bitboard !
      */
-    if (piece == KING)
-        return !sq_attackers(pos, to, them);
+    if (piece == KING) {
+        bitboard_t occ = pos_occ(pos) ^ kingbb;
+        return !sq_attackers(pos, occ, to, them);
+    }
 
-    /* (2) - pinned pieces
+    /* (2) - King is in check
+     * Double-check is already handled, as only K moves were generated.
+     * Here, allowed moves are only on King-attacker line, including
+     * attacker.We can move a piece on
+     * in pseudo move generation, so we only care destination square here.
+     */
+    if (pos->checkers) {
+        if (popcount64(pos->checkers) == 1) {     /* one checker */
+            square_t checker = ctz64(pos->checkers);
+            bitboard_t between = bb_between[king][checker];
+            return mask(to) & between;
+        }
+        return false;                             /* double check */
+    }
+
+    /* (3) - pinned pieces
      * We verify here that pinned piece P stays on line King-P.
      */
     if (mask(from) & pos->blockers & pos->bb[us][ALL_PIECES]) {
-        bitboard_t line = bb_line[from][pos->king[us]];
+        bitboard_t line = bb_line[from][king];
         return line & mask(to);                   /* to is not on pin line */
     }
 
-    /* (3) - En-passant
+    /* (4) - En-passant
      * We only care the situation where our King and enemy R/Q are on
-     * from rank ()
+     * 5th relative rank. To do so, we create an occupation bb without
+     * the 2 pawns.
      */
     if (move & M_CAPTURE && PIECE(pos->board[to]) == EMPTY) {
-         /* from square rank bitboard */
-        bitboard_t rank5 = bb_sqrank[sq_rank(from)];
+         /* from rank bitboard */
+        bitboard_t rank5 = bb_sqrank[from];
         /* enemy rooks/queens on from rank */
         bitboard_t rooks = (pos->bb[them][ROOK] | pos->bb[them][QUEEN]) & rank5;
 
-        if ((pos->bb[us][KING] & rank5) && rooks) { /* K and enemy R/Q on rank */
+        if ((kingbb & rank5) && rooks) { /* K and enemy R/Q on rank */
             /* captured pawn square (beside from square) */
             square_t captured = sq_make(sq_file(pos->en_passant), sq_rank(from));
             /* occupation bitboard without the two "disappearing" pawns */
             bitboard_t occ = pos_occ(pos) ^ mask(from) ^ mask(captured);
 
             bit_for_each64(sq, tmp, rooks)        /* check all rooks/queens */
-                if (hyperbola_rank_moves(occ, sq) & pos->bb[us][KING])
+                if (hyperbola_rank_moves(occ, sq) & kingbb)
                     return false;
         }
         return true;
@@ -246,14 +265,14 @@ int pos_gen_pseudomoves(pos_t *pos)
         if (CAN_OO(pos->castle, us)) {
             bitboard_t occmask = rel_rank1 & (FILE_Fbb | FILE_Gbb);
             if (!(occ & occmask) &&
-                !sq_attackers(pos, from+1, them)) { /* f1/f8 */
+                !sq_attackers(pos, occ, from+1, them)) { /* f1/f8 */
                 moves[nmoves++] = move_make_flags(from, from + 2, M_CASTLE_K);
             }
         }
         if (CAN_OOO(pos->castle, us)) {
             bitboard_t occmask = rel_rank1 & (FILE_Bbb | FILE_Cbb | FILE_Dbb);
             if (!(occ & occmask) &&
-                !sq_attackers(pos, from-1, them)) { /* d1/d8 */
+                !sq_attackers(pos, occ, from-1, them)) { /* d1/d8 */
                 moves[nmoves++] = move_make_flags(from, from - 2, M_CASTLE_Q);
             }
         }
