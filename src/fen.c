@@ -184,9 +184,9 @@ pos_t *fen2pos(pos_t *pos, const char *fen)
             file += *cur - '0';
             continue;
         }
-        if ((piece = char_color_to_piece(*cur)) != EMPTY) {
+        if ((piece = piece_from_fen(*cur)) != EMPTY) {
 #           ifdef DEBUG_FEN
-            log_i(5, "f=%d r=%d *p=%c piece=%#04x t=%d c=%d\n", file, rank, *cur,
+            printf("f=%d r=%d *p=%c piece=%#04x t=%d c=%d\n", file, rank, *cur,
                   piece, PIECE(piece), COLOR(piece));
 #           endif
             pos_set_sq(&tmppos, sq_make(file, rank), piece);
@@ -296,13 +296,23 @@ char *pos2fen(const pos_t *pos, char *fen)
         for (file_t f = FILE_A; f <= FILE_H;) {
             square_t sq = sq_make(f, r);
             piece_t piece = pos->board[sq];
-            if (pos->board[sq] == EMPTY) {
+#           ifdef DEBUG_FEN
+            printf("r=%d f=%d p=%d pos=%d\n", r, f, piece, cur);
+#           endif
+            if (piece == EMPTY) {
                 int len = 0;
                 for (; f <= FILE_H && pos->board[sq_make(f, r)] == EMPTY; f++)
                     len++;
+#               ifdef DEBUG_FEN
+                printf("empty=%d char=%c\n", len, '0' + len);
+#               endif
                 fen[cur++] = '0' + len;
             } else {
-                fen[cur++] = *piece_to_char_color(piece);
+                fen[cur++] = *piece_to_fen(piece);
+#               ifdef DEBUG_FEN
+                printf("f1=%d r=%d c=%c t=%d c=%d \n", f, r,
+                       *(piece_to_fen(piece)), PIECE(piece), COLOR(piece));
+#               endif
                 f++;
             }
         }

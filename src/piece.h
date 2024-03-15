@@ -31,6 +31,7 @@ typedef enum {
 
 typedef enum {
     ALL_PIECES = 0,                               /* 'all pieces' bitboard */
+    NO_PIECE_TYPE = 0,
     PAWN = 1, KNIGHT, BISHOP, ROOK, QUEEN, KING,
     PIECE_TYPE_MAX = 7                            /* bit 4 */
 } piece_type_t;
@@ -80,10 +81,10 @@ typedef enum __piece_e {
  *  s64  end_value;
  */
 extern const struct piece_details {
-    char *abbr;                                   /* used for game notation */
-    char *c_abbr;                                 /* lowercase = black */
-    char *sym;                                    /* used for game notation */
-    char *c_sym;                                  /* different W & B */
+    char *cap;                                    /* used for game notation */
+    char *low;                                    /* used also for UCI promotion */
+    char *fen;                                    /* cap=white, low=black */
+    char *sym;                                    /* UTF-8 symbol */
     char *name;                                   /* piece name */
     s64  opn_value;                               /* value opening */
     s64  mid_value;                               /* value midgame */
@@ -104,20 +105,26 @@ extern const char pieces_str[6+6+1];              /* to search from fen/user inp
 #define IS_WHITE(p)       (!COLOR(p))
 #define IS_BLACK(p)       (COLOR(p))
 
-#define SET_WHITE(p)      ((p) &= ~MASK_COLOR)
-#define SET_BLACK(p)      ((p) |= MASK_COLOR)
-#define SET_COLOR(p, c)   (!(c)? SET_WHITE(p): SET_BLACK(p))
+#define SET_WHITE(p)      (piece_t)((p) &= ~MASK_COLOR)
+#define SET_BLACK(p)      (piece_t)((p) |= MASK_COLOR)
+#define SET_COLOR(p, c)   (piece_t)(!(c)? SET_WHITE(p): SET_BLACK(p))
 
-extern bool piece_ok(piece_t p);
+bool piece_ok(piece_t p);
 
-extern char *piece_to_char(piece_t p);
-extern char *piece_to_char_color(piece_t p);
-extern char *piece_to_sym(piece_t p);
-extern char *piece_to_sym_color(piece_t p);
-extern char *piece_to_name(piece_t p);
+char *piece_to_cap(piece_t p);
+char *piece_to_low(piece_t p);
+char *piece_to_fen(piece_t p);
+char *piece_to_sym(piece_t p);
+char *piece_to_name(piece_t p);
 
-extern piece_t char_to_piece(char c);
-extern piece_t char_color_to_piece(char c);
+#define piece_to_char(c) piece_to_fen(c)
+//#define piece_to_char_t(p) piece_to_uci(p)
+
+//piece_type_t char_to_piece(char c);
+piece_type_t piece_t_from_char(char c);
+piece_t piece_from_fen(char c);
+
+#define piece_from_char(c) piece_from_fen(c)
 
 /* use short name or symbol - no effect
  */

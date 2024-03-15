@@ -65,9 +65,9 @@ void board_print(const piece_t *board)
         for (int file = 0; file < 8; ++file) {
             piece_t pc = board[sq_make(file, rank)];
 #           ifdef DIAGRAM_SYM
-            printf(" %s |", pc? piece_to_sym_color(pc): " ");
+            printf(" %s |", pc? piece_to_sym(pc): " ");
 #           else
-            printf(" %s |", pc? piece_to_sym_color(pc): " ");
+            printf(" %s |", pc? piece_to_fen(pc): " ");
 #           endif
         }
         printf("\n  +---+---+---+---+---+---+---+---+\n");
@@ -96,7 +96,7 @@ void board_print_mask(const piece_t *board, const bitboard_t mask)
             bitboard_t set = mask(sq) & mask;
             printf("%s", set? REVERSE : " ");
 #           ifdef DIAGRAM_SYM
-            printf("%s", pc? piece_to_sym_color(pc): " ");
+            printf("%s", pc? piece_to_sym(pc): " ");
 #           else
             printf("%s", pc? piece_to_char_color(pc): " ");
 #           endif
@@ -118,7 +118,7 @@ void board_print_raw(const piece_t *board, const int type)
         for (file_t f = FILE_A; f <= FILE_H; ++f) {
             piece_t p = board[sq_make(f, r)];
             if (type) {
-                printf("%s ", p == EMPTY? ".": piece_to_char_color(p));
+                printf("%s ", p == EMPTY? ".": piece_to_char(p));
             } else {
                 printf("%02o ", p);
             }
