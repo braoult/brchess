@@ -88,7 +88,7 @@ static void send_stockfish_fen(FILE *desc, pos_t *pos, char *fen)
     move_t *moves = pos->moves.move;
     int nmoves = pos->moves.nmoves;
     //char nodescount[] = "Nodes searched";
-    printf("nmoves = %d\n", nmoves);
+    //printf("nmoves = %d\n", nmoves);
     fflush(stdout);
     //sprintf(str, "stockfish \"position fen %s\ngo perft depth\n\"", fen);
     fprintf(desc, "position fen %s\ngo perft 1\n", fen);
@@ -111,22 +111,46 @@ static void send_stockfish_fen(FILE *desc, pos_t *pos, char *fen)
             //       count);
             moves[nmoves++] = move_make(from, to);
 
+        } else if (sscanf(buf, "%*5s: %d", &count) == 1) {
+            square_t from = sq_from_string(buf);
+            square_t to   = sq_from_string(buf + 2);
+            piece_type_t promoted = piece_t_from_char(*(buf + 4));
+            mycount += count;
+            //printf("move found: %c%c->%c%c %s->%s count=%d\n",
+            //       buf[0], buf[1], buf[2], buf[3],
+            //       sq_to_string(from), sq_to_string(to),
+            //       count);
+            moves[nmoves++] = move_make_promote(from, to, promoted);
         }
-
     }
     pos->moves.nmoves = nmoves;
     // printf("fishcount=%d mycount=%d\n", fishcount, mycount);
     free(buf);
 }
 
-static void compare_moves(pos_t *fish, pos_t *me)
+static __unused bool movelists_equal(movelist_t *fish, movelist_t *me)
+{
+    move_t *m1 = fish->move, *m2 = me->move;
+    int n1 = fish->nmoves, n2 = me->nmoves;
+    int mask = 077777;
+
+    if (n1 != n2)
+        return false;
+    for (int cur = 0; cur < n1; ++cur) {
+        if ((m1[cur] & mask) != (m2[cur] & mask))
+            return false;
+    }
+    return true;
+}
+
+static __unused void compare_moves(movelist_t *fish, movelist_t *me)
 {
     char str1[1024] = {0}, str2[1024] = {0}, tmpstr[1024];
     char *skip = "      ";
-    move_t *m1 = fish->moves.move;
-    move_t *m2 = me->moves.move;
-    int n1 = fish->moves.nmoves;
-    int n2 = me->moves.nmoves;
+    move_t *m1 = fish->move;
+    move_t *m2 = me->move;
+    int n1 = fish->nmoves;
+    int n2 = me->nmoves;
 
 #define f(c) move_from(c)
 #define t(c) move_to(c)
@@ -191,9 +215,13 @@ int main(int __unused ac, __unused char**av)
     FILE *outfd;
     char *fen;
     pos_t *pos, *fishpos = pos_new();
+    movelist_t legal;
     //bitboard_t wrong = 0x5088000040, tmp, loop;
     //bit_for_each64(loop, tmp, )
     //printf("fishpos 1=%p\n", fishpos);
+
+    setlinebuf(stdout);                           /* line-buffered stdout */
+
     bitboard_init();
     hyperbola_init();
     outfd = open_stockfish();
@@ -201,15 +229,15 @@ int main(int __unused ac, __unused char**av)
     while ((fen = next_fen(MOVEGEN))) {
         //printf(">>>>> %s\n", test[i]);
         //printf("fishpos 2=%p\n", fishpos);
-        printf("original fen %d: [%p][%s]\n", i, fen, fen);
+        //printf("original fen %d: [%p][%s]\n", i, fen, fen);
         if (!(pos = fen2pos(NULL, fen))) {
             printf("wrong fen %d: [%s]\n", i, fen);
             continue;
         }
-        pos_print(pos);
         /* print movelists */
         send_stockfish_fen(outfd, fishpos, fen);
-        gen_all_pseudomoves(pos);
+        pos_gen_pseudomoves(pos);
+        pos_legalmoves(pos, &legal);
         //printf("Fu ");
         //moves_print(fishpos, 0);
         //fflush(stdout);
@@ -218,8 +246,8 @@ int main(int __unused ac, __unused char**av)
         //fflush(stdout);
 
         /* sort and print movelists */
-        move_sort_by_sq(fishpos);
-        move_sort_by_sq(pos);
+        move_sort_by_sq(&fishpos->moves);
+        move_sort_by_sq(&legal);
         // printf("\nFs ");
         // moves_print(fishpos, 0);
         // fflush(stdout);
@@ -228,7 +256,20 @@ int main(int __unused ac, __unused char**av)
         // fflush(stdout);
 
         /* compare movelists */
-        compare_moves(fishpos, pos);
+        if (!movelists_equal(&fishpos->moves, &legal)) {
+            pos_print(pos);
+            printf("F: ");
+            moves_print(&fishpos->moves, 0);
+            printf("M: ");
+            moves_print(&legal, 0);
+        } else {
+            printf("[%s]\n\tMoves (OK): ", fen);
+            moves_print(&fishpos->moves, 0);
+        }
+        //compare_moves(&fishpos->moves, &legal);
+            //} else {
+            //printf("fen %d: [%s] - OK (%d moves)\n", i, fen, legal.nmoves);
+            //}
         //pos_print_board_raw(pos, 1);
         //printf("%s\n", pos2fen(pos, str));
         //get_stockfish_moves(test[i]);

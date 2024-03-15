@@ -31,17 +31,19 @@ int main(__unused int ac, __unused char**av)
     bitboard_init();
 
     while ((fen = next_fen(FEN))) {
+        printf("***** [%s] ", fen);
+        fflush(stdout);
         if (!(pos = fen2pos(NULL, fen))) {
-            printf("[%s] **INVALID\n", fen);
+            printf("**INVALID\n");
         } else {
-            pos_print(pos);
+            //pos_print(pos);
             pos2fen(pos, revfen);
             if (!strcmp(fen, revfen)) {
-                printf("[%s] OK\n", fen);
+                printf("OK\n");
             } else {
                 //printf("fen = [%s]\nrev = [%s]", fen, revfen);
-                //pos_print_raw(pos, 1);
-                printf("[%s] -> [%s] **FIXED\n", fen, revfen);
+                printf("-> [%s] **FIXED\n",revfen);
+                pos_print_raw(pos, 1);
             }
             pos_del(pos);
         }
