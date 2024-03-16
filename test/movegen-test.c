@@ -237,7 +237,7 @@ int main(int __unused ac, __unused char**av)
         /* print movelists */
         send_stockfish_fen(outfd, fishpos, fen);
         pos_gen_pseudomoves(pos);
-        pos_legalmoves(pos, &legal);
+        pos_all_legal(pos, &legal);
         //printf("Fu ");
         //moves_print(fishpos, 0);
         //fflush(stdout);

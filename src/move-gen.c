@@ -34,7 +34,7 @@
  *
  * @return: true if move is valid, false otherwise.
  */
-bool pseudo_is_legal(pos_t *pos, move_t move)
+bool pseudo_is_legal(const pos_t *pos, const move_t move)
 {
     color_t us = pos->turn, them = OPPONENT(us);
     square_t from = move_from(move), to = move_to(move), king = pos->king[us], sq;
@@ -79,7 +79,7 @@ bool pseudo_is_legal(pos_t *pos, move_t move)
      * 5th relative rank. To do so, we create an occupation bb without
      * the 2 pawns.
      */
-    if (move & M_CAPTURE && PIECE(pos->board[to]) == EMPTY) {
+    if (IS_CAPTURE(move) && PIECE(pos->board[to]) == EMPTY) {
          /* from rank bitboard */
         bitboard_t rank5 = bb_sqrank[from];
         /* enemy rooks/queens on from rank */
@@ -98,6 +98,51 @@ bool pseudo_is_legal(pos_t *pos, move_t move)
         return true;
     }
     return true;
+}
+
+/**
+ * pos_next_legal() - get next legal move in position.
+ * @pos:  position
+ * @start:  &int, starting position in move list
+ *
+ * Get next valid move in @pos move list, from move @start, or MOVE_NONE.
+ * @start is set to next non-checked move in pseudo-legal list.
+ * Position pseudo-legal moves must be already calculated before calling this function.
+ *
+ * @return: move, or -1 if no move.
+ */
+move_t pos_next_legal(const pos_t *pos, int *start)
+{
+    int nmoves = pos->moves.nmoves;
+    const move_t *moves = pos->moves.move;
+
+    while (*start < nmoves) {
+        move_t move = moves[*start];
+        ++*start;
+        if (pseudo_is_legal(pos, move))
+            return  move;
+    }
+    return MOVE_NONE;
+}
+
+/**
+ * pos_all_legal() - get the list of legal moves from pseudo-legal.
+ * @pos:  position
+ * @dest: destination &movelist_t
+ *
+ * The pseudo-legal moves must be already calculated before calling this function.
+ *
+ * @Return: @dest
+ */
+movelist_t *pos_all_legal(const pos_t *pos, movelist_t *dest)
+{
+    dest->nmoves = 0;
+    move_t move;
+    int tmp = 0;
+
+    while ((move = pos_next_legal(pos, &tmp)) != MOVE_NONE)
+        dest->move[dest->nmoves++] = move;
+    return dest;
 }
 
 /**
@@ -289,25 +334,4 @@ int pos_gen_pseudomoves(pos_t *pos)
      *
      */
     return (pos->moves.nmoves = nmoves);
-}
-
-/**
- * pos_legalmoves() - generate position legal moves from pseudo-legal ones.
- * @pos:  position
- * @dest: address where to store legal moves
- *
- * The pseudo-legal moves must be already calculated before calling this function.
- *
- * @Return: @dest
- */
-movelist_t *pos_legalmoves(pos_t *pos, movelist_t *dest)
-{
-    int pseudo;
-    movelist_t *src = &pos->moves;
-    dest->nmoves = 0;
-    for (pseudo = 0; pseudo < src->nmoves; ++pseudo) {
-        if (pseudo_is_legal(pos, src->move[pseudo]))
-            dest->move[dest->nmoves++] = src->move[pseudo];
-    }
-    return dest;
 }

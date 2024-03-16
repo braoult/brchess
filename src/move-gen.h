@@ -21,8 +21,9 @@
 #include "piece.h"
 #include "move.h"
 
-extern bool pseudo_is_legal(pos_t *pos, move_t move);
-extern int pos_gen_pseudomoves(pos_t *pos);
-extern movelist_t *pos_legalmoves(pos_t *pos, movelist_t *dest);
+bool pseudo_is_legal(const pos_t *pos, const move_t move);
+move_t pos_next_legal(const pos_t *pos, int *start);
+movelist_t *pos_all_legal(const pos_t *pos, movelist_t *dest);
+int pos_gen_pseudomoves(pos_t *pos);
 
 #endif  /* MOVEGEN_H */

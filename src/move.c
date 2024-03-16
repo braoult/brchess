@@ -107,11 +107,11 @@ char *move_str(char *dst, const move_t move, __unused const int flags)
     square_t from = move_from(move);
     square_t to   = move_to(move);
     int len;
-    sprintf(dst, "%s-%s%n", sq_to_string(from), sq_to_string(to), &len);
+    sprintf(dst, "%s%s%n", sq_to_string(from), sq_to_string(to), &len);
 
-    if (move & M_PROMOTION) {
+    if (IS_PROMOTION(move)) {
         piece_t promoted = move_promoted(move);
-        sprintf(dst + len, "=%s", piece_to_low(promoted));
+        sprintf(dst + len, "%s", piece_to_low(promoted));
     }
     return dst;
 }
@@ -127,7 +127,7 @@ char *move_str(char *dst, const move_t move, __unused const int flags)
  * M_PR_NCAPT: print move if non capture
  * M_PR_NUM:   print also move number
  * M_PR_LONG:  print long notation
- * M_PR_NL:    print a newline after move
+ * M_PR_NL:    print a newline after each move
  * M_PR_EVAL:  print move eval
  */
 void moves_print(movelist_t *moves, __unused int flags)
