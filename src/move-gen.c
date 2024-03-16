@@ -113,13 +113,12 @@ bool pseudo_is_legal(const pos_t *pos, const move_t move)
  */
 move_t pos_next_legal(const pos_t *pos, int *start)
 {
-    int nmoves = pos->moves.nmoves;
+    const int nmoves = pos->moves.nmoves;
     const move_t *moves = pos->moves.move;
+    move_t move;
 
     while (*start < nmoves) {
-        move_t move = moves[*start];
-        ++*start;
-        if (pseudo_is_legal(pos, move))
+        if (pseudo_is_legal(pos, (move = moves[(*start)++] )))
             return  move;
     }
     return MOVE_NONE;
@@ -131,14 +130,15 @@ move_t pos_next_legal(const pos_t *pos, int *start)
  * @dest: destination &movelist_t
  *
  * The pseudo-legal moves must be already calculated before calling this function.
+ * No check is done on @dest limits.
  *
  * @Return: @dest
  */
 movelist_t *pos_all_legal(const pos_t *pos, movelist_t *dest)
 {
-    dest->nmoves = 0;
+    int tmp = dest->nmoves = 0;
     move_t move;
-    int tmp = 0;
+    //int tmp = 0;
 
     while ((move = pos_next_legal(pos, &tmp)) != MOVE_NONE)
         dest->move[dest->nmoves++] = move;
