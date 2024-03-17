@@ -95,10 +95,14 @@ pos_t *pos_clear(pos_t *pos)
 #   endif
     pos->node_count = 0;
     pos->turn = WHITE;
-    pos->clock_50 = 0;
-    pos->plycount = 0;
+
     pos->en_passant = SQUARE_NONE;
     pos->castle = 0;
+    pos->clock_50 = 0;
+    pos->plycount = 0;
+
+    for (square_t sq = A1; sq <= H8; ++sq)
+        pos->board[sq] = EMPTY;
 
     for (color_t color = WHITE; color <= BLACK; ++color) {
         for (piece_type_t piece = 0; piece <= KING; ++piece)
@@ -107,12 +111,12 @@ pos_t *pos_clear(pos_t *pos)
         pos->king[color] = SQUARE_NONE;
     }
 
-    for (square_t sq = A1; sq <= H8; ++sq)
-        pos->board[sq] = EMPTY;
-    pos->moves.curmove = 0;
-    pos->moves.nmoves = 0;
     pos->checkers = 0;
     pos->pinners = 0;
+    pos->blockers = 0;
+
+    //pos->moves.curmove = 0;
+    pos->moves.nmoves = 0;
     return pos;
 }
 

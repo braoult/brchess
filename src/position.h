@@ -18,6 +18,7 @@
 
 #include "brlib.h"
 #include "bitops.h"
+#include "struct-group.h"
 
 #include "chessdefs.h"
 #include "bitboard.h"
@@ -28,19 +29,28 @@
 typedef struct __pos_s {
     u64 node_count;                               /* evaluated nodes */
     int turn;                                     /* WHITE or BLACK */
-    u16 clock_50;
-    u16 plycount;                                 /* plies so far, start is 0 */
 
-    square_t king[2];                             /* dup with bb, faster retrieval */
-    square_t en_passant;
-    castle_rights_t castle;
+    /* data which cannot be recovered by move_undo
+     * following data can be accessed either directly, either via "movesave"
+     * structure name.
+     * For example, pos->en_passant and pos->movesave.en_passant are the same.
+     * This allows a memcpy on this data (to save/restore position state).
+     */
+    struct_group_tagged(movesave, movesave,
+                 square_t en_passant;
+                 castle_rights_t castle;
+                 u16 clock_50;
+                 u16 plycount;                    /* plies so far, start is 0 */
+        );
+
+    piece_t board[BOARDSIZE];
 
     bitboard_t bb[2][PIECE_TYPE_MAX];             /* bb[0][PAWN], bb[1][ALL_PIECES] */
     bitboard_t controlled[2];                     /* unsure */
+    square_t king[2];                             /* dup with bb, faster retrieval */
     bitboard_t checkers;                          /* opponent checkers */
     bitboard_t pinners;                           /* opponent pinners */
     bitboard_t blockers;                          /* pieces blocking pin */
-    piece_t board[BOARDSIZE];
     movelist_t moves;
 } pos_t;
 
