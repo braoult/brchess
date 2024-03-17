@@ -17,4 +17,5 @@ vgcore.*
 /tmp/
 /notused/
 valgrind.out
+gmon.out
 compile_commands.json
