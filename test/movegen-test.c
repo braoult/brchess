@@ -263,8 +263,8 @@ int main(int __unused ac, __unused char**av)
             printf("M: ");
             moves_print(&legal, 0);
         } else {
-            printf("[%s]\n\tMoves (OK): ", fen);
-            moves_print(&fishpos->moves, 0);
+            printf("[%s]: OK (%d Moves)\n", fen, legal.nmoves);
+            //moves_print(&fishpos->moves, 0);
         }
         //compare_moves(&fishpos->moves, &legal);
             //} else {

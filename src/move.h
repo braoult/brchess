@@ -23,14 +23,14 @@
  * 1 0    5 3    8 7 5 4 2 1    6 5    0
  * S UUUUUUU FFFFFF ccc ppp tttttt ffffff
  *
- * bits    len  off  range          type          mask       get   desc
- * ffffff    6    0    0-5      square_t           077       &63   from
- * tttttt    6    6   6-11      square_t         07700  (>>6)&63   to
- * ppp       3   12  12-14  piece_type_t        070000  (>>12)&7   promoted
- * ccc       3   15  15-17  piece_type_t       0700000  (>>15)&7   captured
- * FFFFFF    6   18  18-23  move_flags_t     077000000 (>>18)&63   N/A  flags
- * UUUUUUU   7   24  24-30        unused  017700000000             future usage
- * S         1   31  31-31             -  020000000000             sign
+ * bits    len off range         type         mask        get  desc
+ * ffffff    6   0   0-5     square_t          077        &077 from
+ * tttttt    6   6  6-11     square_t        07700 (>>6)  &077 to
+ * ppp       3  12 12-14 piece_type_t       070000 (>>12) &07  promoted
+ * ccc       3  15 15-17 piece_type_t      0700000 (>>15) &07  captured
+ * FFFFFF    6  18 18-23 move_flags_t    077000000 (>>18) &077 N/A  flags
+ * UUUUUUU   7  24 24-30       unused 017700000000             future usage
+ * S         1  31 31-31            - 020000000000             sign
  */
 typedef s32 move_t;
 
@@ -47,8 +47,6 @@ enum {
 };
 
 typedef enum {
-    //M_INVALID   = -1,
-    //M_START     = 18,
     M_CAPTURE   = mask(0),
     M_ENPASSANT = mask(1),
     M_PROMOTION = mask(2),
@@ -57,21 +55,12 @@ typedef enum {
     M_CHECK     = mask(6)                         /* maybe unknown/useless ? */
 } move_flags_t;
 
-#define MOVE_FLAGS(m)   ((m) >> M_OFF_FLAGS)
-#define IS_CAPTURE(m)   (MOVE_FLAGS(m) & M_CAPTURE)
-#define IS_ENPASSANT(m) (MOVE_FLAGS(m) & M_ENPASSANT)
-#define IS_PROMOTION(m) (MOVE_FLAGS(m) & M_PROMOTION)
-#define IS_CASTLE(m)    (MOVE_FLAGS(m) & (M_CASTLE_K | M_CASTLE_Q))
-#define IS_CASTLE_K(m)  (MOVE_FLAGS(m) & M_CASTLE_K)
-#define IS_CASTLE_Q(m)  (MOVE_FLAGS(m) & M_CASTLE_Q)
-#define IS_CHECK(m)     (MOVE_FLAGS(m) & M_CHECK)
-
 #define MOVES_MAX   256
 
 typedef struct __movelist_s {
     move_t move[MOVES_MAX];
     int nmoves;                                   /* total moves (fill) */
-    int curmove;                                  /* current move (use) */
+    //int curmove;                                  /* current move (use) */
 } movelist_t;
 
 static inline square_t move_from(move_t move)
@@ -93,6 +82,19 @@ static inline piece_type_t move_captured(move_t move)
 {
     return (move >> M_OFF_CAPT) & 07;
 }
+
+static inline move_flags_t move_flags(move_t move)
+{
+    return (move >> M_OFF_FLAGS) & 077;
+}
+
+#define is_capture(m)   (move_flags(m) & M_CAPTURE)
+#define is_enpassant(m) (move_flags(m) & M_ENPASSANT)
+#define is_promotion(m) (move_flags(m) & M_PROMOTION)
+#define is_castle(m)    (move_flags(m) & (M_CASTLE_K | M_CASTLE_Q))
+#define is_castle_K(m)  (move_flags(m) & M_CASTLE_K)
+#define is_castle_Q(m)  (move_flags(m) & M_CASTLE_Q)
+#define is_check(m)     (move_flags(m) & M_CHECK)
 
 static inline move_t move_make(square_t from, square_t to)
 {

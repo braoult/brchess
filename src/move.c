@@ -109,7 +109,7 @@ char *move_str(char *dst, const move_t move, __unused const int flags)
     int len;
     sprintf(dst, "%s%s%n", sq_to_string(from), sq_to_string(to), &len);
 
-    if (IS_PROMOTION(move)) {
+    if (is_promotion(move)) {
         piece_t promoted = move_promoted(move);
         sprintf(dst + len, "%s", piece_to_low(promoted));
     }

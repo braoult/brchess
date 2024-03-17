@@ -79,7 +79,7 @@ bool pseudo_is_legal(const pos_t *pos, const move_t move)
      * 5th relative rank. To do so, we create an occupation bb without
      * the 2 pawns.
      */
-    if (IS_CAPTURE(move) && PIECE(pos->board[to]) == EMPTY) {
+    if (is_capture(move) && PIECE(pos->board[to]) == EMPTY) {
          /* from rank bitboard */
         bitboard_t rank5 = bb_sqrank[from];
         /* enemy rooks/queens on from rank */
