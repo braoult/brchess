@@ -79,7 +79,7 @@ bool pseudo_is_legal(const pos_t *pos, const move_t move)
      * 5th relative rank. To do so, we create an occupation bb without
      * the 2 pawns.
      */
-    if (is_capture(move) && PIECE(pos->board[to]) == EMPTY) {
+    if (is_enpassant(move)) {
          /* from rank bitboard */
         bitboard_t rank5 = bb_sqrank[from];
         /* enemy rooks/queens on from rank */
@@ -158,6 +158,7 @@ movelist_t *pos_all_legal(const pos_t *pos, movelist_t *dest)
  * When immediately known, a few move flags are also applied in these cases:
  *  - castling: M_CASTLE_{K,Q}
  *  - pawn capture (incl. en-passant): M_CAPTURE
+ *                         en-passant: M_EN_PASSANT
  *  - promotion: M_PROMOTION
  *  - promotion and capture
  *
@@ -188,7 +189,7 @@ int pos_gen_pseudomoves(pos_t *pos)
     /* king - MUST BE FIRST ! */
     from = pos->king[us];
     movebits = bb_king_moves(not_my_pieces, from);
-    bit_for_each64(to, tmp2, movebits) {
+    bit_for_each64(to, tmp1, movebits) {
         moves[nmoves++] = move_make(from, to);
     }
     if (popcount64(pos->checkers) > 1)            /* double check, we stop here */
@@ -235,8 +236,6 @@ int pos_gen_pseudomoves(pos_t *pos)
     //       sizeof(RANK_3bb));
     //bitboard_t rel_filea = (me == WHITE ? FILE_Abb : FILE_Hbb);
     //bitboard_t rel_fileh = (me == WHITE ? FILE_Hbb : FILE_Abb);
-    int en_passant = pos->en_passant == SQUARE_NONE? 0: pos->en_passant;
-    bitboard_t enemy_avail = bb_sq[en_passant] | enemy_pieces;
 
     /* pawn: ranks 2-6 push 1 and 2 squares */
     movebits = pawn_shift_up(pos->bb[us][PAWN] & ~rel_rank7, us) & empty;
@@ -252,19 +251,29 @@ int pos_gen_pseudomoves(pos_t *pos)
         moves[nmoves++] = move_make(from, to);
     }
 
-    /* pawn: ranks 2-6 captures left, including en-passant */
+    /* pawn: ranks 2-6 captures left */
     from_pawns = pos->bb[us][PAWN] & ~rel_rank7; // & ~rel_filea;
-    movebits = pawn_shift_upleft(from_pawns, us) & enemy_avail;
+    movebits = pawn_shift_upleft(from_pawns, us) & enemy_pieces;
     bit_for_each64(to, tmp1, movebits) {
         from = pawn_push_upleft(to, them);         /* reverse capture */
         moves[nmoves++] = move_make_capture(from, to);
     }
-    /* pawn: ranks 2-6 captures right, including en-passant */
+    /* pawn: ranks 2-6 captures right */
     from_pawns = pos->bb[us][PAWN] & ~rel_rank7; // & ~rel_fileh;
-    movebits = pawn_shift_upright(from_pawns, us) & enemy_avail;
+    movebits = pawn_shift_upright(from_pawns, us) & enemy_pieces;
     bit_for_each64(to, tmp1, movebits) {
         from = pawn_push_upright(to, them);
         moves[nmoves++] = move_make_capture(from, to);
+    }
+
+    /* pawn: en-passant */
+    if ((to = pos->en_passant) != SQUARE_NONE) {
+        movebits = mask(to);
+        from_pawns = pos->bb[us][PAWN]
+            & (pawn_shift_upleft(movebits, them) | pawn_shift_upright(movebits, them));
+        bit_for_each64(from, tmp1, from_pawns) {
+            moves[nmoves++] = move_make_enpassant(from, to);
+        }
     }
 
     /* pawn: rank 7 push */
@@ -278,7 +287,7 @@ int pos_gen_pseudomoves(pos_t *pos)
     }
     /* pawn promotion: rank 7 captures left */
     from_pawns = pos->bb[us][PAWN] & rel_rank7; // & ~rel_filea;
-    movebits = pawn_shift_upleft(from_pawns, us) & enemy_avail;
+    movebits = pawn_shift_upleft(from_pawns, us) & enemy_pieces;
     bit_for_each64(to, tmp1, movebits) {
         from = pawn_push_upleft(to, them);         /* reverse capture */
         moves[nmoves++] = move_make_promote_capture(from, to, QUEEN);
