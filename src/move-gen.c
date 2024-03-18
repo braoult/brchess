@@ -174,7 +174,6 @@ int pos_gen_pseudomoves(pos_t *pos)
     bitboard_t my_pieces     = pos->bb[us][ALL_PIECES];
     bitboard_t not_my_pieces = ~my_pieces;
     bitboard_t enemy_pieces  = pos->bb[them][ALL_PIECES];
-
     bitboard_t occ           = my_pieces | enemy_pieces;
     bitboard_t empty         = ~occ;
 
@@ -183,59 +182,58 @@ int pos_gen_pseudomoves(pos_t *pos)
 
     move_t *moves            = pos->moves.move;
     int nmoves               = pos->moves.nmoves;
-
     int from, to;
 
-    /* king - MUST BE FIRST ! */
+    bug_on(nmoves != 0);
+
+    /* king - MUST BE FIRST (we stop if doubler check) */
     from = pos->king[us];
     movebits = bb_king_moves(not_my_pieces, from);
-    bit_for_each64(to, tmp1, movebits) {
+    bit_for_each64(to, tmp1, movebits & empty) {
         moves[nmoves++] = move_make(from, to);
     }
+    bit_for_each64(to, tmp1, movebits & enemy_pieces) {
+        moves[nmoves++] = move_make_capture(from, to);
+    }
+
     if (popcount64(pos->checkers) > 1)            /* double check, we stop here */
         return (pos->moves.nmoves = nmoves);
 
     /* sliding pieces */
-    bit_for_each64(from, tmp1, pos->bb[us][BISHOP]) {
+    bit_for_each64(from, tmp1, pos->bb[us][BISHOP] | pos->bb[us][QUEEN]) {
         movebits = hyperbola_bishop_moves(occ, from) & not_my_pieces;
-        bit_for_each64(to, tmp2, movebits) {
+        bit_for_each64(to, tmp2, movebits & empty) {
             moves[nmoves++] = move_make(from, to);
         }
+        bit_for_each64(to, tmp2, movebits & enemy_pieces) {
+            moves[nmoves++] = move_make_capture(from, to);
+        }
     }
-    bit_for_each64(from, tmp1, pos->bb[us][ROOK]) {
+    bit_for_each64(from, tmp1, pos->bb[us][ROOK] | pos->bb[us][QUEEN]) {
         // printf("rook=%d/%s\n", from, sq_to_string(from));
         movebits = hyperbola_rook_moves(occ, from) & not_my_pieces;
-        bit_for_each64(to, tmp2, movebits) {
+        bit_for_each64(to, tmp2, movebits & empty) {
             moves[nmoves++] = move_make(from, to);
         }
-    }
-    /* TODO: remove this one, after movegen is validated */
-    bit_for_each64(from, tmp1, pos->bb[us][QUEEN]) {
-        movebits = hyperbola_queen_moves(occ, from) & not_my_pieces;
-        bit_for_each64(to, tmp2, movebits) {
-            moves[nmoves++] = move_make(from, to);
+        bit_for_each64(to, tmp2, movebits & enemy_pieces) {
+            moves[nmoves++] = move_make_capture(from, to);
         }
     }
 
     /* knight */
     bit_for_each64(from, tmp1, pos->bb[us][KNIGHT]) {
         movebits = bb_knight_moves(not_my_pieces, from);
-        bit_for_each64(to, tmp2, movebits) {
+        bit_for_each64(to, tmp2, movebits & empty) {
             moves[nmoves++] = move_make(from, to);
+        }
+        bit_for_each64(to, tmp2, movebits & enemy_pieces) {
+            moves[nmoves++] = move_make_capture(from, to);
         }
     }
 
     /* pawn: relative rank and files */
     bitboard_t rel_rank7 = us == WHITE ? RANK_7bb : RANK_2bb;
     bitboard_t rel_rank3 = us == WHITE ? RANK_3bb : RANK_6bb;
-    //printf("r7_o = %016lx\nr7_n = %016lx\nsize=%lu\n", rel_rank7, BB_REL_RANK(RANK_7, me),
-    //       sizeof(RANK_3bb));
-    //printf("r3_o = %016lx\nr3_n = %016lx\nsize=%lu\n", rel_rank3, BB_REL_RANK(RANK_3, me),
-    //       sizeof(RANK_3bb));
-    //printf("fc_o = %016lx\nfc_n = %016lx\nsize=%lu\n", FILE_Cbb, BB_REL_FILE(FILE_C, me),
-    //       sizeof(RANK_3bb));
-    //bitboard_t rel_filea = (me == WHITE ? FILE_Abb : FILE_Hbb);
-    //bitboard_t rel_fileh = (me == WHITE ? FILE_Hbb : FILE_Abb);
 
     /* pawn: ranks 2-6 push 1 and 2 squares */
     movebits = pawn_shift_up(pos->bb[us][PAWN] & ~rel_rank7, us) & empty;
