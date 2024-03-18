@@ -39,28 +39,38 @@ typedef s32 move_t;
 #define MOVE_NULL (0)                             /* hack: from = to = A1 */
 
 enum {
-    M_OFF_FROM  = 0,
-    M_OFF_TO    = 6,
-    M_OFF_PROM  = 12,
-    M_OFF_CAPT  = 15,
-    M_OFF_FLAGS = 18
+    M_OFF_FROM     = 0,
+    M_OFF_TO       = 6,
+    M_OFF_PROMOTED = 12,
+    M_OFF_CAPTURED = 15,
+    M_OFF_FLAGS    = 18
 };
 
 typedef enum {
-    M_CAPTURE   = mask(0),
-    M_ENPASSANT = mask(1),
-    M_PROMOTION = mask(2),
-    M_CASTLE_K  = mask(3),                        /* maybe only one ? */
-    M_CASTLE_Q  = mask(5),                        /* maybe only one ? */
-    M_CHECK     = mask(6)                         /* maybe unknown/useless ? */
+    M_CAPTURE   = mask(M_OFF_FLAGS + 0),
+    M_ENPASSANT = mask(M_OFF_FLAGS + 1),
+    M_PROMOTION = mask(M_OFF_FLAGS + 2),
+    M_CASTLE_K  = mask(M_OFF_FLAGS + 3),          /* maybe only one ? */
+    M_CASTLE_Q  = mask(M_OFF_FLAGS + 5),          /* maybe only one ? */
+    M_CHECK     = mask(M_OFF_FLAGS + 6)           /* maybe unknown/useless ? */
 } move_flags_t;
+
+#define move_set_flags(move, flags) ((move) | (flags))
+
+#define is_capture(m)   ((m) & M_CAPTURE)
+#define is_enpassant(m) ((m) & M_ENPASSANT)
+#define is_promotion(m) ((m) & M_PROMOTION)
+#define is_castle(m)    ((m) & (M_CASTLE_K | M_CASTLE_Q))
+#define is_castle_K(m)  ((m) & M_CASTLE_K)
+#define is_castle_Q(m)  ((m) & M_CASTLE_Q)
+#define is_check(m)     ((m) & M_CHECK)
+
 
 #define MOVES_MAX   256
 
 typedef struct __movelist_s {
     move_t move[MOVES_MAX];
     int nmoves;                                   /* total moves (fill) */
-    //int curmove;                                  /* current move (use) */
 } movelist_t;
 
 static inline square_t move_from(move_t move)
@@ -75,26 +85,14 @@ static inline square_t move_to(move_t move)
 
 static inline piece_t move_promoted(move_t move)
 {
-    return (move >> M_OFF_PROM) & 07;
+    return (move >> M_OFF_PROMOTED) & 07;
 }
 
 static inline piece_type_t move_captured(move_t move)
 {
-    return (move >> M_OFF_CAPT) & 07;
+    return (move >> M_OFF_CAPTURED) & 07;
 }
 
-static inline move_flags_t move_flags(move_t move)
-{
-    return (move >> M_OFF_FLAGS) & 077;
-}
-
-#define is_capture(m)   (move_flags(m) & M_CAPTURE)
-#define is_enpassant(m) (move_flags(m) & M_ENPASSANT)
-#define is_promotion(m) (move_flags(m) & M_PROMOTION)
-#define is_castle(m)    (move_flags(m) & (M_CASTLE_K | M_CASTLE_Q))
-#define is_castle_K(m)  (move_flags(m) & M_CASTLE_K)
-#define is_castle_Q(m)  (move_flags(m) & M_CASTLE_Q)
-#define is_check(m)     (move_flags(m) & M_CHECK)
 
 static inline move_t move_make(square_t from, square_t to)
 {
@@ -103,7 +101,7 @@ static inline move_t move_make(square_t from, square_t to)
 
 static inline move_t move_make_flags(square_t from, square_t to, move_flags_t flags)
 {
-    return move_make(from, to) | (flags << M_OFF_FLAGS);
+    return move_set_flags(move_make(from, to), flags);
 }
 
 static inline move_t move_make_capture(square_t from, square_t to)
@@ -111,16 +109,21 @@ static inline move_t move_make_capture(square_t from, square_t to)
     return move_make_flags(from, to, M_CAPTURE);
 }
 
+static inline move_t move_make_enpassant(square_t from, square_t to)
+{
+    return move_make_flags(from, to, M_CAPTURE | M_ENPASSANT);
+}
+
 static inline move_t move_make_promote(square_t from, square_t to,
                                        piece_type_t promoted)
 {
-    return move_make_flags(from, to, M_PROMOTION) | (promoted << M_OFF_PROM);
+    return move_make_flags(from, to, M_PROMOTION) | (promoted << M_OFF_PROMOTED);
 }
 
 static inline move_t move_make_promote_capture(square_t from, square_t to,
                                                piece_type_t promoted)
 {
-    return move_make_flags(from, to, M_CAPTURE | M_PROMOTION) | (promoted << M_OFF_PROM);
+    return move_make_promote(from, to, promoted) | M_CAPTURE;
 }
 
 /* moves_print flags

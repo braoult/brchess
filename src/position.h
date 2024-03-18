@@ -33,14 +33,14 @@ typedef struct __pos_s {
     /* data which cannot be recovered by move_undo
      * following data can be accessed either directly, either via "movesave"
      * structure name.
-     * For example, pos->en_passant and pos->movesave.en_passant are the same.
+     * For example, pos->en_passant and pos->state.en_passant are the same.
      * This allows a memcpy on this data (to save/restore position state).
      */
-    struct_group_tagged(movesave, movesave,
+    struct_group_tagged(state_s, state,
                  square_t en_passant;
                  castle_rights_t castle;
                  u16 clock_50;
-                 u16 plycount;                    /* plies so far, start is 0 */
+                 u16 plycount;                    /* plies so far, start from 1 */
         );
 
     piece_t board[BOARDSIZE];
@@ -53,6 +53,8 @@ typedef struct __pos_s {
     bitboard_t blockers;                          /* pieces blocking pin */
     movelist_t moves;
 } pos_t;
+
+typedef struct state_s state_t;
 
 #define pos_pinned(p)                  (p->blockers & p->bb[p->turn][ALL_PIECES])
 
