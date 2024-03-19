@@ -81,9 +81,9 @@ static int fen_check(pos_t *pos)
     if (pos->en_passant != SQUARE_NONE) {
         rank_t eprank = sq_rank(pos->en_passant);
         file_t epfile = sq_file(pos->en_passant);
-        rank_t rank5 = SQ_REL_RANK(RANK_5, pos->turn);
-        rank_t rank6 = SQ_REL_RANK(RANK_6, pos->turn);
-        rank_t rank7 = SQ_REL_RANK(RANK_7, pos->turn);
+        rank_t rank5 = sq_rel_rank(RANK_5, pos->turn);
+        rank_t rank6 = sq_rel_rank(RANK_6, pos->turn);
+        rank_t rank7 = sq_rel_rank(RANK_7, pos->turn);
         piece_t pawn = pos->turn == WHITE? B_PAWN: W_PAWN;
         if (warn(eprank != rank6 ||
                  pos->board[sq_make(epfile, rank5)] != pawn ||

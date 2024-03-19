@@ -299,7 +299,7 @@ void pos_print_raw(const pos_t *pos, const int type)
  */
 void pos_print_pieces(const pos_t *pos)
 {
-    int bit, count, cur;
+    int sq, count, cur;
     char *pname;
     u64 tmp;
     bitboard_t p;
@@ -308,12 +308,12 @@ void pos_print_pieces(const pos_t *pos)
             p = pos->bb[color][piece];
             count = popcount64(p);
             cur = 0;
-            pname = piece_to_cap(piece);
-            printf("%s(0)%s", pname, count? ":": "");
+            pname = piece_to_char(p);
+            printf("%s(%d)%s", pname, count, count? ":": "");
             if (count) {
-                bit_for_each64(bit, tmp, p) {
-                    char cf = sq_file(bit), cr = sq_rank(bit);
-                    printf("%s%c%c", cur? ",": "", FILE2C(cf), RANK2C(cr));
+                bit_for_each64(sq, tmp, p) {
+                    // char cf = sq_file(bit), cr = sq_rank(bit);
+                    printf("%s%s", cur? ",": "", sq_to_string(sq));
                     cur++;
                 }
             }

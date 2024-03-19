@@ -173,10 +173,6 @@ static __always_inline bitboard_t bb_rank(int rank)
 {
     return RANK_1bb << (rank * 8);
 }
-static __always_inline bitboard_t bb_file(int file)
-{
-    return FILE_Abb << file;
-}
 static __always_inline bitboard_t bb_rel_rank(int rank, color)
 {
     return RANK_1bb << (rank * 8);
@@ -187,11 +183,13 @@ static __always_inline bitboard_t bb_file(int file)
 }
 */
 
-#define BB_RANK(r)        ((u64) RANK_1bb << ((r) * 8))
+#define bb_rank(r)        ((u64) RANK_1bb << ((r) * 8))
 #define BB_FILE(f)        ((u64) FILE_Abb << (f))
 
-#define BB_REL_RANK(r, c) (RANK_1bb << (SQ_REL_RANK((r), (c)) * 8))
-#define BB_REL_FILE(f, c) (FILE_Abb << (SQ_REL_RANK((f), (c))))
+#define bb_rel_rank(r, c) bb_rank(sq_rel_rank(r, c))
+
+//#define BB_REL_RANK(r, c) (RANK_1bb << (SQ_REL_RANK(r, c) * 8))
+//#define BB_REL_FILE(f, c) (FILE_Abb << (SQ_REL_RANK((f), (c))))
 
 /**
  * bb_sq_aligned() - check if two squares are aligned (same file or rank).

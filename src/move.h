@@ -52,7 +52,8 @@ typedef enum {
     M_PROMOTION = mask(M_OFF_FLAGS + 2),
     M_CASTLE_K  = mask(M_OFF_FLAGS + 3),          /* maybe only one ? */
     M_CASTLE_Q  = mask(M_OFF_FLAGS + 5),          /* maybe only one ? */
-    M_CHECK     = mask(M_OFF_FLAGS + 6)           /* maybe unknown/useless ? */
+    M_CHECK     = mask(M_OFF_FLAGS + 6),          /* maybe unknown/useless ? */
+    M_DPUSH     = mask(M_OFF_FLAGS + 7)           /* pawn double push */
 } move_flags_t;
 
 #define move_set_flags(move, flags) ((move) | (flags))
@@ -64,7 +65,7 @@ typedef enum {
 #define is_castle_K(m)  ((m) & M_CASTLE_K)
 #define is_castle_Q(m)  ((m) & M_CASTLE_Q)
 #define is_check(m)     ((m) & M_CHECK)
-
+#define is_dpush(m)     ((m) & M_DPUSH)
 
 #define MOVES_MAX   256
 
@@ -124,6 +125,11 @@ static inline move_t move_make_promote_capture(square_t from, square_t to,
                                                piece_type_t promoted)
 {
     return move_make_promote(from, to, promoted) | M_CAPTURE;
+}
+
+static inline move_t move_set_captured(move_t move, piece_type_t captured)
+{
+    return move | (captured << M_OFF_CAPTURED);
 }
 
 /* moves_print flags

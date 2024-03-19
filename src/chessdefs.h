@@ -21,8 +21,30 @@
 #define mask(i)            ( (u64) (ONE << (i)) )
 
 #define BOARDSIZE          (8*8)
-/* relative rank */
-#define SQ_REL_RANK(r, c)  (rank_t)((7 * (c)) ^ r)
+
+/**
+ * sq_rel - get relative square
+ * @sq: white point of view square
+ * @c:  color
+ *
+ * Get relative (mirrored if @c is BLACK) square.
+ * Example: sq_rel(A1, WHITE) = A1, sq_rel(B2, BLACK) = B7
+ *
+ * @return: Relative square.
+ */
+#define sq_rel(sq, c)      ((square_t)((sq) ^ (56 * (c))))
+
+/**
+ * sq_rel_rank - get relative rank
+ * @rank: white point of view rank
+ * @c:  color
+ *
+ * Get relative (mirrored if @c is BLACK) rank.
+ * Example: sq_rel(RANK_2, WHITE) = RANK_2, sq_rel(RANK_6, BLACK) = RANK_3
+ *
+ * @return: Relative rank.
+ */
+#define sq_rel_rank(rank, c)  ((rank_t)((7 * (c)) ^ rank))
 
 /* castle_t bits structure
  */
@@ -41,10 +63,14 @@ typedef enum {
 
 /* determine is oo or ooo is possible with castle flags f and color c
  */
-#define NORM_CASTLE(f, c) ((f) >> (2 * (c)))      /* shift  flags to bits 0/1 */
-#define CAN_OO(f, c)     (NORM_CASTLE(f, c) & CASTLE_K)
-#define CAN_OOO(f, c)    (NORM_CASTLE(f, c) & CASTLE_Q)
-#define CAN_CASTLE(f, c) (CAN_OO(f, c) | CAN_OOO(f, c))
+#define NORM_CASTLE(f, c)  ((f) >> (2 * (c)))      /* shift  flags to bits 0/1 */
+#define CAN_OO(f, c)       (NORM_CASTLE(f, c) & CASTLE_K)
+#define CAN_OOO(f, c)      (NORM_CASTLE(f, c) & CASTLE_Q)
+#define CAN_CASTLE(f, c)   (CAN_OO(f, c) | CAN_OOO(f, c))
+
+#define CLR_OO(f, c)     (f & ~(CASTLE_K << (2 * (c))))
+#define CLR_OOO(f, c)    (f & ~(CASTLE_Q << (2 * (c))))
+#define CLR_OO_OOO(f, c) (f & ~((CASTLE_K | CASTLE_Q) << (2 * (c)) ))
 
 /* game phases
  */

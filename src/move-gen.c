@@ -159,6 +159,7 @@ movelist_t *pos_all_legal(const pos_t *pos, movelist_t *dest)
  *  - castling: M_CASTLE_{K,Q}
  *  - pawn capture (incl. en-passant): M_CAPTURE
  *                         en-passant: M_EN_PASSANT
+ *  - pawn double push: M_DPUSH
  *  - promotion: M_PROMOTION
  *  - promotion and capture
  *
@@ -232,8 +233,8 @@ int pos_gen_pseudomoves(pos_t *pos)
     }
 
     /* pawn: relative rank and files */
-    bitboard_t rel_rank7 = us == WHITE ? RANK_7bb : RANK_2bb;
-    bitboard_t rel_rank3 = us == WHITE ? RANK_3bb : RANK_6bb;
+    bitboard_t rel_rank7 = bb_rel_rank(RANK_7, us);
+    bitboard_t rel_rank3 = bb_rel_rank(RANK_3, us);
 
     /* pawn: ranks 2-6 push 1 and 2 squares */
     movebits = pawn_shift_up(pos->bb[us][PAWN] & ~rel_rank7, us) & empty;
@@ -246,7 +247,7 @@ int pos_gen_pseudomoves(pos_t *pos)
     movebits = pawn_shift_up(movebits & rel_rank3, us) & empty;
     bit_for_each64(to, tmp1, movebits) {
         from = pawn_push_up(pawn_push_up(to, them), them);
-        moves[nmoves++] = move_make(from, to);
+        moves[nmoves++] = move_make_flags(from, to, M_DPUSH);
     }
 
     /* pawn: ranks 2-6 captures left */
@@ -307,7 +308,7 @@ int pos_gen_pseudomoves(pos_t *pos)
     /* castle - Attention ! Castling flags are assumed correct
      */
     if (!pos->checkers) {
-        bitboard_t rel_rank1 = BB_REL_RANK(RANK_1, us);
+        bitboard_t rel_rank1 = bb_rel_rank(RANK_1, us);
         from = pos->king[us];
         square_t from_square[2] = { E1, E8 };     /* verify king is on E1/E8 */
         bug_on(CAN_CASTLE(pos->castle, us) && from != from_square[us]);
