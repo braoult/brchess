@@ -37,10 +37,11 @@ typedef struct __pos_s {
      * This allows a memcpy on this data (to save/restore position state).
      */
     struct_group_tagged(state_s, state,
-                 square_t en_passant;
-                 castle_rights_t castle;
-                 u16 clock_50;
-                 u16 plycount;                    /* plies so far, start from 1 */
+                        square_t en_passant;
+                        castle_rights_t castle;
+                        u16 clock_50;
+                        u16 plycount;             /* plies so far, start from 1 */
+                        piece_t captured;         /* only for move_undo */
         );
 
     piece_t board[BOARDSIZE];
@@ -130,7 +131,7 @@ static __always_inline bitboard_t pos_between_occ(const pos_t *pos,
 static __always_inline int pos_between_count(const pos_t *pos,
                                              const square_t sq1, const square_t sq2)
 {
-    return bb_between_excl[sq1][sq2] & pos_occ(pos);
+    return popcount64(pos_between_occ(pos, sq1, sq2));
 }
 
 /**

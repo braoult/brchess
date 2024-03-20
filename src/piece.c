@@ -65,10 +65,6 @@ char *piece_to_low(piece_t p)
 {
     return piece_details[p].low;
 }
-//char *piece_to_sym(piece_t p)
-//{
-//    return piece_details[PIECE(p)].sym;
-//}
 
 char *piece_to_sym(piece_t p)
 {
