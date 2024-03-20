@@ -57,20 +57,23 @@ typedef enum {
     CASTLE_W  = (CASTLE_WK | CASTLE_WQ),          /* 00000011 W castle mask */
     CASTLE_B  = (CASTLE_BK | CASTLE_BQ),          /* 00001100 B castle mask */
 
-    CASTLE_K  = (1 << 0),                         /* generic K/Q, after doing : */
-    CASTLE_Q  = (1 << 1),                         /* flags >> (2 * color)       */
+    CASTLE_K  = (1 << 0),                         /* generic K/Q, bits 0 and 1 */
+    CASTLE_Q  = (1 << 1),
+    CASTLE_KQ = (CASTLE_K |CASTLE_Q)
 } castle_rights_t;
 
 /* determine is oo or ooo is possible with castle flags f and color c
  */
-#define NORM_CASTLE(f, c)  ((f) >> (2 * (c)))      /* shift  flags to bits 0/1 */
-#define CAN_OO(f, c)       (NORM_CASTLE(f, c) & CASTLE_K)
-#define CAN_OOO(f, c)      (NORM_CASTLE(f, c) & CASTLE_Q)
-#define CAN_CASTLE(f, c)   (CAN_OO(f, c) | CAN_OOO(f, c))
+//#define NORM_CASTLE(f, c)  ((f) >> (2 * (c)))      /* shift  flags to bits 0/1 */
+//#define
+//(NORM_CASTLE(f, c) & CASTLE_Q)
+#define can_oo(f, c)     ((f) & (CASTLE_K  << ((c) * 2)))
+#define can_ooo(f, c)    ((f) & (CASTLE_Q  << ((c) * 2)))
+#define can_castle(f, c) ((f) & (CASTLE_KQ << ((c) * 2)))
 
-#define CLR_OO(f, c)     (f & ~(CASTLE_K << (2 * (c))))
-#define CLR_OOO(f, c)    (f & ~(CASTLE_Q << (2 * (c))))
-#define CLR_OO_OOO(f, c) (f & ~((CASTLE_K | CASTLE_Q) << (2 * (c)) ))
+#define clr_oo(f, c)     ((f) & ~(CASTLE_K  << (2 * (c))))
+#define clr_ooo(f, c)    ((f) & ~(CASTLE_Q  << (2 * (c))))
+#define clr_castle(f, c) ((f) & ~(CASTLE_KQ << (2 * (c)) ))
 
 /* game phases
  */
