@@ -157,8 +157,8 @@ movelist_t *pos_all_legal(const pos_t *pos, movelist_t *dest)
  *  - castling, if king passes an enemy-controlled square (not final square).
  * When immediately known, a few move flags are also applied in these cases:
  *  - castling: M_CASTLE_{K,Q}
- *  - pawn capture (incl. en-passant): M_CAPTURE
- *                         en-passant: M_EN_PASSANT
+ *  - pawn capture (excl. en-passant): M_CAPTURE
+ *  - en-passant: M_EN_PASSANT
  *  - pawn double push: M_DPUSH
  *  - promotion: M_PROMOTION
  *  - promotion and capture
@@ -311,18 +311,18 @@ int pos_gen_pseudomoves(pos_t *pos)
         bitboard_t rel_rank1 = bb_rel_rank(RANK_1, us);
         from = pos->king[us];
         square_t from_square[2] = { E1, E8 };     /* verify king is on E1/E8 */
-        bug_on(CAN_CASTLE(pos->castle, us) && from != from_square[us]);
+        bug_on(can_castle(pos->castle, us) && from != from_square[us]);
         /* For castle, we check the opponent attacks on squares between from and to.
          * To square attack check will be done in gen_is_legal.
          */
-        if (CAN_OO(pos->castle, us)) {
+        if (can_oo(pos->castle, us)) {
             bitboard_t occmask = rel_rank1 & (FILE_Fbb | FILE_Gbb);
             if (!(occ & occmask) &&
                 !sq_attackers(pos, occ, from+1, them)) { /* f1/f8 */
                 moves[nmoves++] = move_make_flags(from, from + 2, M_CASTLE_K);
             }
         }
-        if (CAN_OOO(pos->castle, us)) {
+        if (can_ooo(pos->castle, us)) {
             bitboard_t occmask = rel_rank1 & (FILE_Bbb | FILE_Cbb | FILE_Dbb);
             if (!(occ & occmask) &&
                 !sq_attackers(pos, occ, from-1, them)) { /* d1/d8 */

@@ -19,8 +19,8 @@
 #include "board.h"
 
 /* move structure:
- * 3 3    2 2    1 1 1 1 1 1
- * 1 0    5 3    8 7 5 4 2 1    6 5    0
+ * 3 3     2 2    1 1 1 1 1 1
+ * 1 0     4 3    8 7 5 4 2 1    6 5    0
  * S UUUUUUU FFFFFF ccc ppp tttttt ffffff
  *
  * bits    len off range         type         mask        get  desc
@@ -84,7 +84,7 @@ static inline square_t move_to(move_t move)
     return (move >> M_OFF_TO) & 077;
 }
 
-static inline piece_t move_promoted(move_t move)
+static inline piece_type_t move_promoted(move_t move)
 {
     return (move >> M_OFF_PROMOTED) & 07;
 }
@@ -93,7 +93,6 @@ static inline piece_type_t move_captured(move_t move)
 {
     return (move >> M_OFF_CAPTURED) & 07;
 }
-
 
 static inline move_t move_make(square_t from, square_t to)
 {
@@ -112,7 +111,7 @@ static inline move_t move_make_capture(square_t from, square_t to)
 
 static inline move_t move_make_enpassant(square_t from, square_t to)
 {
-    return move_make_flags(from, to, M_CAPTURE | M_ENPASSANT);
+    return move_make_flags(from, to, M_ENPASSANT);
 }
 
 static inline move_t move_make_promote(square_t from, square_t to,

@@ -110,7 +110,7 @@ char *move_str(char *dst, const move_t move, __unused const int flags)
     sprintf(dst, "%s%s%n", sq_to_string(from), sq_to_string(to), &len);
 
     if (is_promotion(move)) {
-        piece_t promoted = move_promoted(move);
+        piece_t promoted = (piece_t) move_promoted(move);
         sprintf(dst + len, "%s", piece_to_low(promoted));
     }
     return dst;
@@ -147,8 +147,8 @@ static int _moves_cmp_bysquare(const void *p1, const void *p2)
     square_t t1 = move_to(m1);
     square_t f2 = move_from(m2);
     square_t t2 = move_to(m2);
-    piece_t prom1 = move_promoted(m1);
-    piece_t prom2 = move_promoted(m2);
+    piece_type_t prom1 = move_promoted(m1);
+    piece_type_t prom2 = move_promoted(m2);
     if (f1 < f2) return -1;
     if (f1 > f2) return 1;
     /* f1 == f2 */
