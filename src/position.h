@@ -47,7 +47,7 @@ typedef struct __pos_s {
     piece_t board[BOARDSIZE];
 
     bitboard_t bb[2][PIECE_TYPE_MAX];             /* bb[0][PAWN], bb[1][ALL_PIECES] */
-    bitboard_t controlled[2];                     /* unsure */
+    //bitboard_t controlled[2];                     /* unsure */
     square_t king[2];                             /* dup with bb, faster retrieval */
     bitboard_t checkers;                          /* opponent checkers */
     bitboard_t pinners;                           /* opponent pinners */
@@ -93,6 +93,8 @@ static __always_inline void pos_clr_sq(pos_t *pos, square_t square)
     pos->board[square] = EMPTY;
     pos->bb[color][type] &= ~mask(square);
     pos->bb[color][ALL_PIECES] &= ~mask(square);
+    if (type == KING)
+        pos->king[color] = SQUARE_NONE;
 }
 
 /**
@@ -151,25 +153,26 @@ static __always_inline int pos_between_count(const pos_t *pos,
 //void bitboard_print(bitboard_t bb, char *title);
 //void bitboard_print2(bitboard_t bb1, bitboard_t bb2, char *title);
 
-extern pos_t *pos_new();
-extern pos_t *pos_dup(const pos_t *pos);
-extern void pos_del(pos_t *pos);
-extern pos_t *pos_clear(pos_t *pos);
+pos_t *pos_new();
+pos_t *pos_dup(const pos_t *pos);
+void pos_del(pos_t *pos);
+pos_t *pos_clear(pos_t *pos);
+bool pos_cmp(const pos_t *pos1, const pos_t *pos2);
 
-extern bitboard_t pos_checkers(const pos_t *pos, const color_t color);
-extern bitboard_t pos_king_pinners(const pos_t *pos, const color_t color);
-extern bitboard_t pos_king_blockers(const pos_t *pos, const color_t color, const bitboard_t );
-//extern bitboard_t set_king_pinners_blockers(pos_t *pos);
-//extern char *pos_checkers2str(const pos_t *pos, char *str);
-//extern char *pos_pinners2str(const pos_t *pos, char *str);
+bitboard_t pos_checkers(const pos_t *pos, const color_t color);
+bitboard_t pos_king_pinners(const pos_t *pos, const color_t color);
+bitboard_t pos_king_blockers(const pos_t *pos, const color_t color, const bitboard_t );
+//bitboard_t set_king_pinners_blockers(pos_t *pos);
+//char *pos_checkers2str(const pos_t *pos, char *str);
+//char *pos_pinners2str(const pos_t *pos, char *str);
 
-extern int pos_check(const pos_t *pos, const bool strict);
+int pos_check(const pos_t *pos, const bool strict);
 
-extern void pos_print(const pos_t *pos);
-extern void pos_print_mask(const pos_t *pos, const bitboard_t mask);
-extern void pos_print_raw(const pos_t *pos, const int type);
+void pos_print(const pos_t *pos);
+void pos_print_mask(const pos_t *pos, const bitboard_t mask);
+void pos_print_raw(const pos_t *pos, const int type);
 
-extern void pos_print_pieces(const pos_t *pos);
+void pos_print_pieces(const pos_t *pos);
 
 
 #endif  /* POSITION_H */

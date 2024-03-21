@@ -47,14 +47,7 @@ pos_t *pos_new(void)
  * pos_dup() - duplicate a position.
  * @pos: &position to duplicate.
  *
- * New position is the same as source one (with duplicated pieces list),
- * except:
- * - moves list is empty
- * - bestmove is NULL
- * - nodecount is set to zero
- * - eval is set to EVAL_INVALID
- * - moves_generated ans moves_counted are unset
- * - check is set to zero
+ * Return a copy, allocated with malloc(1), of @pos.
  *
  * @Return: The new position.
  *
@@ -64,14 +57,7 @@ pos_t *pos_dup(const pos_t *pos)
 {
     pos_t *newpos = safe_malloc(sizeof(pos_t));
 
-    //board = new->board;
     *newpos = *pos;
-    //new->bestmove = NULL;
-    newpos->node_count = 0;
-    //new->eval = EVAL_INVALID;
-    //new->moves_generated = false;
-    //new->moves_counted = false;
-    //new->check[WHITE] = new->check[BLACK] = 0;
     return newpos;
 }
 
@@ -87,6 +73,8 @@ void pos_del(pos_t *pos)
 /**
  * pos_clear() - clear a position.
  * @pos: &position.
+ *
+ * @return: @pos.
  */
 pos_t *pos_clear(pos_t *pos)
 {
@@ -96,10 +84,12 @@ pos_t *pos_clear(pos_t *pos)
     pos->node_count = 0;
     pos->turn = WHITE;
 
+    /* move_do/undo position state */
     pos->en_passant = SQUARE_NONE;
     pos->castle = 0;
     pos->clock_50 = 0;
     pos->plycount = 0;
+    pos->captured = NO_PIECE;
 
     for (square_t sq = A1; sq <= H8; ++sq)
         pos->board[sq] = EMPTY;
@@ -107,7 +97,7 @@ pos_t *pos_clear(pos_t *pos)
     for (color_t color = WHITE; color <= BLACK; ++color) {
         for (piece_type_t piece = 0; piece <= KING; ++piece)
             pos->bb[color][piece] = 0;
-        pos->controlled[color] = 0;
+        //pos->controlled[color] = 0;
         pos->king[color] = SQUARE_NONE;
     }
 
@@ -118,6 +108,65 @@ pos_t *pos_clear(pos_t *pos)
     //pos->moves.curmove = 0;
     pos->moves.nmoves = 0;
     return pos;
+}
+
+/**
+ * pos_cmp() - compare two positions..
+ * @pos1, @pos2: The two &position.
+ *
+ * @return: true if equal, false otherwise.
+ */
+bool pos_cmp(const pos_t *pos1, const pos_t *pos2)
+{
+#define _cmpf(a) (pos1->a != pos2->a)
+    bool ret = false;
+    if (warn_on(_cmpf(node_count)))
+        goto end;
+    if (warn_on(_cmpf(turn)))
+        goto end;
+
+    /* move_do/undo position state */
+    if (warn_on(_cmpf(en_passant)))
+        goto end;
+    if (warn_on(_cmpf(castle)))
+        goto end;
+    if (warn_on(_cmpf(clock_50)))
+        goto end;
+    if (warn_on(_cmpf(plycount)))
+        goto end;
+    if (warn_on(_cmpf(captured)))
+        goto end;
+
+    for (square_t sq = A1; sq <= H8; ++sq)
+        if (warn_on(_cmpf(board[sq])))
+            goto end;
+
+    for (color_t color = WHITE; color <= BLACK; ++color) {
+        for (piece_type_t piece = 0; piece <= KING; ++piece)
+            if (warn_on(_cmpf(bb[color][piece])))
+                goto end;
+        //pos->controlled[color] = 0;
+        if (warn_on(_cmpf(king[color])))
+            goto end;
+    }
+
+    if (warn_on(_cmpf(checkers)))
+        goto end;
+    if (warn_on(_cmpf(pinners)))
+        goto end;
+    if (warn_on(_cmpf(blockers)))
+        goto end;
+
+    if (warn_on(_cmpf(moves.nmoves)))
+        goto end;
+    for (int i = 0; i < pos1->moves.nmoves; ++i)
+        if (warn_on(_cmpf(moves.move[i])))
+            goto end;
+
+    ret = true;
+end:
+    return ret;
+#undef _cmpf
 }
 
 /**
