@@ -14,11 +14,12 @@
 #include <stdio.h>
 #include "chessdefs.h"
 /* when below FENs are in a struct with selection per test */
-#define NOTEST   0
-#define FEN      1
-#define BITBOARD 2
-#define MOVEGEN  4
-#define ATTACK   8
+#define NOTEST      0
+#define FEN         1
+#define BITBOARD    2
+#define MOVEGEN     4
+#define ATTACK      8
+#define MOVEDO     16
 
 struct fentest {
     uint modules;
@@ -367,7 +368,18 @@ struct fentest {
       "illegal, SF crash",
       "2r1k3/3P4/8/8/8/8/8/4K3 w - - 0 1"
     },
-
+    { MOVEDO,
+      "simple movedo/undo: only 2 W knights",
+      "8/1k6/8/8/8/8/6K1/1NN5 w - - 0 1"
+    },
+    { MOVEDO,
+      "simple movedo/undo: only 2 W knights",
+      "8/1k6/8/8/8/8/6K1/1NN5 w - - 0 1"
+    },
+    { MOVEDO,
+      "simple movedo/undo: only 2 W knights",
+      "5n2/1k6/8/8/5K2/8/P7/1N6 w - - 0 1"
+    },
     { 0, NULL, NULL }
 };
 

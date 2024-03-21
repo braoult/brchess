@@ -286,7 +286,7 @@ memcheck: targets
 ##################################### test binaries
 .PHONY: testing test
 
-TEST          :=piece-test fen-test bitboard-test movegen-test attack-test
+TEST          := piece-test fen-test bitboard-test movegen-test attack-test movedo-test
 
 PIECE_OBJS    := piece.o
 FEN_OBJS      := fen.o position.o piece.o bitboard.o board.o hyperbola-quintessence.o \
@@ -297,6 +297,8 @@ MOVEGEN_OBJS  := fen.o position.o piece.o bitboard.o board.o hyperbola-quintesse
 	attack.o move.o move-gen.o
 ATTACK_OBJS   := fen.o position.o piece.o bitboard.o board.o hyperbola-quintessence.o \
 	 attack.o move.o move-gen.o
+MOVEDO_OBJS   := fen.o position.o piece.o bitboard.o board.o hyperbola-quintessence.o \
+	 attack.o move.o move-gen.o move-do.o
 
 TEST          := $(addprefix $(BINDIR)/,$(TEST))
 
@@ -305,6 +307,7 @@ FEN_OBJS      := $(addprefix $(OBJDIR)/,$(FEN_OBJS))
 BB_OBJS       := $(addprefix $(OBJDIR)/,$(BB_OBJS))
 MOVEGEN_OBJS  := $(addprefix $(OBJDIR)/,$(MOVEGEN_OBJS))
 ATTACK_OBJS   := $(addprefix $(OBJDIR)/,$(ATTACK_OBJS))
+MOVEDO_OBJS   := $(addprefix $(OBJDIR)/,$(MOVEDO_OBJS))
 
 test:
 	echo TEST=$(TEST)
@@ -331,6 +334,10 @@ bin/movegen-test: test/movegen-test.c test/common-test.h $(MOVEGEN_OBJS)
 bin/attack-test: test/attack-test.c test/common-test.h $(ATTACK_OBJS)
 	@echo compiling $@ test executable.
 	@$(CC) $(ALL_CFLAGS) $< $(ATTACK_OBJS) $(ALL_LDFLAGS) -o $@
+
+bin/movedo-test: test/movedo-test.c test/common-test.h $(MOVEDO_OBJS)
+	@echo compiling $@ test executable.
+	@$(CC) $(ALL_CFLAGS) $< $(MOVEDO_OBJS) $(ALL_LDFLAGS) -o $@
 
 ##################################### Makefile debug
 .PHONY: showflags wft
