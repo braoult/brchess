@@ -14,7 +14,9 @@
 #ifndef MOVE_DO_H
 #define MOVE_DO_H
 
-//extern pos_t *move_do(pos_t *pos, move_t *move);
-//extern void move_undo(pos_t *pos, move_t *move);
+#include "position.h"
+
+pos_t *move_do(pos_t *pos, const move_t move, state_t *state);
+pos_t *move_undo(pos_t *pos, const move_t move, const state_t *state);
 
 #endif  /* MOVE_DO_H */
