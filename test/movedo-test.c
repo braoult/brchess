@@ -26,9 +26,10 @@
 
 int main(int __unused ac, __unused char**av)
 {
-    int i = 1;
+    int i = 0, test_line;
     char *fen, movebuf[8];;
     pos_t *pos, *savepos;
+    movelist_t pseudo;
     move_t move;
 
     setlinebuf(stdout);                           /* line-buffered stdout */
@@ -37,41 +38,48 @@ int main(int __unused ac, __unused char**av)
     hyperbola_init();
 
     while ((fen = next_fen(MOVEGEN | MOVEDO))) {
+        test_line = cur_line();
         if (!(pos = fen2pos(NULL, fen))) {
             printf("wrong fen %d: [%s]\n", i, fen);
             continue;
         }
-        pos_gen_pseudomoves(pos);
+        pos_gen_pseudomoves(pos, &pseudo);
         savepos = pos_dup(pos);
-        if (pos_cmp(pos, savepos) != true) {
-            printf("*** positions differ 1\n");
-            exit(0);
-        }
-        int tmp = 0, j = 1;
-        while ((move = pos_next_legal(pos, &tmp)) != MOVE_NONE) {
+        int tmp = 0, j = 0;
+        while ((move = pos_next_legal(pos, &pseudo, &tmp)) != MOVE_NONE) {
             state_t state;
-
-            pos_print(pos);
-            printf("i=%d j=%d  turn=%d move=[%s]\n", i, j, pos->turn,
-                   move_str(movebuf, move, 0));
+            move_str(movebuf, move, 0);
+            //pos_print(pos);
+            //printf("i=%d j=%d  turn=%d move=[%s]\n", i, j, pos->turn,
+            //       move_str(movebuf, move, 0));
             //move_p
             move_do(pos, move, &state);
-            pos_print(pos);
-            fflush(stdout);
-            pos_check(pos, true);
-            printf("%d/%d move_do check ok\n", i, j);
-            move_undo(pos, move, &state);
-            if (pos_cmp(pos, savepos) != true) {
-                printf("*** positions differ 2\n");
+            //pos_print(pos);
+            //fflush(stdout);
+            if (pos_check(pos, false)) {
+                printf("*** fen %d move %d [%s] invalid position after move_do\n",
+                       test_line, j, movebuf);
                 exit(0);
             }
-            fflush(stdout);
-            pos_check(pos, true);
-            printf("%d/%d move_undo check ok\n", i, j);
 
-            if (j++ == 1000)
+            //printf("%d/%d move_do check ok\n", i, j);
+            move_undo(pos, move, &state);
+            if (pos_check(pos, false)) {
+                printf("*** fen %d move %d [%s] invalid position after move_undo\n",
+                       test_line, j, movebuf);
                 exit(0);
+            }
+            if (pos_cmp(pos, savepos) != true) {
+                printf("*** fen %d move %d [%s] position differ after move_{do,undo}\n",
+                       test_line, j, movebuf);
+                exit(0);
+            }
+            //fflush(stdout);
+            //pos_check(pos, true);
+            //printf("%d/%d move_undo check ok\n", i, j);
+            j++;
         }
+        printf("fen %d line=%d [%s] %d move_{do,undo} OK\n", i, test_line, fen, j);
         pos_del(savepos);
         pos_del(pos);
         i++;

@@ -89,7 +89,7 @@ pos_t *pos_clear(pos_t *pos)
     pos->castle = 0;
     pos->clock_50 = 0;
     pos->plycount = 0;
-    pos->captured = NO_PIECE;
+    //pos->captured = NO_PIECE;
 
     for (square_t sq = A1; sq <= H8; ++sq)
         pos->board[sq] = EMPTY;
@@ -105,8 +105,7 @@ pos_t *pos_clear(pos_t *pos)
     pos->pinners = 0;
     pos->blockers = 0;
 
-    //pos->moves.curmove = 0;
-    pos->moves.nmoves = 0;
+    //pos->moves.nmoves = 0;
     return pos;
 }
 
@@ -134,8 +133,8 @@ bool pos_cmp(const pos_t *pos1, const pos_t *pos2)
         goto end;
     if (warn_on(_cmpf(plycount)))
         goto end;
-    if (warn_on(_cmpf(captured)))
-        goto end;
+    //if (warn_on(_cmpf(captured)))
+    //    goto end;
 
     for (square_t sq = A1; sq <= H8; ++sq)
         if (warn_on(_cmpf(board[sq])))
@@ -157,11 +156,13 @@ bool pos_cmp(const pos_t *pos1, const pos_t *pos2)
     if (warn_on(_cmpf(blockers)))
         goto end;
 
-    if (warn_on(_cmpf(moves.nmoves)))
-        goto end;
-    for (int i = 0; i < pos1->moves.nmoves; ++i)
-        if (warn_on(_cmpf(moves.move[i])))
-            goto end;
+    /*
+     * if (warn_on(_cmpf(moves.nmoves)))
+     *     goto end;
+     * for (int i = 0; i < pos1->moves.nmoves; ++i)
+     *     if (warn_on(_cmpf(moves.move[i])))
+     *         goto end;
+     */
 
     ret = true;
 end:

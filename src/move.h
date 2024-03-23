@@ -35,8 +35,8 @@
 typedef s32 move_t;
 
 /* special move_t values */
-#define MOVE_NONE (-1)
-#define MOVE_NULL (0)                             /* hack: from = to = A1 */
+#define MOVE_NONE ((move_t) -1)
+#define MOVE_NULL ((move_t) 0)                    /* hack: from = to = A1 */
 
 enum {
     M_OFF_FROM     = 0,

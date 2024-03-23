@@ -41,7 +41,10 @@ typedef struct __pos_s {
                         castle_rights_t castle;
                         u16 clock_50;
                         u16 plycount;             /* plies so far, start from 1 */
-                        piece_t captured;         /* only for move_undo */
+                        //piece_t captured;         /* only for move_undo */
+                        bitboard_t checkers;      /* opponent checkers */
+                        bitboard_t pinners;       /* opponent pinners */
+                        bitboard_t blockers;      /* pieces blocking pin */
         );
 
     piece_t board[BOARDSIZE];
@@ -49,10 +52,7 @@ typedef struct __pos_s {
     bitboard_t bb[2][PIECE_TYPE_MAX];             /* bb[0][PAWN], bb[1][ALL_PIECES] */
     //bitboard_t controlled[2];                     /* unsure */
     square_t king[2];                             /* dup with bb, faster retrieval */
-    bitboard_t checkers;                          /* opponent checkers */
-    bitboard_t pinners;                           /* opponent pinners */
-    bitboard_t blockers;                          /* pieces blocking pin */
-    movelist_t moves;
+    //movelist_t moves;
 } pos_t;
 
 typedef struct state_s state_t;

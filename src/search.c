@@ -1,6 +1,6 @@
 /* search.c - search good moves.
  *
- * Copyright (C) 2023 Bruno Raoult ("br")
+ * Copyright (C) 2023-2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
  * Some rights reserved. See COPYING.
  *
@@ -11,14 +11,62 @@
  *
  */
 
+#include <stdio.h>
 
-#include <br.h>
-#include <list.h>
-#include "debug.h"
+#include "brlib.h"
 
-#include "move.h"
-#include "eval.h"
-#include "search.h"
+#include "position.h"
+#include "move-gen.h"
+#include "move-do.h"
+
+//#include "move.h"
+//#include "eval.h"
+//#include "search.h"
+
+/**
+ * perft() - Perform perft on position
+ * @pos:   &position to search
+ * @depth: Wanted depth.
+ * @ply:   Depth level where perft is consolidated.
+ *
+ * Print perftCalculate the negamax value of @pos. This is an extensive search, with
+ * absolutely no cutoff.
+ *
+ * @return: The @pos negamax evaluation.
+ */
+u64 perft(pos_t *pos, int depth, int ply)
+{
+    int movetmp = 0, nodes = 0, subnodes, nmove = 0;
+    movelist_t pseudo = { .nmoves = 0 }, legal = { .nmoves = 0 };
+    move_t move;
+
+    if (depth == 0)
+        return 1;
+    pos->checkers = pos_checkers(pos, pos->turn);
+    pos->pinners = pos_king_pinners(pos, pos->turn);
+    pos->blockers = pos_king_blockers(pos, pos->turn, pos->pinners);
+
+    pos_gen_pseudomoves(pos, &pseudo);
+    pos_all_legal(pos, &pseudo, &legal);
+
+    //for (nmove = 0; nmove < legal.nmoves; ++nmove ) {
+    while ((move =  pos_next_legal(pos, &pseudo, &movetmp)) != MOVE_NONE) {
+
+        state_t state;
+        move = legal.move[nmove];
+        move_do(pos, move, &state);
+        subnodes = perft(pos, depth - 1, ply + 1);
+        if (ply == 1) {
+            char movestr[8];
+            printf("%s: %d\n", move_str(movestr, move, 0), subnodes);
+        }
+        nodes += subnodes;
+        move_undo(pos, move, &state);
+    }
+    if (ply == 1)
+        printf("Total: %d\n", nodes);
+    return nodes;
+}
 
 /**
  * negamax() - search position negamax.
@@ -31,32 +79,34 @@
  *
  * @return: The @pos negamax evaluation.
  */
-eval_t negamax(pos_t *pos, int depth, int color)
-{
-    move_t *move;
-    pos_t *newpos;
-    eval_t best = EVAL_MIN, score;
-
-    pos->node_count++;
-    if (depth == 0) {
-        moves_gen_all_nomoves(pos);
-        score = eval(pos) * color;
-        return score;
-    }
-    moves_gen_all(pos);
-    list_for_each_entry(move, &pos->moves[pos->turn], list) {
-        newpos = move_do(pos, move);
-        score = -negamax(newpos, depth - 1, -color);
-        pos->node_count += newpos->node_count;
-        move->negamax = score;
-        if (score > best) {
-            best = score;
-            pos->bestmove = move;
-        }
-        move_undo(newpos, move);
-    }
-    return best;
-}
+/*
+ * eval_t negamax(pos_t *pos, int depth, int color)
+ * {
+ *     move_t *move;
+ *     pos_t *newpos;
+ *     eval_t best = EVAL_MIN, score;
+ *
+ *     pos->node_count++;
+ *     if (depth == 0) {
+ *         moves_gen_all_nomoves(pos);
+ *         score = eval(pos) * color;
+ *         return score;
+ *     }
+ *     moves_gen_all(pos);
+ *     list_for_each_entry(move, &pos->moves[pos->turn], list) {
+ *         newpos = move_do(pos, move);
+ *         score = -negamax(newpos, depth - 1, -color);
+ *         pos->node_count += newpos->node_count;
+ *         move->negamax = score;
+ *         if (score > best) {
+ *             best = score;
+ *             pos->bestmove = move;
+ *         }
+ *         move_undo(newpos, move);
+ *     }
+ *     return best;
+ * }
+ */
 
 
 /**
@@ -74,74 +124,76 @@ eval_t negamax(pos_t *pos, int depth, int color)
  *
  * @return: The @pos PVS evaluation.
  */
-eval_t pvs(pos_t *pos, int depth, int alpha, int beta, int color)
-{
-    move_t *move;
-    pos_t *newpos;
-    eval_t score = EVAL_INVALID;
-    bool firstchild = true;
-
-    pos->node_count++;
-
-    if (depth == 0) {
-        //return quiesce(p, alpha, beta);           /* leaf node */
-        moves_gen_all_nomoves(pos);
-        score = eval(pos) * color;
-        log_f(2, "Terminal: depth=%d ", depth);
-        log_f(2, "score=%d alpha=%d beta=%d\n", score, alpha, beta);
-        return score;
-    }
-
-    moves_gen_all(pos);
-    //moves_print(pos, M_PR_EVAL);
-    /* do the full search for first child */
-    //move = list_first_entry_or_null(&pos->moves[pos->turn], move_t, list);
-
-    list_for_each_entry(move, &pos->moves[pos->turn], list) {
-        newpos = move_do(pos, move);
-        log(2, "%.*s", 5 - depth, "                ");
-        if (firstchild) {                               /* first child */
-            score = -pvs(newpos, depth - 1, -beta, -alpha, -color);
-            log_f(2, "First child depth=%d move=", depth);
-            //move_print(0, move, 0);
-            log(2, "score=%d alpha=%d beta=%d\n", score, alpha, beta);
-            pos->bestmove = move;
-        } else {
-            /* search with a null window */
-            score = -pvs(newpos, depth - 1, -alpha - 1, -alpha, -color);
-            log_f(2, "Other child depth=%d move=", depth);
-            //move_print(0, move, 0);
-            log_f(2, "score=%d alpha=%d beta=%d ", score, alpha, beta);
-            /* for fail-soft:  if (score > alpha && score < beta) */
-            if (score > alpha) {
-                /* if failed high, do a full re-search */
-                log_f(2, "doing full search.");
-                score = -pvs(newpos, depth - 1, -beta, -alpha, -color);
-            }
-            log(2, "\n");
-        }
-        pos->node_count += newpos->node_count;
-        move_undo(newpos, move);
-        if (score >= beta) {                      /* fail-hard hard beta cut-off */
-            log(2, "%.*s", 5 - depth, "                ");
-            log_f(2, "depth=%d score=%d alpha=%d beta=%d beta cut-off.\n",
-                  depth, score, alpha, beta);
-            return beta;
-        }
-        if (score > alpha) {
-            log(2, "%.*s", 5 - depth, "                ");
-            log_f(2, "depth=%d setting new alpha from %d to %d\n",
-                  depth, alpha, score);
-            alpha = score;
-            pos->bestmove = move;
-        }
-        move->pos = NULL;
-        move->negamax = score;
-        firstchild = false;
-    }
-
-    return alpha;
-}
+/*
+ * eval_t pvs(pos_t *pos, int depth, int alpha, int beta, int color)
+ * {
+ *     move_t *move;
+ *     pos_t *newpos;
+ *     eval_t score = EVAL_INVALID;
+ *     bool firstchild = true;
+ *
+ *     pos->node_count++;
+ *
+ *     if (depth == 0) {
+ *         //return quiesce(p, alpha, beta);           /\* leaf node *\/
+ *         moves_gen_all_nomoves(pos);
+ *         score = eval(pos) * color;
+ *         log_f(2, "Terminal: depth=%d ", depth);
+ *         log_f(2, "score=%d alpha=%d beta=%d\n", score, alpha, beta);
+ *         return score;
+ *     }
+ *
+ *     moves_gen_all(pos);
+ *     //moves_print(pos, M_PR_EVAL);
+ *     /\* do the full search for first child *\/
+ *     //move = list_first_entry_or_null(&pos->moves[pos->turn], move_t, list);
+ *
+ *     list_for_each_entry(move, &pos->moves[pos->turn], list) {
+ *         newpos = move_do(pos, move);
+ *         log(2, "%.*s", 5 - depth, "                ");
+ *         if (firstchild) {                               /\* first child *\/
+ *             score = -pvs(newpos, depth - 1, -beta, -alpha, -color);
+ *             log_f(2, "First child depth=%d move=", depth);
+ *             //move_print(0, move, 0);
+ *             log(2, "score=%d alpha=%d beta=%d\n", score, alpha, beta);
+ *             pos->bestmove = move;
+ *         } else {
+ *             /\* search with a null window *\/
+ *             score = -pvs(newpos, depth - 1, -alpha - 1, -alpha, -color);
+ *             log_f(2, "Other child depth=%d move=", depth);
+ *             //move_print(0, move, 0);
+ *             log_f(2, "score=%d alpha=%d beta=%d ", score, alpha, beta);
+ *             /\* for fail-soft:  if (score > alpha && score < beta) *\/
+ *             if (score > alpha) {
+ *                 /\* if failed high, do a full re-search *\/
+ *                 log_f(2, "doing full search.");
+ *                 score = -pvs(newpos, depth - 1, -beta, -alpha, -color);
+ *             }
+ *             log(2, "\n");
+ *         }
+ *         pos->node_count += newpos->node_count;
+ *         move_undo(newpos, move);
+ *         if (score >= beta) {                      /\* fail-hard hard beta cut-off *\/
+ *             log(2, "%.*s", 5 - depth, "                ");
+ *             log_f(2, "depth=%d score=%d alpha=%d beta=%d beta cut-off.\n",
+ *                   depth, score, alpha, beta);
+ *             return beta;
+ *         }
+ *         if (score > alpha) {
+ *             log(2, "%.*s", 5 - depth, "                ");
+ *             log_f(2, "depth=%d setting new alpha from %d to %d\n",
+ *                   depth, alpha, score);
+ *             alpha = score;
+ *             pos->bestmove = move;
+ *         }
+ *         move->pos = NULL;
+ *         move->negamax = score;
+ *         firstchild = false;
+ *     }
+ *
+ *     return alpha;
+ * }
+ */
 
 /*
  * int negascout (pos_t *pos, int depth, int alpha, int beta )

@@ -76,7 +76,7 @@ static FILE *open_stockfish()
     return out_desc;
 }
 
-static void send_stockfish_fen(FILE *desc, pos_t *pos, char *fen)
+static void send_stockfish_fen(FILE *desc, pos_t *pos, movelist_t *movelist, char *fen)
 {
     char *buf = NULL;
     int count, __unused mycount = 0, fishcount;
@@ -85,8 +85,9 @@ static void send_stockfish_fen(FILE *desc, pos_t *pos, char *fen)
 
     pos_clear(pos);
 
-    move_t *moves = pos->moves.move;
-    int nmoves = pos->moves.nmoves;
+    move_t *moves = movelist->move;
+    int *nmoves = &movelist->nmoves;
+    *nmoves = 0;
     //char nodescount[] = "Nodes searched";
     //printf("nmoves = %d\n", nmoves);
     fflush(stdout);
@@ -109,7 +110,7 @@ static void send_stockfish_fen(FILE *desc, pos_t *pos, char *fen)
             //       buf[0], buf[1], buf[2], buf[3],
             //       sq_to_string(from), sq_to_string(to),
             //       count);
-            moves[nmoves++] = move_make(from, to);
+            moves[(*nmoves)++] = move_make(from, to);
 
         } else if (sscanf(buf, "%*5s: %d", &count) == 1) {
             square_t from = sq_from_string(buf);
@@ -120,10 +121,10 @@ static void send_stockfish_fen(FILE *desc, pos_t *pos, char *fen)
             //       buf[0], buf[1], buf[2], buf[3],
             //       sq_to_string(from), sq_to_string(to),
             //       count);
-            moves[nmoves++] = move_make_promote(from, to, promoted);
+            moves[(*nmoves)++] = move_make_promote(from, to, promoted);
         }
     }
-    pos->moves.nmoves = nmoves;
+    //pos->moves.nmoves = nmoves;
     // printf("fishcount=%d mycount=%d\n", fishcount, mycount);
     free(buf);
 }
@@ -215,7 +216,7 @@ int main(int __unused ac, __unused char**av)
     FILE *outfd;
     char *fen;
     pos_t *pos, *fishpos = pos_new();
-    movelist_t legal;
+    movelist_t pseudo, legal, fishmoves;
     //bitboard_t wrong = 0x5088000040, tmp, loop;
     //bit_for_each64(loop, tmp, )
     //printf("fishpos 1=%p\n", fishpos);
@@ -235,9 +236,9 @@ int main(int __unused ac, __unused char**av)
             continue;
         }
         /* print movelists */
-        send_stockfish_fen(outfd, fishpos, fen);
-        pos_gen_pseudomoves(pos);
-        pos_all_legal(pos, &legal);
+        send_stockfish_fen(outfd, fishpos, &fishmoves, fen);
+        pos_gen_pseudomoves(pos, &pseudo);
+        pos_all_legal(pos, &pseudo, &legal);
         //printf("Fu ");
         //moves_print(fishpos, 0);
         //fflush(stdout);
@@ -246,7 +247,7 @@ int main(int __unused ac, __unused char**av)
         //fflush(stdout);
 
         /* sort and print movelists */
-        move_sort_by_sq(&fishpos->moves);
+        move_sort_by_sq(&fishmoves);
         move_sort_by_sq(&legal);
         // printf("\nFs ");
         // moves_print(fishpos, 0);
@@ -256,10 +257,10 @@ int main(int __unused ac, __unused char**av)
         // fflush(stdout);
 
         /* compare movelists */
-        if (!movelists_equal(&fishpos->moves, &legal)) {
+        if (!movelists_equal(&fishmoves, &legal)) {
             pos_print(pos);
             printf("F: ");
-            moves_print(&fishpos->moves, 0);
+            moves_print(&fishmoves, 0);
             printf("M: ");
             moves_print(&legal, 0);
         } else {

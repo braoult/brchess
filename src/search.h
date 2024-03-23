@@ -1,6 +1,6 @@
 /* search.h - search for perfect move.
  *
- * Copyright (C) 2021 Bruno Raoult ("br")
+ * Copyright (C) 2021-2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
  * Some rights reserved. See COPYING.
  *
@@ -16,7 +16,9 @@
 
 #include "position.h"
 
-eval_t negamax(pos_t *pos, int depth, int color);
-eval_t pvs(pos_t *pos, int depth, int alpha, int beta, int color);
+//eval_t negamax(pos_t *pos, int depth, int color);
+//eval_t pvs(pos_t *pos, int depth, int alpha, int beta, int color);
+
+u64 perft(pos_t *pos, int depth, int ply);
 
 #endif  /* SEARCH_H */
