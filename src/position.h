@@ -41,7 +41,7 @@ typedef struct __pos_s {
                         castle_rights_t castle;
                         u16 clock_50;
                         u16 plycount;             /* plies so far, start from 1 */
-                        //piece_t captured;         /* only for move_undo */
+                        piece_t captured;         /* only for move_undo */
                         bitboard_t checkers;      /* opponent checkers */
                         bitboard_t pinners;       /* opponent pinners */
                         bitboard_t blockers;      /* pieces blocking pin */
