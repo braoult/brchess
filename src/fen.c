@@ -1,6 +1,6 @@
-/* fen.c - fen notation.
+/* fen.c - fen parsing/generation/test.
  *
- * Copyright (C) 2021 Bruno Raoult ("br")
+ * Copyright (C) 2021-2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
  * Some rights reserved. See COPYING.
  *
@@ -18,158 +18,337 @@
 #include <ctype.h>
 
 #include <debug.h>
+#include <bug.h>
 
 #include "chessdefs.h"
+#include "util.h"
+//#include "piece.h"
+//#include "bitboard.h"
 #include "position.h"
-#include "board.h"
 #include "fen.h"
-#include "piece.h"
 
-/* Starting Position :
- * rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
- * After 1.e4 :
- * rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1
- * After 1... c5 :
- * rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2
- * After 2. Nf3:
- * rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2
- *
- * 1 : White uppercase
+/* FEN description:
+ * 1 : pieces on board (no space allowed):
+ *   - rank 8 first, '/' between ranks
+ *   - piece is usual piece notation(PNBRQK), black lowercase.
+ *   - empty: number of consecutive empty squares (digit)
  * 2 : next move (w or b)
  * 3 : Castling capabilities: "-" if none, KQ/kq if white/black can castle
  *     on K or Q side
- * 4 : en-passant: if pawn just moved 2 squares, indicate target square (e.g.
- *     for e2-e4 this field is e3)
+ * 4 : en-passant: "-" if none. If pawn just moved 2 squares, indicate target
+ *     en-passant square (e.g. for e2-e4 this field is e3)
  * 5 : half moves since last capture or pawn advance (for 50 moves rule)
  * 6 : full moves, starts at 1, increments after black move
  *
+ * Examples:
+ *
+ * starting position:
+ * rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+ * after 1.e4 e6 2.e5 d5
+ * rnbqkbnr/ppp2ppp/4p3/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3
+ * 3.Nc3 Nc6 4.Rb1 Rb8 5.Nf3 h5 6.Be2
+ * 1rbqkbnr/ppp2pp1/2n1p3/3pP2p/8/2N2N2/PPPPBPPP/1RBQK2R b Kk - 1 6
+ * 6...Be7
+ * 1rbqk1nr/ppp1bpp1/2n1p3/3pP2p/8/2N2N2/PPPPBPPP/1RBQK2R w Kk - 2 7
+ * 7.Nxd5 h4 8.g4
+ * 1rbqk1nr/ppp1bpp1/2n1p3/3NP3/6Pp/5N2/PPPPBP1P/1RBQK2R b Kk g3 0 8
  */
 
-// warning, we expect a valid fen input
-pos_t *fen2pos(pos_t *pos, char *fen)
+/*  chess startup position FEN */
+const char *startfen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+static const char *castle_str = "KQkq";
+
+#define SKIP_BLANK(p) for(;isspace(*(p)); (p)++)
+
+/**
+ * fen_check(pos_t *pos) - test (and try to fix) fen-generated position.
+ * @pos: position
+ *
+ * Test and fix the following:
+ * - inconsistent castle flags (if K & R are not in correct position)
+ * - inconsistent en-passant square (turn, bad pawn position)
+ *
+ * pos_check() is also called, leading to fatal errors if something is wrong.
+ *
+ * @return: 0 if OK, 1 if OK after fix, -1 if fatal issue.
+ */
+static int fen_check(pos_t *pos)
 {
-    char *p = fen;
-    short rank, file, skip, color, bbpiece;
-    piece_t piece;
-    board_t *board = pos->board;
-#   define SKIP_BLANK(p) for(;*(p) == ' '; (p)++)
+    char *colstr[2] = { "white", "black"};
+    int error = 0, warning = 0;
 
-    pos_clear(pos);
-    /* 1) get piece placement information
-     */
-    for (rank = 7, file = 0; *p && *p != ' '; ++p) {
-        color = isupper(*p)? WHITE: BLACK;
-        char cp = toupper(*p);
-        switch (cp) {
-            case CHAR_PAWN:
-                bbpiece = BB_PAWN;
-                piece = PAWN;
-                goto set_square;
-            case CHAR_KNIGHT:
-                bbpiece = BB_KNIGHT;
-                piece = KNIGHT;
-                goto set_square;
-            case CHAR_BISHOP:
-                bbpiece = BB_BISHOP;
-                piece = BISHOP;
-                goto set_square;
-            case CHAR_ROOK:
-                bbpiece = BB_ROOK;
-                piece = ROOK;
-                goto set_square;
-            case CHAR_QUEEN:
-                bbpiece = BB_QUEEN;
-                piece = QUEEN;
-                goto set_square;
-            case CHAR_KING:
-                bbpiece = BB_KING;
-                piece = KING;
-                //pos->bb[color][BB_KING] = BB(file, rank);
-                //goto set_square;
-            set_square:
-#               ifdef DEBUG_FEN
-                log_i(5, "f=%d r=%d *p=%c piece=%c color=%d\n",
-                      file, rank, *p, cp, color);
-#               endif
-                pos->bb[color][bbpiece] |= BB(file, rank);
-                pos->occupied[color] |= BB(file, rank);
-                SET_COLOR(piece, color);
-                board[SQ88(file, rank)].piece = piece;
-                board[SQ88(file, rank)].s_piece =
-                    piece_add(pos, piece, SQ88(file, rank));
-                file++;
-                break;
-            case '/':
-                rank--;
-                file = 0;
-                break;
-            default:
-                skip = cp - '0';
-                while (skip--) {
-                    board[SQ88(file++, rank)].piece = EMPTY;
-                }
+    /* en passant, depends on who plays next */
+    if (pos->en_passant != SQUARE_NONE) {
+        rank_t eprank = sq_rank(pos->en_passant);
+        file_t epfile = sq_file(pos->en_passant);
+        rank_t rank5 = sq_rel_rank(RANK_5, pos->turn);
+        rank_t rank6 = sq_rel_rank(RANK_6, pos->turn);
+        rank_t rank7 = sq_rel_rank(RANK_7, pos->turn);
+        piece_t pawn = pos->turn == WHITE? B_PAWN: W_PAWN;
+        if (warn(eprank != rank6 ||
+                 pos->board[sq_make(epfile, rank5)] != pawn ||
+                 pos->board[sq_make(epfile, rank6)] != EMPTY ||
+                 pos->board[sq_make(epfile, rank7)] != EMPTY,
+                 "fen warn: wrong en-passant settings. (fixed)\n")) {
+#           ifdef DEBUG_FEN
+            printf("ep5=%o ep6=%o ep7=%o\n", sq_make(epfile, rank5),
+                   sq_make(epfile, rank6), sq_make(epfile, rank7));
+#           endif
+            warning++;
+            pos->en_passant = SQUARE_NONE;
         }
     }
-#   ifdef DEBUG_FEN
-    for (rank = 7; rank >= 0; --rank) {
-        for (file = 0; file < 8; ++file) {
-            log(5, "%02x ", board[SQ88(file, rank)].piece);
+
+    for (int color = WHITE; color <= BLACK; ++color) {
+        rank_t rank1 = color == WHITE? RANK_1: RANK_8;
+
+        /* castling */
+        /* where K and R should be for valid castle flag */
+        bitboard_t k    = bb_sq[sq_make(FILE_E, rank1)];
+        bitboard_t r_k  = bb_sq[sq_make(FILE_H, rank1)];
+        bitboard_t r_q  = bb_sq[sq_make(FILE_A, rank1)];
+
+       /* where they are */
+        bitboard_t kings = pos->bb[color][KING];
+        bitboard_t rooks = pos->bb[color][ROOK];
+        castle_rights_t castle_k = color == WHITE? CASTLE_WK: CASTLE_BK;
+        castle_rights_t castle_q = color == WHITE? CASTLE_WQ: CASTLE_BQ;
+        if (pos->castle & castle_k) {
+            if (warn(!(k & kings && r_k & rooks),
+                     "fen warn: wrong %s short castling K or R position (fixed)\n",
+                     colstr[color])) {
+                warning++;
+                pos->castle &= ~castle_k;
+            }
         }
-        log(5, "\n");
-    }
-#   endif
-
-    /* 2) next move color
-     */
-    SKIP_BLANK(p);
-    SET_COLOR(pos->turn, *p == 'w' ? WHITE : BLACK);
-    p++;
-
-    /* 3) castle status
-     */
-    SKIP_BLANK(p);
-    pos->castle = 0;
-    if (*p != '-') {
-        for (; *p && *p != ' '; ++p) {
-            switch (*p) {
-                case 'K':
-                    pos->castle |= CASTLE_WK;
-                    break;
-                case 'k':
-                    pos->castle |= CASTLE_BK;
-                    break;
-                case 'Q':
-                    pos->castle |= CASTLE_WQ;
-                    break;
-                case 'q':
-                    pos->castle |= CASTLE_BQ;
-                    break;
+        if (pos->castle & castle_q) {
+            if (warn(!(k & kings && r_q & rooks),
+                     "fen warn: wrong %s long castling K or R position (fixed)\n",
+                     colstr[color])) {
+                warning++;
+                pos->castle &= ~castle_q;
             }
         }
     }
-    p++;
+    if (!(error = pos_check(pos, 0))) {
+        /* TODO: Should it really be here ? */
+        pos->checkers = pos_checkers(pos, pos->turn);
+        pos->pinners = pos_king_pinners(pos, pos->turn);
+        pos->blockers = pos_king_blockers(pos, pos->turn, pos->pinners);
+    }
+    return error ? -1: warning;
+}
+
+/**
+ * startpos - create a game start position
+ * @pos: a position pointer or NULL
+ *
+ * See @fen2pos function.
+ *
+ * @return: the pos position.
+ */
+pos_t *startpos(pos_t *pos)
+{
+    return fen2pos(pos, startfen);
+}
+
+/**
+ * fen2pos - make a position from a fen string
+ * @pos: a position pointer or NULL
+ * @fen: a valid fen string
+ *
+ * If @pos is NULL, a position will be allocated with @pos_new(),
+ * that should be freed by caller.
+ *
+ * @return: the pos position, or NULL if error.
+ */
+pos_t *fen2pos(pos_t *pos, const char *fen)
+{
+    const char *cur = fen;
+    char *p;
+    short rank, file, tmp;
+    piece_t piece;
+    int consumed, err_line = 0, err_pos, err_char;
+    pos_t tmppos;
+
+    pos_clear(&tmppos);
+    /* 1) get piece placement information
+     */
+    for (rank = 7, file = 0; *cur && !isspace(*cur); ++cur) {
+        if (*cur == '/') {                        /* next rank */
+            rank--;
+            file = 0;
+            continue;
+        }
+        if (isdigit(*cur)) {                      /* empty square(s) */
+            file += *cur - '0';
+            continue;
+        }
+        if ((piece = piece_from_fen(*cur)) != EMPTY) {
+#           ifdef DEBUG_FEN
+            printf("f=%d r=%d *p=%c piece=%#04x t=%d c=%d\n", file, rank, *cur,
+                  piece, PIECE(piece), COLOR(piece));
+#           endif
+            pos_set_sq(&tmppos, sq_make(file, rank), piece);
+            file++;
+        } else {                                  /* error */
+            err_line = __LINE__, err_char = *cur, err_pos = cur - fen;
+            goto end;
+        }
+    }
+    SKIP_BLANK(cur);
+
+    /* 2) next turn color
+     */
+    tmppos.turn = *cur++ == 'w' ? WHITE : BLACK;
+    SKIP_BLANK(cur);
+
+    /* 3) castle rights
+     */
+    if (*cur == '-') {
+        cur++;
+    } else {
+        for (; *cur && !isspace(*cur); ++cur) {
+            if ((p = strchr(castle_str, *cur))) { /* valid castle letter */
+                tmppos.castle |= 1 << (p - castle_str);
+            } else {
+                err_line = __LINE__, err_char = *cur, err_pos = cur - fen;
+                goto end;
+            }
+        }
+    }
+    SKIP_BLANK(cur);
 
     /* 4) en passant
      */
-    SKIP_BLANK(p);
-    pos->en_passant = 0;
-    if (*p != '-') {
-        //SET_F(pos->en_passant, C2FILE(*p++));
-        //SET_R(pos->en_passant, C2RANK(*p++));
-        pos->en_passant = SQ88(C2FILE(*p), C2RANK(*(p+1)));
-        pos += 2;
+    if (*cur == '-') {
+        cur++;
     } else {
-        p++;
+        tmppos.en_passant = sq_from_string(cur);
+        cur += 2;
+    }
+    SKIP_BLANK(cur);
+
+    /* 5) half moves since last capture or pawn move (50 moves rule)
+     */
+    tmppos.clock_50 = 0;
+    tmppos.plycount = 1;
+    if (sscanf(cur, "%hd%n", &tmp, &consumed) != 1)
+        goto end;                                 /* early end, ignore w/o err */
+
+    tmppos.clock_50 = tmp;
+    cur += consumed;
+    SKIP_BLANK(cur);
+
+    /* 6) current full move number, starting with 1
+     */
+    if (sscanf(cur, "%hd", &tmp) != 1)
+        goto end;
+    if (tmp <= 0)                                 /* fix faulty numbers*/
+        tmp = 1;
+    tmp = 2 * (tmp - 1) + (tmppos.turn == BLACK); /* plies, +1 if black turn */
+    tmppos.plycount = tmp;
+
+end:
+    if (warn(err_line, "FEN error line %d: charpos=%d char=%#x(%c)\n",
+             err_line, err_pos, err_char, err_char)) {
+        return NULL;
+    }
+    if (fen_check(&tmppos) < 0)
+        return NULL;
+    if (!pos)
+        pos = pos_dup(&tmppos);
+    //puts("prout 1");
+    //pos_print_raw(&tmppos, 1);
+    //puts("prout 2");
+#   ifdef DEBUG_FEN
+    pos_print_raw(&tmppos, 1);
+#   endif
+
+    return pos;
+}
+
+/**
+ * pos2fen - make a FEN string from a position.
+ * @pos: a position pointer
+ * @fen: destination FEN char*, or NULL
+ *
+ * If @fen is NULL, a 92 bytes memory will be allocated with malloc(1),
+ * that should be freed by caller.
+ *
+ * Note: If @fen is given, no check is done on its length, but to
+ * be on secure side, it should be at least 90 bytes. See:
+ * https://chess.stackexchange.com/questions/30004/longest-possible-fen
+ * For convenience, use FENSTRLEN.
+ *
+ * @return: the pos position, or NULL if error.
+ */
+char *pos2fen(const pos_t *pos, char *fen)
+{
+    int cur = 0;
+
+    if (!fen)
+        fen = safe_malloc(92);
+
+    /*  1) position
+     */
+    for (rank_t r = RANK_8; r >= RANK_1; --r) {
+        for (file_t f = FILE_A; f <= FILE_H;) {
+            square_t sq = sq_make(f, r);
+            piece_t piece = pos->board[sq];
+#           ifdef DEBUG_FEN
+            printf("r=%d f=%d p=%d pos=%d\n", r, f, piece, cur);
+#           endif
+            if (piece == EMPTY) {
+                int len = 0;
+                for (; f <= FILE_H && pos->board[sq_make(f, r)] == EMPTY; f++)
+                    len++;
+#               ifdef DEBUG_FEN
+                printf("empty=%d char=%c\n", len, '0' + len);
+#               endif
+                fen[cur++] = '0' + len;
+            } else {
+                fen[cur++] = *piece_to_fen(piece);
+#               ifdef DEBUG_FEN
+                printf("f1=%d r=%d c=%c t=%d c=%d \n", f, r,
+                       *(piece_to_fen(piece)), PIECE(piece), COLOR(piece));
+#               endif
+                f++;
+            }
+        }
+        fen[cur++] = r == RANK_1? ' ': '/';
     }
 
-    /* 5) half moves since last capture or pawn move and
-     * 6) current move number
+    /* 2) next turn color
      */
-    SKIP_BLANK(p);
-    //log_i(5, "pos=%d\n", (int)(p-fen));
-    sscanf(p, "%hd %hd", &pos->clock_50, &pos->curmove);
-#   ifdef DEBUG_FEN
-    log_i(5, "50 rule=%d current move=%d\n", pos->clock_50, pos->curmove);
-#   endif
-    return pos;
+    fen[cur++] = pos->turn == WHITE? 'w': 'b';
+    fen[cur++] = ' ';
+
+    /*  3) castle rights
+     */
+    if (pos->castle == 0) {
+        fen[cur++] = '-';
+    } else {
+        for (int i = 0; i < 4; ++i)
+            if (pos->castle & mask(i))
+                fen[cur++] = castle_str[i];
+    }
+    fen[cur++] = ' ';
+
+    /* 4) en passant
+     */
+    if (pos->en_passant == SQUARE_NONE) {
+        fen[cur++] = '-';
+    } else {
+        fen[cur++] = FILE2C(sq_file(pos->en_passant));
+        fen[cur++] = RANK2C(sq_rank(pos->en_passant));
+    }
+    fen[cur++] = ' ';
+
+    /* 5) moves since last capture or pawn move (50 moves rule)
+     * 6) current full move number, starting with 1
+     */
+    sprintf(fen+cur, "%d %d", pos->clock_50,
+            1 + (pos->plycount - (pos->turn == BLACK)) / 2);
+    return fen;
 }

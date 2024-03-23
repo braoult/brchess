@@ -1,6 +1,6 @@
 /* piece.c - piece list management.
  *
- * Copyright (C) 2021 Bruno Raoult ("br")
+ * Copyright (C) 2021-2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
  * Some rights reserved. See COPYING.
  *
@@ -13,106 +13,83 @@
 
 #include <malloc.h>
 #include <ctype.h>
+#include <string.h>
+#include <assert.h>
 
-#include <debug.h>
-#include <pool.h>
-#include <list.h>
+#include "bug.h"
 
 #include "chessdefs.h"
 #include "piece.h"
-#include "board.h"
-#include "bitboard.h"
-#include "position.h"
 
-static pool_t *pieces_pool;
-
-struct piece_details piece_details[] = {
-    [E_EMPTY]  = { ' ', ' ', " ", " ", "",       0 },
-    [E_PAWN]   = { 'P', 'p', "♙", "♟", "Pawn",   PAWN_VALUE },
-    [E_KNIGHT] = { 'N', 'n', "♘", "♞", "Knight", KNIGHT_VALUE },
-    [E_BISHOP] = { 'B', 'b', "♗", "♝", "Bishop", BISHOP_VALUE },
-    [E_ROOK]   = { 'R', 'r', "♖", "♜", "Rook",   ROOK_VALUE },
-    [E_QUEEN]  = { 'Q', 'q', "♕", "♛", "Queen",  QUEEN_VALUE },
-    [E_KING]   = { 'K', 'k', "♔", "♚", "King",   KING_VALUE }
+/**
+ * piece_details
+ */
+const struct piece_details piece_details[PIECE_MAX] = {
+    /*             cap  low  fen  sym  name      values */
+    [EMPTY]    = { "",  "",  "",  "",  "",       0, 0, 0 },
+    [W_PAWN]   = { "",  "",  "P", "♙", "Pawn",   P_VAL_OPN, P_VAL_MID, P_VAL_END },
+    [W_KNIGHT] = { "N", "n", "N", "♘", "Knight", N_VAL_OPN, N_VAL_MID, N_VAL_END },
+    [W_BISHOP] = { "B", "b", "B", "♗", "Bishop", B_VAL_OPN, B_VAL_MID, B_VAL_END },
+    [W_ROOK]   = { "R", "r", "R", "♖", "Rook",   R_VAL_OPN, R_VAL_MID, R_VAL_END },
+    [W_QUEEN]  = { "Q", "q", "Q", "♕", "Queen",  Q_VAL_OPN, Q_VAL_MID, Q_VAL_END },
+    [W_KING]   = { "K", "k", "K", "♔", "King",   K_VAL_OPN, K_VAL_MID, K_VAL_END },
+    [7]        = { "",  "",  "",  "",  "",       0, 0, 0 },
+    [8]        = { "",  "",  "",  "",  "",       0, 0, 0 },
+    [B_PAWN]   = { "",  "",  "p", "♟", "Pawn",   P_VAL_OPN, P_VAL_MID, P_VAL_END },
+    [B_KNIGHT] = { "N", "n", "n", "♞", "Knight", P_VAL_OPN, N_VAL_MID, N_VAL_END },
+    [B_BISHOP] = { "B", "b", "b", "♝", "Bishop", P_VAL_OPN, B_VAL_MID, B_VAL_END },
+    [B_ROOK]   = { "R", "r", "r", "♜", "Rook",   P_VAL_OPN, R_VAL_MID, R_VAL_END },
+    [B_QUEEN]  = { "Q", "q", "q", "♛", "Queen",  P_VAL_OPN, Q_VAL_MID, Q_VAL_END },
+    [B_KING]   = { "K", "k", "k", "♚", "King",   P_VAL_OPN, K_VAL_MID, K_VAL_END },
 };
 
-void piece_list_print(struct list_head *list)
+const char pieces_str[6+6+1] = "PNBRQKpnbrqk";
+
+bool piece_ok(piece_t p)
 {
-    struct list_head *p_cur, *tmp;
-    piece_list_t *piece;
-
-    list_for_each_safe(p_cur, tmp, list) {
-        piece = list_entry(p_cur, piece_list_t, list);
-
-        printf("%s%c%c ", P_SYM(piece->piece),
-               FILE2C(F88(piece->square)),
-               RANK2C(R88(piece->square)));
-    }
-    printf("\n");
+    piece_type_t pt = PIECE(p);
+    return !(p & ~(MASK_COLOR | MASK_PIECE)) && pt && (pt <= KING);
 }
 
-pool_t *piece_pool_init()
+char *piece_to_cap(piece_t p)
 {
-    if (!pieces_pool)
-        pieces_pool = pool_create("pieces", 128, sizeof(piece_list_t));
-    return pieces_pool;
+    return piece_details[p].cap;
 }
 
-void piece_pool_stats()
+char *piece_to_char(piece_t p)
 {
-    if (pieces_pool)
-        pool_stats(pieces_pool);
+    return piece_details[p].fen;
 }
 
-piece_list_t *piece_add(pos_t *pos, piece_t piece, square_t square)
+char *piece_to_low(piece_t p)
 {
-    piece_list_t *new;
-    short color = COLOR(piece);
-
-#   ifdef DEBUG_PIECE
-    log_f(3, "piece=%02x square=%02x\n", piece, square);
-    log_f(5, "Adding %s %s on %c%c\n", color? "Black": "White",
-          P_NAME(piece), FILE2C(F88(square)), RANK2C(R88(square)));
-#   endif
-    if ((new = pool_get(pieces_pool))) {
-        /* first piece is always king */
-        if (PIECE(piece) == KING)
-            list_add(&new->list, &pos->pieces[color]);
-        else
-            list_add_tail(&new->list, &pos->pieces[color]);
-        new->piece = piece;
-        new->square = square;
-        new->castle = 0;
-        new-> value = piece_details[PIECE(piece)].value;
-    }
-
-    return new;
+    return piece_details[p].low;
 }
 
-void piece_del(struct list_head *ptr)
+char *piece_to_sym(piece_t p)
 {
-    piece_list_t *piece = list_entry(ptr, piece_list_t, list);
-#   ifdef DEBUG_PIECE
-    log_f(3, "piece=%02x square=%02x\n", piece->piece, piece->square);
-#   endif
-    list_del(ptr);
-    pool_add(pieces_pool, piece);
-    return;
+    return piece_details[p].sym;
 }
 
-int pieces_del(pos_t *pos, short color)
+char *piece_to_name(piece_t p)
 {
-    struct list_head *p_cur, *tmp, *head;
-    int count = 0;
+    return piece_details[p].name;
+}
 
-    head = &pos->pieces[color];
+piece_type_t piece_t_from_char(char c)
+{
+    char *p = strchr(pieces_str, c);
+    return p? (p - pieces_str) % 6 + 1: NO_PIECE_TYPE;
+}
 
-    list_for_each_safe(p_cur, tmp, head) {
-        piece_del(p_cur);
-        count++;
-    }
-#   ifdef DEBUG_PIECE
-    log_f(3, "color=%d removed=%d\n", color, count);
-#   endif
-    return count;
+//piece_type_t piece_from_promotion(char c, color_t color)
+//{
+//    piece_type_t piece = piece_t_from_char(c);
+//    return piece? SET_COLOR()p? (p - pieces_str) % 6 + 1: NO_PIECE_TYPE;
+//}
+
+piece_t piece_from_char(char c)
+{
+    piece_type_t piece = piece_t_from_char(c);
+    return isupper(c)? SET_WHITE(piece): SET_BLACK(piece);
 }

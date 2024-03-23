@@ -1,6 +1,6 @@
-/* brchess.h - main loop.
+/* search.h - search for perfect move.
  *
- * Copyright (C) 2021-2024 Bruno Raoult ("br")
+ * Copyright (C) 2021 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
  * Some rights reserved. See COPYING.
  *
@@ -11,11 +11,12 @@
  *
  */
 
-#ifndef BRCHESS_H
-#define BRCHESS_H
+#ifndef SEARCH_H
+#define SEARCH_H
 
 #include "position.h"
 
-int brchess(pos_t *pos);
+eval_t negamax(pos_t *pos, int depth, int color);
+eval_t pvs(pos_t *pos, int depth, int alpha, int beta, int color);
 
-#endif  /* BRCHESS_H */
+#endif  /* SEARCH_H */

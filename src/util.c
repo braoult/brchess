@@ -1,6 +1,6 @@
-/* brchess.h - main loop.
+/* util.c - various util functions.
  *
- * Copyright (C) 2021-2024 Bruno Raoult ("br")
+ * Copyright (C) 2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
  * Some rights reserved. See COPYING.
  *
@@ -11,11 +11,8 @@
  *
  */
 
-#ifndef BRCHESS_H
-#define BRCHESS_H
+#include <stdio.h>
+#include <stdlib.h>
 
-#include "position.h"
-
-int brchess(pos_t *pos);
-
-#endif  /* BRCHESS_H */
+#include "util.h"
+#include "bitboard.h"

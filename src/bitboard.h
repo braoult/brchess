@@ -1,6 +1,6 @@
 /* bitboard.h - bitboard definitions.
  *
- * Copyright (C) 2021 Bruno Raoult ("br")
+ * Copyright (C) 2021-2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
  * Some rights reserved. See COPYING.
  *
@@ -11,60 +11,276 @@
  *
  */
 
-#ifndef BITBOARD_H
-#define BITBOARD_H
+#ifndef _BITBOARD_H
+#define _BITBOARD_H
 
-#include "br.h"
-#include "chessdefs.h"
-#include "piece.h"
+#include "brlib.h"
 #include "bitops.h"
 
-enum bb_square {
-    A1 = 1UL <<  0, B1 = 1UL <<  1, C1 = 1UL <<  2, D1 = 1UL <<  3,
-    E1 = 1UL <<  4, F1 = 1UL <<  5, G1 = 1UL <<  6, H1 = 1UL <<  7,
+#include "chessdefs.h"
+#include "board.h"
+#include "piece.h"
 
-    A2 = 1UL <<  8, B2 = 1UL <<  9, C2 = 1UL << 10, D2 = 1UL << 11,
-    E2 = 1UL << 12, F2 = 1UL << 13, G2 = 1UL << 14, H2 = 1UL << 15,
+/* mapping square -> bitboard */
+extern bitboard_t bb_sq[64];
+/* squares between sq1 and sq2, exclusing both */
+extern bitboard_t bb_between_excl[64][64];
+/* squares between sq1 and sq2, including sq2 */
+extern bitboard_t bb_between[64][64];
 
-    A3 = 1UL << 16, B3 = 1UL << 17, C3 = 1UL << 18, D3 = 1UL << 19,
-    E3 = 1UL << 20, F3 = 1UL << 21, G3 = 1UL << 22, H3 = 1UL << 23,
+/**
+ * bb_sqrank[64]: square to rank
+ * bb_sqfile[64]: square to file
+ * bb_sqdiag[64]: square to diagonal
+ * bb_sqanti[64]: square to antidiagonal
+ */
+extern bitboard_t bb_sqrank[64], bb_sqfile[64], bb_sqdiag[64], bb_sqanti[64];
 
-    A4 = 1UL << 24, B4 = 1UL << 25, C4 = 1UL << 26, D4 = 1UL << 27,
-    E4 = 1UL << 28, F4 = 1UL << 29, G4 = 1UL << 30, H4 = 1UL << 31,
+/* line (rank, file, diagonal or anti-diagonal) between two squares */
+extern bitboard_t bb_line[64][64];
 
-    A5 = 1UL << 32, B5 = 1UL << 33, C5 = 1UL << 34, D5 = 1UL << 35,
-    E5 = 1UL << 36, F5 = 1UL << 37, G5 = 1UL << 38, H5 = 1UL << 39,
+/* knight and king moves */
+extern bitboard_t bb_knight[64], bb_king[64];
 
-    A6 = 1UL << 40, B6 = 1UL << 41, C6 = 1UL << 42, D6 = 1UL << 43,
-    E6 = 1UL << 44, F6 = 1UL << 45, G6 = 1UL << 46, H6 = 1UL << 47,
 
-    A7 = 1UL << 48, B7 = 1UL << 49, C7 = 1UL << 50, D7 = 1UL << 51,
-    E7 = 1UL << 52, F7 = 1UL << 53, G7 = 1UL << 54, H7 = 1UL << 55,
+/* TODO (maybe C23?) when we can ensure an enum can be u64
+ *
+ * enum {
+ *     A1bb = mask(A1), A2bb = mask(A2), A3bb = mask(A3), A4bb = mask(A4),
+ *     A5bb = mask(A5), A6bb = mask(A6), A7bb = mask(A7), A8bb = mask(A8),
+ *     B1bb = mask(B1), B2bb = mask(B2), B3bb = mask(B3), B4bb = mask(B4),
+ *     B5bb = mask(B5), B6bb = mask(B6), B7bb = mask(B7), B8bb = mask(B8),
+ *     C1bb = mask(C1), C2bb = mask(C2), C3bb = mask(C3), C4bb = mask(C4),
+ *     C5bb = mask(C5), C6bb = mask(C6), C7bb = mask(C7), C8bb = mask(C8),
+ *     D1bb = mask(D1), D2bb = mask(D2), D3bb = mask(D3), D4bb = mask(D4),
+ *     D5bb = mask(D5), D6bb = mask(D6), D7bb = mask(D7), D8bb = mask(D8),
+ *     E1bb = mask(E1), E2bb = mask(E2), E3bb = mask(E3), E4bb = mask(E4),
+ *     E5bb = mask(E5), E6bb = mask(E6), E7bb = mask(E7), E8bb = mask(E8),
+ *     F1bb = mask(F1), F2bb = mask(F2), F3bb = mask(F3), F4bb = mask(F4),
+ *     F5bb = mask(F5), F6bb = mask(F6), F7bb = mask(F7), F8bb = mask(F8),
+ *     G1bb = mask(G1), G2bb = mask(G2), G3bb = mask(G3), G4bb = mask(G4),
+ *     G5bb = mask(G5), G6bb = mask(G6), G7bb = mask(G7), G8bb = mask(G8),
+ *     H1bb = mask(H1), H2bb = mask(H2), H3bb = mask(H3), H4bb = mask(H4),
+ *     H5bb = mask(H5), H6bb = mask(H6), H7bb = mask(H7), H8bb = mask(H8),
+ * };
+ *
+ * enum {
+ *     FILE_Abb = 0x0101010101010101ull, FILE_Bbb = 0x0202020202020202ull,
+ *     FILE_Cbb = 0x0404040404040404ull, FILE_Dbb = 0x0808080808080808ull,
+ *     FILE_Ebb = 0x1010101010101010ull, FILE_Fbb = 0x2020202020202020ull,
+ *     FILE_Gbb = 0x4040404040404040ull, FILE_Hbb = 0x8080808080808080ull,
+ *
+ *     RANK_1bb = 0x00000000000000ffull, RANK_2bb = 0x000000000000ff00ull,
+ *     RANK_3bb = 0x0000000000ff0000ull, RANK_4bb = 0x00000000ff000000ull,
+ *     RANK_5bb = 0x000000ff00000000ull, RANK_6bb = 0x0000ff0000000000ull,
+ *     RANK_7bb = 0x00ff000000000000ull, RANK_8bb = 0xff00000000000000ull
+ * };
+ */
 
-    A8 = 1UL << 56, B8 = 1UL << 57, C8 = 1UL << 58, D8 = 1UL << 59,
-    E8 = 1UL << 60, F8 = 1UL << 61, G8 = 1UL << 62, H8 = 1UL << 63,
-};
+/* generated with bash:
+ * R="ABCDEFGH"
+ * F="12345678"
+ * for i in {0..63}; do
+ *   printf "#define  %c%cbb %#018llxull\n" ${R:i/8:1} ${F:i%8:1} $((1 << i))
+ * done
+ */
+#define A1bb     0x0000000000000001ull
+#define A2bb     0x0000000000000002ull
+#define A3bb     0x0000000000000004ull
+#define A4bb     0x0000000000000008ull
+#define A5bb     0x0000000000000010ull
+#define A6bb     0x0000000000000020ull
+#define A7bb     0x0000000000000040ull
+#define A8bb     0x0000000000000080ull
+#define B1bb     0x0000000000000100ull
+#define B2bb     0x0000000000000200ull
+#define B3bb     0x0000000000000400ull
+#define B4bb     0x0000000000000800ull
+#define B5bb     0x0000000000001000ull
+#define B6bb     0x0000000000002000ull
+#define B7bb     0x0000000000004000ull
+#define B8bb     0x0000000000008000ull
+#define C1bb     0x0000000000010000ull
+#define C2bb     0x0000000000020000ull
+#define C3bb     0x0000000000040000ull
+#define C4bb     0x0000000000080000ull
+#define C5bb     0x0000000000100000ull
+#define C6bb     0x0000000000200000ull
+#define C7bb     0x0000000000400000ull
+#define C8bb     0x0000000000800000ull
+#define D1bb     0x0000000001000000ull
+#define D2bb     0x0000000002000000ull
+#define D3bb     0x0000000004000000ull
+#define D4bb     0x0000000008000000ull
+#define D5bb     0x0000000010000000ull
+#define D6bb     0x0000000020000000ull
+#define D7bb     0x0000000040000000ull
+#define D8bb     0x0000000080000000ull
+#define E1bb     0x0000000100000000ull
+#define E2bb     0x0000000200000000ull
+#define E3bb     0x0000000400000000ull
+#define E4bb     0x0000000800000000ull
+#define E5bb     0x0000001000000000ull
+#define E6bb     0x0000002000000000ull
+#define E7bb     0x0000004000000000ull
+#define E8bb     0x0000008000000000ull
+#define F1bb     0x0000010000000000ull
+#define F2bb     0x0000020000000000ull
+#define F3bb     0x0000040000000000ull
+#define F4bb     0x0000080000000000ull
+#define F5bb     0x0000100000000000ull
+#define F6bb     0x0000200000000000ull
+#define F7bb     0x0000400000000000ull
+#define F8bb     0x0000800000000000ull
+#define G1bb     0x0001000000000000ull
+#define G2bb     0x0002000000000000ull
+#define G3bb     0x0004000000000000ull
+#define G4bb     0x0008000000000000ull
+#define G5bb     0x0010000000000000ull
+#define G6bb     0x0020000000000000ull
+#define G7bb     0x0040000000000000ull
+#define G8bb     0x0080000000000000ull
+#define H1bb     0x0100000000000000ull
+#define H2bb     0x0200000000000000ull
+#define H3bb     0x0400000000000000ull
+#define H4bb     0x0800000000000000ull
+#define H5bb     0x1000000000000000ull
+#define H6bb     0x2000000000000000ull
+#define H7bb     0x4000000000000000ull
+#define H8bb     0x8000000000000000ull
 
-enum bb_files {
-    F_1 = A1 | A2 | A3 | A4 | A5 | A6 | A7 | A8,
-    F_2 = B1 | B2 | B3 | B4 | B5 | B6 | B7 | B8,
-    F_3 = C1 | C2 | C3 | C4 | C5 | C6 | C7 | C8,
-    F_4 = D1 | D2 | D3 | D4 | D5 | D6 | D7 | D8,
-    F_5 = E1 | E2 | E3 | E4 | E5 | E6 | E7 | E8,
-    F_6 = F1 | F2 | F3 | F4 | F5 | F6 | F7 | F8,
-    F_7 = G1 | G2 | G3 | G4 | G5 | G6 | G7 | G8,
-    F_8 = H1 | H2 | H3 | H4 | H5 | H6 | H7 | H8,
-};
+#define FILE_Abb 0x0101010101010101ull
+#define FILE_Bbb 0x0202020202020202ull
+#define FILE_Cbb 0x0404040404040404ull
+#define FILE_Dbb 0x0808080808080808ull
+#define FILE_Ebb 0x1010101010101010ull
+#define FILE_Fbb 0x2020202020202020ull
+#define FILE_Gbb 0x4040404040404040ull
+#define FILE_Hbb 0x8080808080808080ull
 
-enum bb_ranges {
-    R_1 = A1 | B1 | C1 | D1 | E1 | F1 | G1 | H1,
-    R_2 = A2 | B2 | C2 | D2 | E2 | F2 | G2 | H2,
-    R_3 = A3 | B3 | C3 | D3 | E3 | F3 | G3 | H3,
-    R_4 = A4 | B4 | C4 | D4 | E4 | F4 | G4 | H4,
-    R_5 = A5 | B5 | C5 | D5 | E5 | F5 | G5 | H5,
-    R_6 = A6 | B6 | C6 | D6 | E6 | F6 | G6 | H6,
-    R_7 = A7 | B7 | C7 | D7 | E7 | F7 | G7 | H7,
-    R_8 = A8 | B8 | C8 | D8 | E8 | F8 | G8 | H8,
-};
+#define RANK_1bb 0x00000000000000ffull
+#define RANK_2bb 0x000000000000ff00ull
+#define RANK_3bb 0x0000000000ff0000ull
+#define RANK_4bb 0x00000000ff000000ull
+#define RANK_5bb 0x000000ff00000000ull
+#define RANK_6bb 0x0000ff0000000000ull
+#define RANK_7bb 0x00ff000000000000ull
+#define RANK_8bb 0xff00000000000000ull
 
-#endif  /* BOARD_H */
+
+/*
+static __always_inline bitboard_t bb_rank(int rank)
+{
+    return RANK_1bb << (rank * 8);
+}
+static __always_inline bitboard_t bb_rel_rank(int rank, color)
+{
+    return RANK_1bb << (rank * 8);
+}
+static __always_inline bitboard_t bb_file(int file)
+{
+    return FILE_Abb << file;
+}
+*/
+
+#define bb_rank(r)        ((u64) RANK_1bb << ((r) * 8))
+#define BB_FILE(f)        ((u64) FILE_Abb << (f))
+
+#define bb_rel_rank(r, c) bb_rank(sq_rel_rank(r, c))
+
+//#define BB_REL_RANK(r, c) (RANK_1bb << (SQ_REL_RANK(r, c) * 8))
+//#define BB_REL_FILE(f, c) (FILE_Abb << (SQ_REL_RANK((f), (c))))
+
+/**
+ * bb_sq_aligned() - check if two squares are aligned (same file or rank).
+ * @sq1, @sq2:  the two squares.
+ *
+ * @return: true if @sq1 and @sq2 are on same line, false otherwise.
+ */
+static __always_inline bool bb_sq_aligned(square_t sq1, square_t sq2)
+{
+    return bb_line[sq1][sq2];
+}
+
+/**
+ * bb_sq_aligned3() - check if 3 squares are aligned (same file or rank).
+ * @sq1, @sq2, @sq3:  the three squares.
+ *
+ * @return: true if @sq1, @sq2, and @sq3 are aligned, false otherwise.
+ */
+static __always_inline bool bb_sq_aligned3(square_t sq1, square_t sq2, square_t sq3)
+{
+    return bb_line[sq1][sq2] & mask(sq3);
+}
+
+/**
+ * bb_sq_between() - check if a square is between two squares
+ * @sq:  the possibly "in-between" square
+ * @sq1: square 1
+ * @sq2: square 2
+ *
+ * @return: bitboard of @betw if between @sq1 and @sq2.
+ */
+static __always_inline bitboard_t bb_sq_between(square_t sq, square_t sq1, square_t sq2)
+{
+    return bb_between_excl[sq1][sq2] & mask(sq);
+}
+
+/* TODO: when OK, replace with macros */
+static __always_inline bitboard_t shift_n(const bitboard_t bb)
+{
+    return bb << NORTH;
+}
+static __always_inline bitboard_t shift_ne(const bitboard_t bb)
+{
+    return (bb & ~FILE_Hbb) << NORTH_EAST;
+}
+static __always_inline bitboard_t shift_e(const bitboard_t bb)
+{
+    return (bb & ~FILE_Hbb) << EAST;
+}
+static __always_inline bitboard_t shift_se(const bitboard_t bb)
+{
+    return (bb & ~FILE_Hbb) >> -SOUTH_EAST;
+}
+static __always_inline bitboard_t shift_s(const bitboard_t bb)
+{
+    return bb >> -SOUTH;
+}
+static __always_inline bitboard_t shift_sw(const bitboard_t bb)
+{
+    return (bb & ~FILE_Abb) >> -SOUTH_WEST;
+}
+static __always_inline bitboard_t shift_w(const bitboard_t bb)
+{
+    return (bb & ~FILE_Abb) >> -WEST;
+}
+static __always_inline bitboard_t shift_nw(const bitboard_t bb)
+{
+    return (bb & ~FILE_Abb) << NORTH_WEST;
+}
+
+#define pawn_up_value(c)          ((c) == WHITE ? 8: -8)
+/* pawn moves/attacks (for bitboards) */
+#define pawn_shift_up(bb, c)      ((c) == WHITE ? shift_n(bb): shift_s(bb))
+#define pawn_shift_upleft(bb, c)  ((c) == WHITE ? shift_nw(bb): shift_se(bb))
+#define pawn_shift_upright(bb, c) ((c) == WHITE ? shift_ne(bb): shift_sw(bb))
+/* pawn move (for single pawn) - NO SQUARE CONTROL HERE !
+ * Need to make functions with control instead.
+ */
+#define pawn_push_up(sq, c)       ((sq) + ((c) == WHITE ? NORTH:      SOUTH))
+#define pawn_push_upleft(sq, c)   ((sq) + ((c) == WHITE ? NORTH_WEST: SOUTH_EAST))
+#define pawn_push_upright(sq, c)  ((sq) + ((c) == WHITE ? NORTH_EAST: SOUTH_WEST))
+
+extern bitboard_t bitboard_between_excl(square_t sq1, square_t sq2);
+extern void bitboard_init(void);
+
+extern bitboard_t bb_knight_moves(bitboard_t occ, square_t sq);
+extern bitboard_t bb_king_moves(bitboard_t occ, square_t sq);
+
+extern void bb_print(const char *title, const bitboard_t bitboard);
+extern void bb_print_multi(const char *title, const int n, ...);
+extern char *bb_rank_sprint(char *str, const uchar bb8);
+extern char *bb_sq2str(const bitboard_t bb, char *str, int len);
+
+#endif  /* _BITBOARD_H */

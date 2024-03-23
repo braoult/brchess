@@ -4,6 +4,9 @@ vgcore.*
 *.i
 *.old
 *.save
+/GPATH
+/GRTAGS
+/GTAGS
 /.ccls-root
 /.ccls-cache/
 /obj/
@@ -14,4 +17,5 @@ vgcore.*
 /tmp/
 /notused/
 valgrind.out
+gmon.out
 compile_commands.json

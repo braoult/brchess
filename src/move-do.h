@@ -1,6 +1,6 @@
-/* brchess.h - main loop.
+/* move-do.h - move do/undo.
  *
- * Copyright (C) 2021-2024 Bruno Raoult ("br")
+ * Copyright (C) 2021 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
  * Some rights reserved. See COPYING.
  *
@@ -11,11 +11,10 @@
  *
  */
 
-#ifndef BRCHESS_H
-#define BRCHESS_H
+#ifndef MOVE_DO_H
+#define MOVE_DO_H
 
-#include "position.h"
+//extern pos_t *move_do(pos_t *pos, move_t *move);
+//extern void move_undo(pos_t *pos, move_t *move);
 
-int brchess(pos_t *pos);
-
-#endif  /* BRCHESS_H */
+#endif  /* MOVE_DO_H */
