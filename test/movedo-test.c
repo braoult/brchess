@@ -37,7 +37,7 @@ int main(int __unused ac, __unused char**av)
     bitboard_init();
     hyperbola_init();
 
-    while ((fen = next_fen(MOVEGEN | MOVEDO))) {
+    while ((fen = next_fen(MOVEDO))) {
         test_line = cur_line();
         if (!(pos = fen2pos(NULL, fen))) {
             printf("wrong fen %d: [%s]\n", i, fen);

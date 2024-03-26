@@ -40,6 +40,7 @@ bool pseudo_is_legal(const pos_t *pos, const move_t move)
     square_t from = move_from(move), to = move_to(move), king = pos->king[us], sq;
     piece_type_t piece = PIECE(pos->board[from]);
     bitboard_t kingbb = pos->bb[us][KING], tmp;
+    u64 pinned = mask(from) & pos->blockers & pos->bb[us][ALL_PIECES];
 
     /* (1) - King
      * For castling, we already tested intermediate squares attacks
@@ -53,14 +54,22 @@ bool pseudo_is_legal(const pos_t *pos, const move_t move)
 
     /* (2) - King is in check
      * Double-check is already handled, as only K moves were generated.
-     * Here, allowed moves are only on King-attacker line, including
-     * attacker.We can move a piece on
-     * in pseudo move generation, so we only care destination square here.
+     * Here, allowed dest squares are only on King-checker line, or on checker
+     * square.
+     * attacker.
+     * Special cases:
+     *   e.p., legal if the taken pawn is giving check
+     *   pinned piece: always illegal
      */
     if (pos->checkers) {
         if (popcount64(pos->checkers) == 1) {     /* one checker */
             square_t checker = ctz64(pos->checkers);
-            bitboard_t between = bb_between[king][checker];
+            if (pinned)
+                return false;
+            if (is_enpassant(move)) {
+                return pawn_push_up(pos->en_passant, them) == checker;
+            }
+            bitboard_t between = bb_between[king][checker] | pos->checkers;
             return mask(to) & between;
         }
         return false;                             /* double check */
@@ -69,7 +78,8 @@ bool pseudo_is_legal(const pos_t *pos, const move_t move)
     /* (3) - pinned pieces
      * We verify here that pinned piece P stays on line King-P.
      */
-    if (mask(from) & pos->blockers & pos->bb[us][ALL_PIECES]) {
+    //if (mask(from) & pos->blockers & pos->bb[us][ALL_PIECES]) {
+    if (pinned) {
         bitboard_t line = bb_line[from][king];
         return line & mask(to);                   /* to is not on pin line */
     }

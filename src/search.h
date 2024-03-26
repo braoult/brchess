@@ -20,5 +20,6 @@
 //eval_t pvs(pos_t *pos, int depth, int alpha, int beta, int color);
 
 u64 perft(pos_t *pos, int depth, int ply);
+u64 perft2(pos_t *pos, int depth, int ply);
 
 #endif  /* SEARCH_H */

@@ -1,4 +1,4 @@
-/* movegen-test.c - basic movegen tests.
+/* perft-test.c - perft test.
  *
  * Copyright (C) 2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
@@ -14,16 +14,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <time.h>
+#include <locale.h>
 
 #include "chessdefs.h"
 #include "fen.h"
-#include "move-gen.h"
 #include "position.h"
+#include "move.h"
+#include "move-do.h"
+#include "move-gen.h"
+#include "search.h"
 
 #include "common-test.h"
 
 #define RD 0
 #define WR 1
+
+typedef struct {
+    move_t move;
+    int count;
+} ddperft;
 
 /**
  * return write pipd fd
@@ -76,10 +86,11 @@ static FILE *open_stockfish()
     return out_desc;
 }
 
-static void send_stockfish_fen(FILE *desc, pos_t *pos, movelist_t *movelist, char *fen)
+static u64 send_stockfish_fen(FILE *desc, pos_t *pos, movelist_t *movelist,
+                               char *fen, int depth)
 {
     char *buf = NULL;
-    int count, __unused mycount = 0, fishcount;
+    u64 count, mycount = 0, fishcount;
     size_t alloc = 0;
     ssize_t buflen;
 
@@ -92,17 +103,17 @@ static void send_stockfish_fen(FILE *desc, pos_t *pos, movelist_t *movelist, cha
     //printf("nmoves = %d\n", nmoves);
     fflush(stdout);
     //sprintf(str, "stockfish \"position fen %s\ngo perft depth\n\"", fen);
-    fprintf(desc, "position fen %s\ngo perft 1\n", fen);
+    fprintf(desc, "position fen %s\ngo perft %d\n", fen, depth);
     //fflush(desc);
     while ((buflen = getline(&buf, &alloc, stdin)) > 0) {
         buf[--buflen] = 0;
         if (buflen == 0)
             continue;
-        if (sscanf(buf, "Nodes searched: %d", &fishcount) == 1) {
+        if (sscanf(buf, "Nodes searched: %lu", &fishcount) == 1) {
             break;
         }
         //printf("%d: %s\n", line++, buf);
-        if (sscanf(buf, "%*4s: %d", &count) == 1) {
+        if (sscanf(buf, "%*4s: %lu", &count) == 1) {
             square_t from = sq_from_string(buf);
             square_t to   = sq_from_string(buf + 2);
             mycount += count;
@@ -112,7 +123,7 @@ static void send_stockfish_fen(FILE *desc, pos_t *pos, movelist_t *movelist, cha
             //       count);
             moves[(*nmoves)++] = move_make(from, to);
 
-        } else if (sscanf(buf, "%*5s: %d", &count) == 1) {
+        } else if (sscanf(buf, "%*5s: %lu", &count) == 1) {
             square_t from = sq_from_string(buf);
             square_t to   = sq_from_string(buf + 2);
             piece_type_t promoted = piece_t_from_char(*(buf + 4));
@@ -127,6 +138,7 @@ static void send_stockfish_fen(FILE *desc, pos_t *pos, movelist_t *movelist, cha
     //pos->moves.nmoves = nmoves;
     // printf("fishcount=%d mycount=%d\n", fishcount, mycount);
     free(buf);
+    return mycount;
 }
 
 static __unused bool movelists_equal(movelist_t *fish, movelist_t *me)
@@ -210,77 +222,67 @@ static __unused void compare_moves(movelist_t *fish, movelist_t *me)
     printf("F(%2d): %s\nM(%2d): %s\n", n1, str1, n2, str2);
 }
 
+
 int main(int __unused ac, __unused char**av)
 {
-    int i = 0;
-    FILE *outfd;
+    int i = 0, test_line;
+    u64 sf_count, my_count;
     char *fen;
-    pos_t *pos, *fishpos = pos_new();
-    movelist_t pseudo, legal, fishmoves;
-    //bitboard_t wrong = 0x5088000040, tmp, loop;
-    //bit_for_each64(loop, tmp, )
-    //printf("fishpos 1=%p\n", fishpos);
+    pos_t *pos, *savepos, *fishpos = pos_new();
+    movelist_t fishmoves;
+    //move_t move;
+    FILE *outfd;
+    int depth = 6;
 
+    if (ac > 1)
+        depth = atoi(av[1]);
+    printf("depth = %d\n", depth);
+
+    setlocale(LC_NUMERIC, "");
     setlinebuf(stdout);                           /* line-buffered stdout */
+    outfd = open_stockfish();
 
     bitboard_init();
     hyperbola_init();
-    outfd = open_stockfish();
 
-    while ((fen = next_fen(MOVEGEN))) {
-        //printf(">>>>> %s\n", test[i]);
-        //printf("fishpos 2=%p\n", fishpos);
-        //printf("original fen %d: [%p][%s]\n", i, fen, fen);
+    while ((fen = next_fen(PERFT | MOVEDO))) {
+        test_line = cur_line();
         if (!(pos = fen2pos(NULL, fen))) {
             printf("wrong fen %d: [%s]\n", i, fen);
             continue;
         }
-        /* print movelists */
-        send_stockfish_fen(outfd, fishpos, &fishmoves, fen);
-        pos_gen_pseudomoves(pos, &pseudo);
-        //moves_print(&pseudo, 0);
-        pos_all_legal(pos, &pseudo, &legal);
+        sf_count = send_stockfish_fen(outfd, fishpos, &fishmoves, fen, depth);
+        //pos_gen_pseudomoves(pos, &pseudo);
+        savepos = pos_dup(pos);
+        //int j = 0;
 
-        //moves_print(&legal, 0);
-        //printf("Fu ");
-        //moves_print(fishpos, 0);
-        //fflush(stdout);
-        //printf("Mu ");
-        //moves_print(pos, 0);
-        //fflush(stdout);
+#define NANOSEC  1000000000                       /* nano sec in sec */
+#define MILLISEC 1000000                          /* milli sec in sec */
 
-        /* sort and print movelists */
-        move_sort_by_sq(&fishmoves);
-        move_sort_by_sq(&legal);
-        // printf("\nFs ");
-        // moves_print(fishpos, 0);
-        // fflush(stdout);
-        // printf("Ms ");
-        // moves_print(pos, 0);
-        // fflush(stdout);
+        struct timespec ts1, ts2;
+        clock_gettime(CLOCK_MONOTONIC_RAW, &ts1);
 
-        /* compare movelists */
-        if (!movelists_equal(&fishmoves, &legal)) {
-            pos_print(pos);
-            printf("F: ");
-            moves_print(&fishmoves, 0);
-            printf("M: ");
-            moves_print(&legal, 0);
-        } else {
-            printf("[%s]: OK (%d Moves)\n", fen, legal.nmoves);
-            //moves_print(&fishpos->moves, 0);
+        my_count = perft(pos, depth, 1);
+
+        clock_gettime(CLOCK_MONOTONIC_RAW, &ts2);
+
+        // 1 sec = 1000 millisec
+        // 1 millisec = 1000 microsec
+        // 1 microsec = 1000 nanosec
+        // milli = sec * 1000 + nanosec / 1000000
+        s64 microsecs = ((s64)ts2.tv_sec - (s64)ts1.tv_sec) * 1000000l
+            + ((s64)ts2.tv_nsec - (s64)ts1.tv_nsec) / 1000l ;
+        if (sf_count == my_count) {
+            printf("OK : fen line=%03d \"%s\" perft=%lu in %'ldms (LPS: %'lu)\n",
+                   test_line, fen, my_count, microsecs/1000l,
+                   my_count*1000000l/microsecs);
+        } else  {
+            printf("ERR: fen line=%03d [%s] sf=%lu me=%lu\n",
+                   test_line, fen, sf_count, my_count);
         }
-        //compare_moves(&fishpos->moves, &legal);
-            //} else {
-            //printf("fen %d: [%s] - OK (%d moves)\n", i, fen, legal.nmoves);
-            //}
-        //pos_print_board_raw(pos, 1);
-        //printf("%s\n", pos2fen(pos, str));
-        //get_stockfish_moves(test[i]);
-        //exit(0);
+        pos_del(savepos);
         pos_del(pos);
         i++;
     }
-    fclose(outfd);
     return 0;
 }
