@@ -21,7 +21,68 @@
 #include "attack.h"
 
 
-// #define DEBUG_ATTACK_ATTACKERS1
+/**
+ * sq_is_attacked() - find if a square is attacked
+ * @pos: position
+ * @occ: occupation mask used
+ * @sq:  square to test
+ * @c:   attacker color
+ *
+ * Find if a @c piece attacks @sq.
+ *
+ * Algorithm:  We perform a reverse attack, and check if any given
+ * piece type on @sq can attack a @c piece of same type.
+ *
+ * For example, if @c is white, we test for all T in P,N,B,R,Q,K if
+ * T on @sq could attack a white T piece.
+ *
+ * @Return: true if @sq is attacked by a @c piece, false otherwise.
+ */
+bool sq_is_attacked(const pos_t *pos, const bitboard_t occ, const square_t sq, const color_t c)
+{
+    bitboard_t sqbb = mask(sq);
+    color_t opp = OPPONENT(c);
+
+
+    //pos_print_raw(pos, 1);
+
+    /* bishop / queen */
+    if (hyperbola_bishop_moves(occ, sq) & (pos->bb[c][BISHOP] | pos->bb[c][QUEEN]))
+        return true;
+
+    /* rook / queen */
+    if (hyperbola_rook_moves(occ, sq) & (pos->bb[c][ROOK] | pos->bb[c][QUEEN]))
+        return true;
+
+    /* pawn */
+    if ((pawn_shift_upleft(sqbb, opp) | pawn_shift_upright(sqbb, opp)) & pos->bb[c][PAWN])
+        return true;
+
+    /* knight */
+    if (bb_knight_moves(pos->bb[c][KNIGHT], sq))
+        return true;
+
+    /* king */
+    if (bb_king_moves(pos->bb[c][KING], sq))
+        return true;
+
+    return false;
+}
+
+/**
+ * is_in_check() - find if a king is in check.
+ * @pos:   position
+ * @color: king color
+ *
+ * Find if a @c king is in check. This function is a wrapper over @sq_is_attacked().
+ *
+ * @Return: true if @sq is attacked by a @c piece, false otherwise.
+ */
+bool is_in_check(const pos_t *pos, const color_t color)
+{
+    bitboard_t occ = pos_occ(pos);
+    return sq_is_attacked(pos, occ, pos->king[color], OPPONENT(color));
+}
 
 /**
  * sq_attackers() - find attackers on a square

@@ -17,6 +17,9 @@
 #include "chessdefs.h"
 #include "bitboard.h"
 
+bool sq_is_attacked(const pos_t *pos, const bitboard_t occ, const square_t sq, const color_t c);
+bool is_in_check(const pos_t *pos, const color_t color);
+
 bitboard_t sq_attackers(const pos_t *pos, const bitboard_t occ, const square_t sq, const color_t c);
 bitboard_t sq_attackers_all(const pos_t *pos, const square_t sq);
 bitboard_t sq_pinners(const pos_t *pos, const square_t sq, const color_t c);
