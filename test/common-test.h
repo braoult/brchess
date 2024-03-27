@@ -41,15 +41,20 @@ struct fentest {
     //"4k3/pppppppp/8/8/8/8/PPPPPPPP/1B1R1K2 w - - 0 1",
     { __LINE__, MOVEGEN | MOVEDO | PERFT,
       "illegal white e.p.",
+      "3k4/8/5K2/3pP3/8/2b5/8/8 w - d6 0 1",
+    },
+    { __LINE__, PERFT,
+      "only K, pawn push and ep moves",
+      "3k4/8/8/3pPK2/8/8/8/8 w - d6 0 1"
+    },
+
+    { __LINE__, MOVEGEN | MOVEDO | PERFT,
+      "illegal white e.p.",
       "3k4/8/8/2qpPK2/8/8/8/8 w - d6 0 1",
     },
     { __LINE__, MOVEGEN | MOVEDO | PERFT,
       "illegal black e.p.",
       "8/8/8/8/2QPpk2/8/8/3K4 b - d3 0 1",
-    },
-    { __LINE__, MOVEGEN | MOVEDO | PERFT,
-      "illegal white e.p.",
-      "3k4/8/5K2/3pP3/8/2b5/8/8 w - d6 0 1",
     },
     { __LINE__, MOVEGEN | MOVEDO | PERFT,
       "illegal black e.p.",
@@ -382,7 +387,18 @@ struct fentest {
       "Stalemate & Checkmate",
       "8/8/2k5/5q2/5n2/8/5K2/8 b - - 0 1"
     },
-
+    { __LINE__, MOVEDO | PERFT,
+      "simple movedo/undo: only 2 W knights",
+      "8/1k6/8/8/8/8/6K1/1NN5 w - - 0 1"
+    },
+    { __LINE__, MOVEDO | PERFT,
+      "simple movedo/undo: only 2 W knights",
+      "8/1k6/8/8/8/8/6K1/1NN5 w - - 0 1"
+    },
+    { __LINE__, MOVEDO | PERFT,
+      "simple movedo/undo: only 2 W knights",
+      "5n2/1k6/8/8/5K2/8/P7/1N6 w - - 0 1"
+    },
     { __LINE__, FEN,
       "illegal EP and castle flags, fix-able by fen parser, SF crash",
       "4k3/8/8/8/7B/8/8/4K3 w KQkq e6 0 1"
@@ -398,18 +414,6 @@ struct fentest {
     { __LINE__, FEN,
       "illegal, SF crash",
       "2r1k3/3P4/8/8/8/8/8/4K3 w - - 0 1"
-    },
-    { __LINE__, MOVEDO | PERFT,
-      "simple movedo/undo: only 2 W knights",
-      "8/1k6/8/8/8/8/6K1/1NN5 w - - 0 1"
-    },
-    { __LINE__, MOVEDO | PERFT,
-      "simple movedo/undo: only 2 W knights",
-      "8/1k6/8/8/8/8/6K1/1NN5 w - - 0 1"
-    },
-    { __LINE__, MOVEDO | PERFT,
-      "simple movedo/undo: only 2 W knights",
-      "5n2/1k6/8/8/5K2/8/P7/1N6 w - - 0 1"
     },
     { __LINE__, 0, NULL, NULL }
 };
