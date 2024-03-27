@@ -86,23 +86,36 @@ CPPFLAGS  := $(strip $(CPPFLAGS))
 
 ##################################### compiler flags
 CFLAGS    := -std=gnu11
-#CFLAGS    += -flto
+
+### dev OR release
+# dev
 CFLAGS    += -O1
-CFLAGS    += -g
+#CFLAGS    += -g
+# release
+#CFLAGS    += -Ofast
+
+CFLAGS    += -march=native
+CFLAGS    += -flto
 CFLAGS    += -Wall
 CFLAGS    += -Wextra
-CFLAGS    += -march=native
 CFLAGS    += -Wmissing-declarations
 # for gprof
-# CFLAGS += -pg
+CFLAGS += -pg
 # Next one may be useful for valgrind (when invalid instructions)
 # CFLAGS += -mno-tbm
 
 CFLAGS    := $(strip $(CFLAGS))
 
+# development CFLAGS - unused - TODO
+#DEV_CFLAGS := -O1
+#DEV_CFLAGS += -g
+
+# release CFLAGS - unused - TODO
+#REL_CFLAGS := -Ofast
+
 ##################################### linker flags
 LDFLAGS   := -L$(BRLIBDIR)
-#LDFLAGS   += -flto
+LDFLAGS   += -flto
 
 LDFLAGS   := $(strip $(LDFLAGS))
 
@@ -286,19 +299,17 @@ memcheck: targets
 ##################################### test binaries
 .PHONY: testing test
 
-TEST          := piece-test fen-test bitboard-test movegen-test attack-test movedo-test
+TEST          := piece-test fen-test bitboard-test movegen-test attack-test
+TEST          += movedo-test perft-test
 
 PIECE_OBJS    := piece.o
-FEN_OBJS      := fen.o position.o piece.o bitboard.o board.o hyperbola-quintessence.o \
-	attack.o
-BB_OBJS       := fen.o position.o piece.o bitboard.o board.o hyperbola-quintessence.o \
-	attack.o
-MOVEGEN_OBJS  := fen.o position.o piece.o bitboard.o board.o hyperbola-quintessence.o \
-	attack.o move.o move-gen.o
-ATTACK_OBJS   := fen.o position.o piece.o bitboard.o board.o hyperbola-quintessence.o \
-	 attack.o move.o move-gen.o
-MOVEDO_OBJS   := fen.o position.o piece.o bitboard.o board.o hyperbola-quintessence.o \
-	 attack.o move.o move-gen.o move-do.o
+FEN_OBJS      := $(PIECE_OBJS) fen.o position.o bitboard.o board.o \
+	hyperbola-quintessence.o attack.o
+BB_OBJS       := $(FEN_OBJS)
+MOVEGEN_OBJS  := $(BB_OBJS) move.o move-gen.o
+ATTACK_OBJS   := $(MOVEGEN_OBJS)
+MOVEDO_OBJS   := $(ATTACK_OBJS) move-do.o
+PERFT_OBJS    := $(MOVEDO_OBJS) search.o
 
 TEST          := $(addprefix $(BINDIR)/,$(TEST))
 
@@ -308,6 +319,7 @@ BB_OBJS       := $(addprefix $(OBJDIR)/,$(BB_OBJS))
 MOVEGEN_OBJS  := $(addprefix $(OBJDIR)/,$(MOVEGEN_OBJS))
 ATTACK_OBJS   := $(addprefix $(OBJDIR)/,$(ATTACK_OBJS))
 MOVEDO_OBJS   := $(addprefix $(OBJDIR)/,$(MOVEDO_OBJS))
+PERFT_OBJS    := $(addprefix $(OBJDIR)/,$(PERFT_OBJS))
 
 test:
 	echo TEST=$(TEST)
@@ -338,6 +350,10 @@ bin/attack-test: test/attack-test.c test/common-test.h $(ATTACK_OBJS)
 bin/movedo-test: test/movedo-test.c test/common-test.h $(MOVEDO_OBJS)
 	@echo compiling $@ test executable.
 	@$(CC) $(ALL_CFLAGS) $< $(MOVEDO_OBJS) $(ALL_LDFLAGS) -o $@
+
+bin/perft-test: test/perft-test.c test/common-test.h $(PERFT_OBJS)
+	@echo compiling $@ test executable.
+	@$(CC) $(ALL_CFLAGS) $< $(PERFT_OBJS) $(ALL_LDFLAGS) -o $@
 
 ##################################### Makefile debug
 .PHONY: showflags wft

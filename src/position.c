@@ -187,6 +187,49 @@ bitboard_t pos_checkers(const pos_t *pos, const color_t color)
 }
 
 /**
+ * pos_set_checkers_pinners_blockers() - calculate checkers, pinners and blockers.
+ * @pos:   &position
+ *
+ * Set position checkers, pinners and blockers on player-to-play king.
+ * It should be faster than @pos_checkers + @pos_set_pinners_blockers, as
+ * some calculation will be done once.
+ */
+/*
+ * void pos_set_checkers_pinners_blockers(pos_t *pos)
+ * {
+ *     bitboard_t b_bb = pos->bb[WHITE][BISHOP] | pos->bb[BLACK][BISHOP];
+ *     bitboard_t r_bb = pos->bb[WHITE][ROOK] | pos->bb[BLACK][ROOK];
+ *     bitboard_t q_bb = pos->bb[WHITE][QUEEN] | pos->bb[BLACK][QUEEN];
+ *
+ *     /\* find out first piece on every diagonal *\/
+ *
+ * }
+ */
+
+/**
+ * pos_set_pinners_blockers() - set position pinners and blockers.
+ * @pos:   &position
+ *
+ * set position pinners and blockers on player-to-play king.
+ */
+void pos_set_pinners_blockers(pos_t *pos)
+{
+    color_t color = pos->turn;
+    square_t king = pos->king[color];
+    bitboard_t tmp, occ = pos_occ(pos), blockers = 0;
+    int pinner;
+
+    pos->pinners = sq_pinners(pos, king, OPPONENT(pos->turn));
+    bit_for_each64(pinner, tmp, pos->pinners) {
+        //bitboard_t blocker =
+        // warn_on(popcount64(blocker) != 1);
+        blockers |= bb_between_excl[pinner][king] & occ;
+    }
+    pos->blockers = blockers;
+    return;
+}
+
+/**
  * pos_king_pinners() - get the "pinners" on a king "pinners".
  * @pos:   &position
  * @color: king color.
@@ -218,19 +261,18 @@ bitboard_t pos_king_blockers(const pos_t *pos, const color_t color, const bitboa
     square_t pinner, king = pos->king[color];
 
     bit_for_each64(pinner, tmp, pinners) {
-        bitboard_t blocker = bb_between_excl[pinner][king] & occ;
-        warn_on(popcount64(blocker) != 1);
-        if (popcount64(blocker) != 1) {
-            printf("n blockers = %d\n", popcount64(blocker));
-            bb_print("blockers", blocker);
-        }
-        blockers |= blocker;
+        //warn_on(popcount64(blocker) != 1);
+        //if (popcount64(blocker) != 1) {
+        //    printf("n blockers = %d\n", popcount64(blocker));
+        //    bb_print("blockers", blocker);
+        //}
+        blockers |= bb_between_excl[pinner][king] & occ;
     }
     return blockers;
 }
 
 /**
- * pos_check() - extensive position consistency check.
+ * pos_ok() - extensive position consistency check.
  * @pos:    &position
  * @strict: if true, call bug_on() on any error.
  *
@@ -255,9 +297,9 @@ bitboard_t pos_king_blockers(const pos_t *pos, const color_t color, const bitboa
  * TODO: add more checks:
  * - kings attacking each other
  *
- * @Return: Number of detected error (only if @strict is false).
+ * @return: (if @strict is false) return true if check is ok, false otherwise.
  */
-int pos_check(const pos_t *pos, const bool strict)
+bool pos_ok(const pos_t *pos, const bool strict)
 {
     int n, count = 0, bbcount = 0, error = 0;
     bitboard_t tmp;
@@ -301,7 +343,7 @@ int pos_check(const pos_t *pos, const bool strict)
     error += warn_on(sq_dist(pos->king[WHITE], pos->king[BLACK]) < 2);
 
     bug_on(strict && error);
-    return error;
+    return error? false: true;
 }
 
 /**
@@ -333,7 +375,7 @@ void pos_print_mask(const pos_t *pos, const bitboard_t mask)
 }
 
 /**
- * pos_print_board_raw - print simple position board (octal/FEN symbol values)
+ * pos_print_raw - print simple position board (octal/FEN symbol values)
  * @bb: the bitboard
  * @type: int, 0 for octal, 1 for fen symbol
  */

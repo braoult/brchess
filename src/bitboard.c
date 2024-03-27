@@ -190,8 +190,6 @@ void bitboard_init(void)
  */
 bitboard_t bb_knight_moves(bitboard_t notmine, square_t sq)
 {
-    //bitboard_print("bb_knight_move mask", bb_knight[sq]);
-    //bitboard_print("bb_knight_move  res", bb_knight[sq] & notmine);
     return bb_knight[sq] & notmine;
 }
 

@@ -30,7 +30,8 @@ typedef struct __pos_s {
     u64 node_count;                               /* evaluated nodes */
     int turn;                                     /* WHITE or BLACK */
 
-    /* data which cannot be recovered by move_undo
+    /* data which cannot be recovered by move_undo (like castle_rights, ...),
+     * or would be expensive to recover (checkers, ...)
      * following data can be accessed either directly, either via "movesave"
      * structure name.
      * For example, pos->en_passant and pos->state.en_passant are the same.
@@ -48,7 +49,6 @@ typedef struct __pos_s {
         );
 
     piece_t board[BOARDSIZE];
-
     bitboard_t bb[2][PIECE_TYPE_MAX];             /* bb[0][PAWN], bb[1][ALL_PIECES] */
     //bitboard_t controlled[2];                     /* unsure */
     square_t king[2];                             /* dup with bb, faster retrieval */
@@ -159,14 +159,13 @@ void pos_del(pos_t *pos);
 pos_t *pos_clear(pos_t *pos);
 bool pos_cmp(const pos_t *pos1, const pos_t *pos2);
 
+//bitboard_t set_king_pinners_blockers(pos_t *pos);
+void pos_set_pinners_blockers(pos_t *pos);
 bitboard_t pos_checkers(const pos_t *pos, const color_t color);
 bitboard_t pos_king_pinners(const pos_t *pos, const color_t color);
 bitboard_t pos_king_blockers(const pos_t *pos, const color_t color, const bitboard_t );
-//bitboard_t set_king_pinners_blockers(pos_t *pos);
-//char *pos_checkers2str(const pos_t *pos, char *str);
-//char *pos_pinners2str(const pos_t *pos, char *str);
 
-int pos_check(const pos_t *pos, const bool strict);
+bool pos_ok(const pos_t *pos, const bool strict);
 
 void pos_print(const pos_t *pos);
 void pos_print_mask(const pos_t *pos, const bitboard_t mask);

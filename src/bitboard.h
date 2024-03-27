@@ -272,15 +272,15 @@ static __always_inline bitboard_t shift_nw(const bitboard_t bb)
 #define pawn_push_upleft(sq, c)   ((sq) + ((c) == WHITE ? NORTH_WEST: SOUTH_EAST))
 #define pawn_push_upright(sq, c)  ((sq) + ((c) == WHITE ? NORTH_EAST: SOUTH_WEST))
 
-extern bitboard_t bitboard_between_excl(square_t sq1, square_t sq2);
-extern void bitboard_init(void);
+bitboard_t bitboard_between_excl(square_t sq1, square_t sq2);
+void bitboard_init(void);
 
-extern bitboard_t bb_knight_moves(bitboard_t occ, square_t sq);
-extern bitboard_t bb_king_moves(bitboard_t occ, square_t sq);
+bitboard_t bb_knight_moves(bitboard_t notmine, square_t sq);
+bitboard_t bb_king_moves(bitboard_t notmine, square_t sq);
 
-extern void bb_print(const char *title, const bitboard_t bitboard);
-extern void bb_print_multi(const char *title, const int n, ...);
-extern char *bb_rank_sprint(char *str, const uchar bb8);
-extern char *bb_sq2str(const bitboard_t bb, char *str, int len);
+void bb_print(const char *title, const bitboard_t bitboard);
+void bb_print_multi(const char *title, const int n, ...);
+char *bb_rank_sprint(char *str, const uchar bb8);
+char *bb_sq2str(const bitboard_t bb, char *str, int len);
 
 #endif  /* _BITBOARD_H */
