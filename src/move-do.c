@@ -42,12 +42,12 @@
  *
  * @return: pos.
  */
-pos_t *move_do(pos_t *pos, const move_t move, state_t *state)
+pos_t *move_do(pos_t *pos, const move_t move) //, state_t *state)
 {
 //#   ifdef DEBUG_MOVE_DO
 //    move_print(move, M_PR_NL | M_PR_LONG);
 //#   endif
-    *state = pos->state;                          /* save irreversible changes */
+    //*state = pos->state;                          /* save irreversible changes */
 
     color_t us = pos->turn, them = OPPONENT(us);
     square_t from = move_from(move), to = move_to(move);
@@ -146,7 +146,7 @@ pos_t *move_do(pos_t *pos, const move_t move, state_t *state)
  *
  * @return: pos.
  */
-pos_t *move_undo(pos_t *pos, const move_t move, const state_t *state)
+pos_t *move_undo(pos_t *pos, const move_t move)//, const state_t *state)
 {
 //#   ifdef DEBUG_MOVE
     //log(1, "new move: ");
@@ -184,7 +184,7 @@ pos_t *move_undo(pos_t *pos, const move_t move, const state_t *state)
         pos_set_sq(pos, grabbed, MAKE_PIECE(PAWN, them));
     }
 
-    pos->state = *state;                          /* restore irreversible changes */
+    //pos->state = *state;                          /* restore irreversible changes */
     pos->turn = us;
     return pos;
 }
