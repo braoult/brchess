@@ -37,33 +37,31 @@
  */
 u64 perft(pos_t *pos, int depth, int ply)
 {
-    int subnodes, nmove = 0;
+    int subnodes, movetmp = 0;
     u64 nodes = 0;
-    movelist_t pseudo = { .nmoves = 0 }, legal = { .nmoves = 0 };
+    movelist_t pseudo = { .nmoves = 0 };
     move_t move;
+    state_t state;
 
     if (depth == 0)
         return 1;
     pos->checkers = pos_checkers(pos, pos->turn);
     pos_set_pinners_blockers(pos);
+    state = pos->state;
 
     pos_gen_pseudomoves(pos, &pseudo);
-    pos_all_legal(pos, &pseudo, &legal);
-
-    for (nmove = 0; nmove < legal.nmoves; ++nmove ) {
-        //while ((move =  pos_next_legal(pos, &pseudo, &movetmp)) != MOVE_NONE) {
-        //printf("depth=%d movetmp=%d\n", depth, movetmp);
-        state_t state;
-        move = legal.move[nmove];
-        move_do(pos, move, &state);
+    while ((move =  pos_next_legal(pos, &pseudo, &movetmp)) != MOVE_NONE) {
+        move_do(pos, move);
         subnodes = perft(pos, depth - 1, ply + 1);
         if (ply == 1) {
             char movestr[8];
             printf("%s: %d\n", move_str(movestr, move, 0), subnodes);
         }
         nodes += subnodes;
-        move_undo(pos, move, &state);
+        move_undo(pos, move);
+        pos->state = state;
     }
+
     if (ply == 1)
         printf("\nTotal: %lu\n", nodes);
     return nodes;
@@ -75,32 +73,31 @@ u64 perft2(pos_t *pos, int depth, int ply)
     u64 nodes = 0;
     movelist_t pseudo = { .nmoves = 0 };
     move_t move;
+    state_t state;
 
     if (is_in_check(pos, OPPONENT(pos->turn)))
         return 0;
     if (depth == 0)
         return 1;
     pos->checkers = pos_checkers(pos, pos->turn);
-    pos->pinners = pos_king_pinners(pos, pos->turn);
-    pos->blockers = pos_king_blockers(pos, pos->turn, pos->pinners);
+    pos_set_pinners_blockers(pos);
+    state = pos->state;
 
     pos_gen_pseudomoves(pos, &pseudo);
-    //pos_all_legal(pos, &pseudo, &legal);
 
     for (nmove = 0; nmove < pseudo.nmoves; ++nmove ) {
-        //while ((move =  pos_next_legal(pos, &pseudo, &movetmp)) != MOVE_NONE) {
-        //printf("depth=%d movetmp=%d\n", depth, movetmp);
-        state_t state;
         move = pseudo.move[nmove];
-        move_do(pos, move, &state);
+        move_do(pos, move);
+        //if (!is_in_check(pos, OPPONENT(pos->turn))) {
         subnodes = perft2(pos, depth - 1, ply + 1);
-
+        nodes += subnodes;
         if (ply == 1) {
             char movestr[8];
             printf("%s: %d\n", move_str(movestr, move, 0), subnodes);
         }
-        nodes += subnodes;
-        move_undo(pos, move, &state);
+            //}
+        move_undo(pos, move);
+        pos->state = state;
     }
     if (ply == 1)
         printf("\nTotal: %lu\n", nodes);
