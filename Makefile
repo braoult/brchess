@@ -89,10 +89,10 @@ CFLAGS    := -std=gnu11
 
 ### dev OR release
 # dev
-#CFLAGS    += -O1
+CFLAGS    += -O1
 #CFLAGS    += -g
 # release
-CFLAGS    += -Ofast
+#CFLAGS    += -Ofast
 
 CFLAGS    += -march=native
 CFLAGS    += -flto
@@ -100,7 +100,7 @@ CFLAGS    += -Wall
 CFLAGS    += -Wextra
 CFLAGS    += -Wmissing-declarations
 # for gprof
-#CFLAGS += -pg
+CFLAGS += -pg
 # Next one may be useful for valgrind (when invalid instructions)
 # CFLAGS += -mno-tbm
 

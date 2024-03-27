@@ -187,11 +187,30 @@ bitboard_t pos_checkers(const pos_t *pos, const color_t color)
 }
 
 /**
- * pos_king_pinners_blockers() - set position "pinners" and "blockers".
+ * pos_set_checkers_pinners_blockers() - calculate checkers, pinners and blockers.
  * @pos:   &position
  *
- * set position "pinners" on player-to-play king.
+ * Set position checkers, pinners and blockers on player-to-play king.
+ * It should be faster than @pos_checkers + @pos_set_pinners_blockers, as
+ * some calculation will be done once.
+ */
+/*
+ * void pos_set_checkers_pinners_blockers(pos_t *pos)
+ * {
+ *     bitboard_t b_bb = pos->bb[WHITE][BISHOP] | pos->bb[BLACK][BISHOP];
+ *     bitboard_t r_bb = pos->bb[WHITE][ROOK] | pos->bb[BLACK][ROOK];
+ *     bitboard_t q_bb = pos->bb[WHITE][QUEEN] | pos->bb[BLACK][QUEEN];
  *
+ *     /\* find out first piece on every diagonal *\/
+ *
+ * }
+ */
+
+/**
+ * pos_set_pinners_blockers() - set position pinners and blockers.
+ * @pos:   &position
+ *
+ * set position pinners and blockers on player-to-play king.
  */
 void pos_set_pinners_blockers(pos_t *pos)
 {
@@ -253,7 +272,7 @@ bitboard_t pos_king_blockers(const pos_t *pos, const color_t color, const bitboa
 }
 
 /**
- * pos_check() - extensive position consistency check.
+ * pos_ok() - extensive position consistency check.
  * @pos:    &position
  * @strict: if true, call bug_on() on any error.
  *
@@ -278,9 +297,9 @@ bitboard_t pos_king_blockers(const pos_t *pos, const color_t color, const bitboa
  * TODO: add more checks:
  * - kings attacking each other
  *
- * @Return: Number of detected error (only if @strict is false).
+ * @return: (if @strict is false) return true if check is ok, false otherwise.
  */
-int pos_check(const pos_t *pos, const bool strict)
+bool pos_ok(const pos_t *pos, const bool strict)
 {
     int n, count = 0, bbcount = 0, error = 0;
     bitboard_t tmp;
@@ -324,7 +343,7 @@ int pos_check(const pos_t *pos, const bool strict)
     error += warn_on(sq_dist(pos->king[WHITE], pos->king[BLACK]) < 2);
 
     bug_on(strict && error);
-    return error;
+    return error? false: true;
 }
 
 /**

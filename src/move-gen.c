@@ -169,7 +169,7 @@ movelist_t *pos_all_legal(const pos_t *pos, movelist_t *movelist, movelist_t *de
  *  - castling, if king passes an enemy-controlled square (not final square).
  * When immediately known, a few move flags are also applied in these cases:
  *  - castling: M_CASTLE_{K,Q}
- *  - pawn capture (excl. en-passant): M_CAPTURE
+ *  - capture (excl. en-passant): M_CAPTURE
  *  - en-passant: M_EN_PASSANT
  *  - pawn double push: M_DPUSH
  *  - promotion: M_PROMOTION

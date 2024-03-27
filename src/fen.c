@@ -75,7 +75,7 @@ static const char *castle_str = "KQkq";
 static int fen_check(pos_t *pos)
 {
     char *colstr[2] = { "white", "black"};
-    int error = 0, warning = 0;
+    int warning = 0;
 
     /* en passant, depends on who plays next */
     if (pos->en_passant != SQUARE_NONE) {
@@ -130,13 +130,7 @@ static int fen_check(pos_t *pos)
             }
         }
     }
-    if (!(error = pos_check(pos, 0))) {
-        /* TODO: Should it really be here ? */
-        pos->checkers = pos_checkers(pos, pos->turn);
-        pos->pinners = pos_king_pinners(pos, pos->turn);
-        pos->blockers = pos_king_blockers(pos, pos->turn, pos->pinners);
-    }
-    return error ? -1: warning;
+    return pos_ok(pos, 0) ? warning: -1;
 }
 
 /**
