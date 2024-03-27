@@ -43,28 +43,33 @@ int main(int __unused ac, __unused char**av)
             printf("wrong fen %d: [%s]\n", i, fen);
             continue;
         }
+
+        pos->checkers = pos_checkers(pos, pos->turn);
+        pos_set_pinners_blockers(pos);
+
         pos_gen_pseudomoves(pos, &pseudo);
         savepos = pos_dup(pos);
+
+        state_t state = pos->state;
         int tmp = 0, j = 0;
         while ((move = pos_next_legal(pos, &pseudo, &tmp)) != MOVE_NONE) {
-            state_t state;
-            move_str(movebuf, move, 0);
             //pos_print(pos);
             //printf("i=%d j=%d  turn=%d move=[%s]\n", i, j, pos->turn,
             //       move_str(movebuf, move, 0));
             //move_p
-            move_do(pos, move, &state);
+            move_do(pos, move);
             //pos_print(pos);
             //fflush(stdout);
-            if (pos_check(pos, false)) {
+            if (!pos_ok(pos, false)) {
                 printf("*** fen %d move %d [%s] invalid position after move_do\n",
                        test_line, j, movebuf);
                 exit(0);
             }
 
             //printf("%d/%d move_do check ok\n", i, j);
-            move_undo(pos, move, &state);
-            if (pos_check(pos, false)) {
+            move_undo(pos, move);
+            pos->state = state;
+            if (!pos_ok(pos, false)) {
                 printf("*** fen %d move %d [%s] invalid position after move_undo\n",
                        test_line, j, movebuf);
                 exit(0);

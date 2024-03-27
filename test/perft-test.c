@@ -259,26 +259,41 @@ int main(int __unused ac, __unused char**av)
 #define NANOSEC  1000000000                       /* nano sec in sec */
 #define MILLISEC 1000000                          /* milli sec in sec */
 
-        struct timespec ts1, ts2;
-        clock_gettime(CLOCK_MONOTONIC_RAW, &ts1);
-
-        my_count = perft(pos, depth, 1);
-
-        clock_gettime(CLOCK_MONOTONIC_RAW, &ts2);
-
         // 1 sec = 1000 millisec
         // 1 millisec = 1000 microsec
         // 1 microsec = 1000 nanosec
         // milli = sec * 1000 + nanosec / 1000000
-        s64 microsecs = ((s64)ts2.tv_sec - (s64)ts1.tv_sec) * 1000000l
+        struct timespec ts1, ts2;
+        s64 microsecs;
+
+        clock_gettime(CLOCK_MONOTONIC_RAW, &ts1);
+        my_count = perft(pos, depth, 1);
+        clock_gettime(CLOCK_MONOTONIC_RAW, &ts2);
+
+        microsecs = ((s64)ts2.tv_sec - (s64)ts1.tv_sec) * 1000000l
             + ((s64)ts2.tv_nsec - (s64)ts1.tv_nsec) / 1000l ;
         if (sf_count == my_count) {
-            printf("OK : fen line=%03d \"%s\" perft=%lu in %'ldms (LPS: %'lu)\n",
-                   test_line, fen, my_count, microsecs/1000l,
-                   my_count*1000000l/microsecs);
+            printf("pt1 OK : line=%03d perft=%lu ms=%'ldms lps=%'lu \"%s\"\n",
+                   test_line, my_count, microsecs/1000l,
+                   my_count*1000000l/microsecs, fen);
         } else  {
-            printf("ERR: fen line=%03d [%s] sf=%lu me=%lu\n",
-                   test_line, fen, sf_count, my_count);
+            printf("pt1 ERR: line=%03d sf=%lu me=%lu \"%s\"\n",
+                   test_line, sf_count, my_count, fen);
+        }
+
+        clock_gettime(CLOCK_MONOTONIC_RAW, &ts1);
+        my_count = perft2(pos, depth, 1);
+        clock_gettime(CLOCK_MONOTONIC_RAW, &ts2);
+
+        microsecs = ((s64)ts2.tv_sec - (s64)ts1.tv_sec) * 1000000l
+            + ((s64)ts2.tv_nsec - (s64)ts1.tv_nsec) / 1000l ;
+        if (sf_count == my_count) {
+            printf("pt2 OK : line=%03d perft=%lu ms=%'ldms lps=%'lu \"%s\"\n\n",
+                   test_line, my_count, microsecs/1000l,
+                   my_count*1000000l/microsecs, fen);
+        } else  {
+            printf("pt2 ERR: line=%03d sf=%lu me=%lu \"%s\"\n\n",
+                   test_line, sf_count, my_count, fen);
         }
         pos_del(savepos);
         pos_del(pos);
