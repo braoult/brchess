@@ -25,12 +25,21 @@
  * perft() - Perform perft on position
  * @pos:   &position to search
  * @depth: Wanted depth.
- * @ply:   Depth level where perft is consolidated.
+ * @ply:   perft depth level.
  *
- * Print perftCalculate the negamax value of @pos. This is an extensive search, with
- * absolutely no cutoff.
+ * Run perft on a position. This function displays the available moves at @depth
+ * level for each possible first move, and the total of moves.
  *
- * @return: The @pos negamax evaluation.
+ * This version uses the algorithm:
+ *    if last depth
+ *      return 1;
+ *    gen pseudo-legal moves
+ *    loop for each legal move
+ *      do-move
+ *      perft (depth -1)
+ *      undo-move
+ *
+ * @return: total moves found at @depth level.
  */
 u64 perft(pos_t *pos, int depth, int ply)
 {
@@ -64,6 +73,25 @@ u64 perft(pos_t *pos, int depth, int ply)
     return nodes;
 }
 
+/**
+ * perft2() - Perform perft on position
+ * @pos:   &position to search
+ * @depth: Wanted depth.
+ * @ply:   perft depth level.
+ *
+ * Run perft on a position. This function displays the available moves at @depth
+ * level for each possible first move, and the total of moves.
+ *
+ * This version uses the algorithm:
+ *    if (king in check)
+ *      finish;
+ *    if last depth
+ *      return 1;
+ *    gen pseudo-legal moves
+ *    foreach pseudo-legal move...
+ *
+ * @return: total moves found at @depth level.
+ */
 u64 perft2(pos_t *pos, int depth, int ply)
 {
     int subnodes, nmove = 0;
