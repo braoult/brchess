@@ -21,9 +21,6 @@
 #include "search.h"
 #include "attack.h"
 
-//#include "move.h"
-//#include "eval.h"
-
 /**
  * perft() - Perform perft on position
  * @pos:   &position to search
@@ -63,7 +60,7 @@ u64 perft(pos_t *pos, int depth, int ply)
     }
 
     if (ply == 1)
-        printf("\nTotal: %lu\n", nodes);
+        printf("Total: %lu\n", nodes);
     return nodes;
 }
 
@@ -88,19 +85,19 @@ u64 perft2(pos_t *pos, int depth, int ply)
     for (nmove = 0; nmove < pseudo.nmoves; ++nmove ) {
         move = pseudo.move[nmove];
         move_do(pos, move);
-        //if (!is_in_check(pos, OPPONENT(pos->turn))) {
+
         subnodes = perft2(pos, depth - 1, ply + 1);
+
         nodes += subnodes;
         if (ply == 1) {
             char movestr[8];
             printf("%s: %d\n", move_str(movestr, move, 0), subnodes);
         }
-            //}
         move_undo(pos, move);
         pos->state = state;
     }
     if (ply == 1)
-        printf("\nTotal: %lu\n", nodes);
+        printf("Total: %lu\n", nodes);
     return nodes;
 }
 
