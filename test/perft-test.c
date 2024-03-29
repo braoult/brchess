@@ -233,11 +233,17 @@ int main(int __unused ac, __unused char**av)
     //move_t move;
     FILE *outfd;
     int depth = 6;
+    s64 ms1 = 0, ms1_total = 0,  ms2 = 0, ms2_total = 0;
+    int run = 3;
 
     if (ac > 1)
         depth = atoi(av[1]);
-    printf("depth = %d\n", depth);
+    if (ac > 2)
+        run =  atoi(av[2]);
+    printf("depth = %d run=%d\n", depth, run);
 
+    if (!run)
+        exit(0);
     setlocale(LC_NUMERIC, "");
     setlinebuf(stdout);                           /* line-buffered stdout */
     outfd = open_stockfish();
@@ -245,6 +251,8 @@ int main(int __unused ac, __unused char**av)
     bitboard_init();
     hyperbola_init();
 
+
+    CLOCK_DEFINE(clock, CLOCK_PROCESS);
     while ((fen = next_fen(PERFT | MOVEDO))) {
         test_line = cur_line();
         if (!(pos = fen2pos(NULL, fen))) {
@@ -256,35 +264,46 @@ int main(int __unused ac, __unused char**av)
         savepos = pos_dup(pos);
         //int j = 0;
 
-        s64 μs;
-        CLOCK_DEFINE(clock, CLOCK_SYSTEM);
+        if (run & 1) {
+            clock_start(&clock);
+            my_count = perft(pos, depth, 1);
+            ms1 = clock_elapsed_ms(&clock);
+            ms1_total += ms1;
 
-        clock_start(&clock);
-        my_count = perft(pos, depth, 1);
-        μs = clock_elapsed_μs(&clock);
-
-        if (sf_count == my_count) {
-            printf("pt1 OK : line=%03d perft=%lu μs=%'ldms lps=%'lu \"%s\"\n",
-                   test_line, my_count, μs, my_count*1000000l/μs, fen);
-        } else  {
-            printf("pt1 ERR: line=%03d sf=%lu me=%lu \"%s\"\n",
-                   test_line, sf_count, my_count, fen);
+            if (sf_count == my_count) {
+                printf("pt1 OK : line=%03d perft=%lu %'ldms lps=%'lu \"%s\"\n",
+                       test_line, my_count, ms1,
+                       ms1? my_count*1000l/ms1: 0,
+                       fen);
+            } else  {
+                printf("pt1 ERR: line=%03d sf=%lu me=%lu \"%s\"\n",
+                       test_line, sf_count, my_count, fen);
+            }
         }
 
-        clock_start(&clock);
-        my_count = perft2(pos, depth, 1);
-        μs = clock_elapsed_μs(&clock);
+        if (run & 2) {
+            clock_start(&clock);
+            my_count = perft2(pos, depth, 1);
+            ms2 = clock_elapsed_ms(&clock);
+            ms2_total += ms2;
 
-        if (sf_count == my_count) {
-            printf("pt2 OK : line=%03d perft=%lu μs=%'ldms lps=%'lu \"%s\"\n\n",
-                   test_line, my_count, μs, my_count*1000000l/μs, fen);
-        } else  {
-            printf("pt2 ERR: line=%03d sf=%lu me=%lu \"%s\"\n\n",
-                   test_line, sf_count, my_count, fen);
+            if (sf_count == my_count) {
+                printf("pt2 OK : line=%03d perft=%lu %'ldms lps=%'lu \"%s\"\n\n",
+                       test_line, my_count, ms2,
+                       ms2? my_count*1000l/ms2: 0,
+                       fen);
+            } else  {
+                printf("pt2 ERR: line=%03d sf=%lu me=%lu \"%s\"\n\n",
+                       test_line, sf_count, my_count, fen);
+            }
         }
         pos_del(savepos);
         pos_del(pos);
         i++;
     }
+    if (run & 1)
+        printf("total perft  %'ldms\n", ms1_total);
+    if (run & 2)
+        printf("total perft2 %'ldms\n", ms2_total);
     return 0;
 }
