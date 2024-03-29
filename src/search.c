@@ -100,8 +100,6 @@ u64 perft2(pos_t *pos, int depth, int ply)
     move_t move;
     state_t state;
 
-    if (is_in_check(pos, OPPONENT(pos->turn)))
-        return 0;
     if (depth == 0)
         return 1;
     pos->checkers = pos_checkers(pos, pos->turn);
@@ -113,13 +111,13 @@ u64 perft2(pos_t *pos, int depth, int ply)
     for (nmove = 0; nmove < pseudo.nmoves; ++nmove ) {
         move = pseudo.move[nmove];
         move_do(pos, move);
-
-        subnodes = perft2(pos, depth - 1, ply + 1);
-
-        nodes += subnodes;
-        if (ply == 1) {
-            char movestr[8];
-            printf("%s: %d\n", move_str(movestr, move, 0), subnodes);
+        if (!is_in_check(pos, OPPONENT(pos->turn))) {
+            subnodes = perft2(pos, depth - 1, ply + 1);
+            nodes += subnodes;
+            if (ply == 1) {
+                char movestr[8];
+                printf("%s: %d\n", move_str(movestr, move, 0), subnodes);
+            }
         }
         move_undo(pos, move);
         pos->state = state;
