@@ -159,7 +159,7 @@ void pos_del(pos_t *pos);
 pos_t *pos_clear(pos_t *pos);
 bool pos_cmp(const pos_t *pos1, const pos_t *pos2);
 
-//bitboard_t set_king_pinners_blockers(pos_t *pos);
+void pos_set_checkers_pinners_blockers(pos_t *pos);
 void pos_set_pinners_blockers(pos_t *pos);
 bitboard_t pos_checkers(const pos_t *pos, const color_t color);
 bitboard_t pos_king_pinners(const pos_t *pos, const color_t color);

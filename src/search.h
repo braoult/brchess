@@ -21,5 +21,6 @@
 
 u64 perft(pos_t *pos, int depth, int ply);
 u64 perft2(pos_t *pos, int depth, int ply);
+u64 perft_new_pinners(pos_t *pos, int depth, int ply);
 
 #endif  /* SEARCH_H */

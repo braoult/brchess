@@ -28,6 +28,7 @@ int main(int __unused ac, __unused char**av)
     int i = 0;
     char *fen;
     pos_t *pos;//, *fishpos = pos_new();
+    bitboard_t checkers, pinners, blockers;
 
     setlinebuf(stdout);                           /* line-buffered stdout */
 
@@ -41,7 +42,21 @@ int main(int __unused ac, __unused char**av)
             printf("wrong fen %d: [%s]\n", i, fen);
             continue;
         }
+        pos->checkers = pos_checkers(pos, pos->turn);
+        pos_set_pinners_blockers(pos);
+
         pos_print(pos);
+
+        checkers = pos->checkers;
+        pinners = pos->pinners;
+        blockers = pos->blockers;
+
+        pos_set_checkers_pinners_blockers(pos);
+
+        printf("******* %s\n", cur_comment());
+        bb_print_multi("checkers", 2, checkers, pos->checkers);
+        bb_print_multi("pinners", 2, pinners, pos->pinners);
+        bb_print_multi("blockers", 2, blockers, pos->blockers);
 
         pos_del(pos);
         i++;

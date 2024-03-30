@@ -127,6 +127,37 @@ u64 perft2(pos_t *pos, int depth, int ply)
     return nodes;
 }
 
+u64 perft_new_pinners(pos_t *pos, int depth, int ply)
+{
+    int subnodes, movetmp = 0;
+    u64 nodes = 0;
+    movelist_t pseudo = { .nmoves = 0 };
+    move_t move;
+    state_t state;
+
+    if (depth == 0)
+        return 1;
+    pos_set_checkers_pinners_blockers(pos);
+    state = pos->state;
+
+    pos_gen_pseudomoves(pos, &pseudo);
+    while ((move =  pos_next_legal(pos, &pseudo, &movetmp)) != MOVE_NONE) {
+        move_do(pos, move);
+        subnodes = perft(pos, depth - 1, ply + 1);
+        if (ply == 1) {
+            char movestr[8];
+            printf("%s: %d\n", move_str(movestr, move, 0), subnodes);
+        }
+        nodes += subnodes;
+        move_undo(pos, move);
+        pos->state = state;
+    }
+
+    if (ply == 1)
+        printf("Total: %lu\n", nodes);
+    return nodes;
+}
+
 /**
  * negamax() - search position negamax.
  * @pos: &position to search

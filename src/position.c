@@ -24,6 +24,7 @@
 #include "chessdefs.h"
 #include "position.h"
 #include "bitboard.h"
+#include "hyperbola-quintessence.h"
 #include "fen.h"
 #include "piece.h"
 #include "util.h"
@@ -194,17 +195,83 @@ bitboard_t pos_checkers(const pos_t *pos, const color_t color)
  * It should be faster than @pos_checkers + @pos_set_pinners_blockers, as
  * some calculation will be done once.
  */
-/*
- * void pos_set_checkers_pinners_blockers(pos_t *pos)
- * {
- *     bitboard_t b_bb = pos->bb[WHITE][BISHOP] | pos->bb[BLACK][BISHOP];
- *     bitboard_t r_bb = pos->bb[WHITE][ROOK] | pos->bb[BLACK][ROOK];
- *     bitboard_t q_bb = pos->bb[WHITE][QUEEN] | pos->bb[BLACK][QUEEN];
- *
- *     /\* find out first piece on every diagonal *\/
- *
- * }
- */
+void pos_set_checkers_pinners_blockers(pos_t *pos)
+{
+    int us = pos->turn, them = OPPONENT(us);
+    bitboard_t occ = pos_occ(pos);
+    bitboard_t attackers;
+    bitboard_t checkers = 0, blockers = 0, pinners = 0;
+    bitboard_t targets, tmpcheckers, tmpblockers, tmppinners, tmpbb;
+    square_t king = pos->king[us];
+    bitboard_t king_bb = mask(king);
+    int pinner;
+
+    /* bishop type - we attack with a bishop from king position */
+    attackers = pos->bb[them][BISHOP] | pos->bb[them][QUEEN];
+
+    /* targets is all "target" pieces if K was a bishop */
+    targets = hyperbola_bishop_moves(occ, king) & occ;
+
+    /* checkers = only opponent B/Q */
+    tmpcheckers = targets & attackers;
+    checkers |= tmpcheckers;
+
+    /* maybe blockers = not checkers */
+    tmpblockers = targets & ~tmpcheckers;
+
+    /* we find second targets, by removing only first ones (excl. checkers) */
+    targets = hyperbola_bishop_moves(occ ^ tmpblockers, king) ^ tmpcheckers;
+
+    /* pinners = only B/Q */
+    tmppinners = targets & attackers;
+    pinners |= tmppinners;
+    //tmpblockers = 0;
+
+    /* blockers = we find occupied squares between pinner and king */
+    bit_for_each64(pinner, tmpbb, tmppinners)
+        blockers |= bb_between[pinner][king] & tmpblockers;
+    //blockers |= tmpblockers;
+
+    /* same for rook type */
+    attackers = pos->bb[them][ROOK] | pos->bb[them][QUEEN];
+
+    /* targets is all "target" pieces if K was a bishop */
+    targets = hyperbola_rook_moves(occ, king) & occ;
+
+    /* checkers = only opponent B/Q */
+    tmpcheckers = targets & attackers;
+    checkers |= tmpcheckers;
+
+    /* maybe blockers = not checkers */
+    tmpblockers = targets & ~tmpcheckers;
+
+    /* we find second targets, by removing only first ones (excl. checkers) */
+    targets = hyperbola_rook_moves(occ ^ tmpblockers, king) ^ tmpcheckers;
+
+    /* pinners = only B/Q */
+    tmppinners = targets & attackers;
+    pinners |= tmppinners;
+    //tmpblockers = 0;
+
+    /* blockers = we find occupied squares between pinner and king */
+    bit_for_each64(pinner, tmpbb, tmppinners)
+        blockers |= bb_between[pinner][king] & tmpblockers;
+    //blockers |= tmpblockers;
+
+    /* pawns */
+    attackers =  pos->bb[them][PAWN];
+    targets = pawn_shift_upleft(king_bb, us) | pawn_shift_upright(king_bb, us);
+    checkers |= targets & attackers;
+
+    /* knight */
+    attackers = pos->bb[them][KNIGHT];
+    targets = bb_knight_moves(attackers, king);
+    checkers |= targets;
+
+    pos->checkers = checkers;
+    pos->pinners = pinners;
+    pos->blockers = blockers;
+}
 
 /**
  * pos_set_pinners_blockers() - set position pinners and blockers.

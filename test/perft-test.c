@@ -233,7 +233,9 @@ int main(int __unused ac, __unused char**av)
     //move_t move;
     FILE *outfd;
     int depth = 6;
-    s64 ms1 = 0, ms1_total = 0,  ms2 = 0, ms2_total = 0;
+    s64 ms1 = 0, ms1_total = 0;
+    s64 ms2 = 0, ms2_total = 0;
+    s64 ms3 = 0, ms3_total = 0;
     int run = 3;
 
     if (ac > 1)
@@ -288,15 +290,33 @@ int main(int __unused ac, __unused char**av)
             ms2_total += ms2;
 
             if (sf_count == my_count) {
-                printf("pt2 OK : line=%03d perft=%lu %'ldms lps=%'lu \"%s\"\n\n",
+                printf("pt2 OK : line=%03d perft=%lu %'ldms lps=%'lu \"%s\"\n",
                        test_line, my_count, ms2,
                        ms2? my_count*1000l/ms2: 0,
                        fen);
             } else  {
-                printf("pt2 ERR: line=%03d sf=%lu me=%lu \"%s\"\n\n",
+                printf("pt2 ERR: line=%03d sf=%lu me=%lu \"%s\"\n",
                        test_line, sf_count, my_count, fen);
             }
         }
+
+        if (run & 4) {
+            clock_start(&clock);
+            my_count = perft_new_pinners(pos, depth, 1);
+            ms3 = clock_elapsed_ms(&clock);
+            ms3_total += ms3;
+
+            if (sf_count == my_count) {
+                printf("pt3 OK : line=%03d perft=%lu %'ldms lps=%'lu \"%s\"\n",
+                       test_line, my_count, ms3,
+                       ms3? my_count*1000l/ms3: 0,
+                       fen);
+            } else  {
+                printf("pt3 ERR: line=%03d sf=%lu me=%lu \"%s\"\n",
+                       test_line, sf_count, my_count, fen);
+            }
+        }
+        printf("\n");
         pos_del(savepos);
         pos_del(pos);
         i++;
@@ -305,5 +325,7 @@ int main(int __unused ac, __unused char**av)
         printf("total perft  %'ldms\n", ms1_total);
     if (run & 2)
         printf("total perft2 %'ldms\n", ms2_total);
+    if (run & 4)
+        printf("total perft3 %'ldms\n", ms3_total);
     return 0;
 }
