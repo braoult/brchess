@@ -307,12 +307,12 @@ int main(int __unused ac, __unused char**av)
             ms3_total += ms3;
 
             if (sf_count == my_count) {
-                printf("pt3 OK : line=%03d perft=%lu %'ldms lps=%'lu \"%s\"\n",
+                printf("pt3 OK : line=%3d perft=%lu %'ldms lps=%'lu \"%s\"\n",
                        test_line, my_count, ms3,
                        ms3? my_count*1000l/ms3: 0,
                        fen);
             } else  {
-                printf("pt3 ERR: line=%03d sf=%lu me=%lu \"%s\"\n",
+                printf("pt3 ERR: line=%3d sf=%lu me=%lu \"%s\"\n",
                        test_line, sf_count, my_count, fen);
             }
         }
