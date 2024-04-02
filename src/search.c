@@ -1,4 +1,4 @@
-/* search.c - search good moves.
+/* search.c - perft + search.
  *
  * Copyright (C) 2023-2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
@@ -13,7 +13,7 @@
 
 #include <stdio.h>
 
-#include "brlib.h"
+#include <brlib.h>
 
 #include "position.h"
 #include "move-gen.h"
