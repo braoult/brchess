@@ -114,7 +114,8 @@ CFLAGS    := $(strip $(CFLAGS))
 #REL_CFLAGS := -Ofast
 
 ##################################### linker flags
-LDFLAGS   := -L$(BRLIBDIR)
+LDFLAGS   := --static
+LDFLAGS   += -L$(BRLIBDIR)
 LDFLAGS   += -flto
 
 LDFLAGS   := $(strip $(LDFLAGS))
@@ -256,11 +257,11 @@ cleanasmcpp:
 	@$(call rmfiles,$(ASMFILES) $(CPPFILES),asm and pre-processed)
 
 %.i: %.c
-	@echo generating $@ (cpp processed).
+	@echo "generating $@ (cpp processed)."
 	@$(CC) -E $(CPPFLAGS) $(CFLAGS) $< -o $@
 
 %.s: %.c
-	@echo generating $@ (asm).
+	@echo "generating $@ (asm)."
 	@$(CC) -S -fverbose-asm $(CPPFLAGS) $(CFLAGS) $< -o $@
 
 ##################################### LSP (ccls)
