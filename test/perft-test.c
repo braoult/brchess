@@ -236,7 +236,7 @@ int main(int __unused ac, __unused char**av)
     s64 ms1 = 0, ms1_total = 0;
     s64 ms2 = 0, ms2_total = 0;
     s64 ms3 = 0, ms3_total = 0;
-    int run = 3;
+    int run = 7;
 
     if (ac > 1)
         depth = atoi(av[1]);
@@ -273,12 +273,12 @@ int main(int __unused ac, __unused char**av)
             ms1_total += ms1;
 
             if (sf_count == my_count) {
-                printf("pt1 OK : line=%03d perft=%lu %'ldms lps=%'lu \"%s\"\n",
+                printf("pt1 OK : line=%3d perft=%lu %'ldms lps=%'lu \"%s\"\n",
                        test_line, my_count, ms1,
                        ms1? my_count*1000l/ms1: 0,
                        fen);
             } else  {
-                printf("pt1 ERR: line=%03d sf=%lu me=%lu \"%s\"\n",
+                printf("pt1 ERR: line=%3d sf=%lu me=%lu \"%s\"\n",
                        test_line, sf_count, my_count, fen);
             }
         }
@@ -290,12 +290,12 @@ int main(int __unused ac, __unused char**av)
             ms2_total += ms2;
 
             if (sf_count == my_count) {
-                printf("pt2 OK : line=%03d perft=%lu %'ldms lps=%'lu \"%s\"\n",
+                printf("pt2 OK : line=%3d perft=%lu %'ldms lps=%'lu \"%s\"\n",
                        test_line, my_count, ms2,
                        ms2? my_count*1000l/ms2: 0,
                        fen);
             } else  {
-                printf("pt2 ERR: line=%03d sf=%lu me=%lu \"%s\"\n",
+                printf("pt2 ERR: line=%3d sf=%lu me=%lu \"%s\"\n",
                        test_line, sf_count, my_count, fen);
             }
         }

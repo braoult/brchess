@@ -36,18 +36,18 @@
  */
 bool pseudo_is_legal(const pos_t *pos, const move_t move)
 {
-    color_t us = pos->turn, them = OPPONENT(us);
-    square_t from = move_from(move), to = move_to(move), king = pos->king[us], sq;
-    piece_type_t piece = PIECE(pos->board[from]);
-    bitboard_t kingbb = pos->bb[us][KING], tmp;
-    u64 pinned = mask(from) & pos->blockers & pos->bb[us][ALL_PIECES];
+    color_t  us = pos->turn, them = OPPONENT(us);
+    square_t from = move_from(move), to = move_to(move);
+    square_t king = pos->king[us];
+    bitboard_t kingbb = pos->bb[us][KING];
+    u64 pinned = mask(from) & pos->blockers;
 
     /* (1) - King
      * For castling, we already tested intermediate squares attacks
      * in pseudo move generation, so we only care destination square here.
      * Attention: We need to exclude king from occupation bitboard !
      */
-    if (piece == KING) {
+    if (from == king) {
         bitboard_t occ = pos_occ(pos) ^ kingbb;
         return !sq_attackers(pos, occ, to, them);
     }
@@ -62,17 +62,16 @@ bool pseudo_is_legal(const pos_t *pos, const move_t move)
      *   pinned piece: always illegal
      */
     if (pos->checkers) {
-        if (popcount64(pos->checkers) == 1) {     /* one checker */
-            square_t checker = ctz64(pos->checkers);
-            if (pinned)
-                return false;
-            if (is_enpassant(move)) {
-                return pawn_push_up(pos->en_passant, them) == checker;
-            }
-            bitboard_t between = bb_between[king][checker] | pos->checkers;
-            return mask(to) & between;
+        if (pinned)
+            return false;
+        if (bb_multiple(pos->checkers))
+            return false;
+        square_t checker = ctz64(pos->checkers);
+        if (is_enpassant(move)) {
+            return pawn_push_up(pos->en_passant, them) == checker;
         }
-        return false;                             /* double check */
+        bitboard_t between = bb_between[king][checker] | pos->checkers;
+        return mask(to) & between;
     }
 
     /* (3) - pinned pieces
@@ -85,27 +84,24 @@ bool pseudo_is_legal(const pos_t *pos, const move_t move)
     }
 
     /* (4) - En-passant
-     * We only care the situation where our King and enemy R/Q are on
-     * 5th relative rank. To do so, we create an occupation bb without
-     * the 2 pawns.
+     * pinned pieces are already handled.
+     * One case is left: when the two "disappearing" pawns would discover
+     * a R/Q check.
      */
     if (is_enpassant(move)) {
-         /* from rank bitboard */
-        bitboard_t rank5 = bb_sqrank[from];
-        /* enemy rooks/queens on from rank */
-        bitboard_t rooks = (pos->bb[them][ROOK] | pos->bb[them][QUEEN]) & rank5;
+        bitboard_t rank5 = us == WHITE? RANK_5bb: RANK_4bb;
 
-        if ((kingbb & rank5) && rooks) { /* K and enemy R/Q on rank */
-            /* captured pawn square (beside from square) */
-            square_t captured = sq_make(sq_file(pos->en_passant), sq_rank(from));
-            /* occupation bitboard without the two "disappearing" pawns */
-            bitboard_t occ = pos_occ(pos) ^ mask(from) ^ mask(captured);
+        if ((pos->bb[us][KING] & rank5)) {
+            bitboard_t exclude = mask(pos->en_passant + sq_up(them)) | mask(from);
+            bitboard_t rooks = (pos->bb[them][ROOK] | pos->bb[them][QUEEN]) & rank5;
 
-            bit_for_each64(sq, tmp, rooks)        /* check all rooks/queens */
-                if (hyperbola_rank_moves(occ, sq) & kingbb)
+            bitboard_t occ = pos_occ(pos) ^ exclude;
+            while (rooks) {
+                square_t rook = bb_next(&rooks);
+                if (hyperbola_rank_moves(occ, rook) & kingbb)
                     return false;
+            }
         }
-        return true;
     }
     return true;
 }
@@ -155,6 +151,31 @@ movelist_t *pos_all_legal(const pos_t *pos, movelist_t *movelist, movelist_t *de
         dest->move[dest->nmoves++] = move;
     return dest;
 }
+
+/**
+ * pos_gen_check_pseudomoves() - generate position pseudo-legal moves when in check
+ * @pos: position
+ * @movelist: &movelist_t array to store pseudo-moves
+ *
+ * Generate all @pos pseudo moves for player-to-move.
+ * @movelist is filled with the moves.
+ *
+ * Only a few validity checks are done here (i.e. moves are not generated):
+ *  - castling, if king is in check
+ *  - castling, if king passes an enemy-controlled square (not final square).
+ * When immediately known, a few move flags are also applied in these cases:
+ *  - castling: M_CASTLE_{K,Q}
+ *  - capture (excl. en-passant): M_CAPTURE
+ *  - en-passant: M_EN_PASSANT
+ *  - pawn double push: M_DPUSH
+ *  - promotion: M_PROMOTION
+ *  - promotion and capture
+ *
+ * TODO: move code to specific functions (especially castling, pawn push/capture)
+ *
+ * @Return: The total number of moves.
+ */
+
 
 /**
  * pos_gen_pseudomoves() - generate position pseudo-legal moves

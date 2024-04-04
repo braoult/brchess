@@ -134,6 +134,11 @@ typedef enum {
     NORTH_WEST = (NORTH + WEST),
 } dir_t;
 
+/* define diff for relative squares */
+#define sq_up(c)          ((c) == WHITE ? NORTH: SOUTH)
+#define sq_upleft(c)      ((c) == WHITE ? NORTH_WEST: SOUTH_EAST)
+#define sq_upright(c)     ((c) == WHITE ? NORTH_EAST: SOUTH_WEST)
+
 #include <time.h>
 
 typedef struct mclock {
