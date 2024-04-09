@@ -262,9 +262,7 @@ int main(int __unused ac, __unused char**av)
             continue;
         }
         sf_count = send_stockfish_fen(outfd, fishpos, &fishmoves, fen, depth);
-        //pos_gen_pseudomoves(pos, &pseudo);
         savepos = pos_dup(pos);
-        //int j = 0;
 
         if (run & 1) {
             clock_start(&clock);

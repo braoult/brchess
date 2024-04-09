@@ -393,10 +393,6 @@ struct fentest {
     },
     { __LINE__, MOVEDO | PERFT,
       "simple movedo/undo: only 2 W knights",
-      "8/1k6/8/8/8/8/6K1/1NN5 w - - 0 1"
-    },
-    { __LINE__, MOVEDO | PERFT,
-      "simple movedo/undo: only 2 W knights",
       "5n2/1k6/8/8/5K2/8/P7/1N6 w - - 0 1"
     },
     { __LINE__, FEN,

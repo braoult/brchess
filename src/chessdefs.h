@@ -45,6 +45,7 @@
  * @return: Relative rank.
  */
 #define sq_rel_rank(rank, c)  ((rank_t)((7 * (c)) ^ rank))
+#define sq_rel_file(file, c)  ((file_t)((7 * (c)) ^ file))
 
 /* castle_t bits structure
  */

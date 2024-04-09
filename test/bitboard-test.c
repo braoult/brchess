@@ -46,16 +46,24 @@ int main(int __unused ac, __unused char**av)
     sprintf(str, "between: %-22s%-22s%-22s%-22s%-22s%-22s%-22s%-22s",
             "c3-c6", "c3-f6", "c3-f3", "c3-e1", "c3-c1", "c3-a1", "c3-a3", "c3-a5");
     bb_print_multi(str, 8,
-                         bb_between[C3][C6], bb_between[C3][F6],
-                         bb_between[C3][F3], bb_between[C3][E1],
-                         bb_between[C3][C1], bb_between[C3][A1],
-                         bb_between[C3][A3], bb_between[C3][A5]);
+                   bb_between[C3][C6], bb_between[C3][F6],
+                   bb_between[C3][F3], bb_between[C3][E1],
+                   bb_between[C3][C1], bb_between[C3][A1],
+                   bb_between[C3][A3], bb_between[C3][A5]);
     sprintf(str, "between: %-22s%-22s%-22s%-22s%-22s%-22s%-22s%-22s",
             "c4-c6", "c4-f6", "c4-f3", "c4-e1", "c4-c1", "c4-a1", "c4-a3", "c4-a5");
     bb_print_multi(str, 8,
-                         bb_between[C4][C6], bb_between[C4][F6],
-                         bb_between[C4][F3], bb_between[C4][E1],
-                         bb_between[C4][C1], bb_between[C4][A1],
-                         bb_between[C4][A3], bb_between[C4][A5]);
+                   bb_between[C4][C6], bb_between[C4][F6],
+                   bb_between[C4][F3], bb_between[C4][E1],
+                   bb_between[C4][C1], bb_between[C4][A1],
+                   bb_between[C4][A3], bb_between[C4][A5]);
+    sprintf(str, "Pwn att: %-22s%-22s%-22s%-22s%-22s%-22s%-22s%-22s",
+            "White a2", "Black a2", "White h7", "Black h7",
+            "White c3", "Black c3", "White e5", "Black e5");
+    bb_print_multi(str, 8,
+                   bb_pawn_attacks[WHITE][A2], bb_pawn_attacks[BLACK][A2],
+                   bb_pawn_attacks[WHITE][H7], bb_pawn_attacks[BLACK][H7],
+                   bb_pawn_attacks[WHITE][C3], bb_pawn_attacks[BLACK][C3],
+                   bb_pawn_attacks[WHITE][E5], bb_pawn_attacks[BLACK][E5]);
     return 0;
 }

@@ -43,9 +43,6 @@ bool sq_is_attacked(const pos_t *pos, const bitboard_t occ, const square_t sq, c
     bitboard_t sqbb = mask(sq);
     color_t opp = OPPONENT(c);
 
-
-    //pos_print_raw(pos, 1);
-
     /* bishop / queen */
     if (hyperbola_bishop_moves(occ, sq) & (pos->bb[c][BISHOP] | pos->bb[c][QUEEN]))
         return true;
@@ -55,7 +52,7 @@ bool sq_is_attacked(const pos_t *pos, const bitboard_t occ, const square_t sq, c
         return true;
 
     /* pawn */
-    if ((pawn_shift_upleft(sqbb, opp) | pawn_shift_upright(sqbb, opp)) & pos->bb[c][PAWN])
+    if (bb_pawn_attacks[opp][sq] & pos->bb[c][PAWN])
         return true;
 
     /* knight */
