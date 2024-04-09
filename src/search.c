@@ -143,7 +143,7 @@ u64 perft_new_pinners(pos_t *pos, int depth, int ply)
     pos_gen_pseudomoves(pos, &pseudo);
     while ((move =  pos_next_legal(pos, &pseudo, &movetmp)) != MOVE_NONE) {
         move_do(pos, move);
-        subnodes = perft(pos, depth - 1, ply + 1);
+        subnodes = perft_new_pinners(pos, depth - 1, ply + 1);
         if (ply == 1) {
             char movestr[8];
             printf("%s: %d\n", move_str(movestr, move, 0), subnodes);
