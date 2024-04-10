@@ -116,7 +116,7 @@ pos_t *pos_clear(pos_t *pos)
  *
  * @return: true if equal, false otherwise.
  */
-bool pos_cmp(const pos_t *pos1, const pos_t *pos2)
+bool pos_cmp(__unused const pos_t *pos1, __unused const pos_t *pos2)
 {
 #define _cmpf(a) (pos1->a != pos2->a)
     bool ret = false;
@@ -201,7 +201,7 @@ void pos_set_checkers_pinners_blockers(pos_t *pos)
     bitboard_t occ = pos_occ(pos);
     bitboard_t attackers;
     bitboard_t checkers = 0, blockers = 0, pinners = 0;
-    bitboard_t targets, tmpcheckers, tmpblockers, tmppinners, tmpbb;
+    bitboard_t targets, tmpcheckers, maybeblockers, tmppinners, tmpbb;
     square_t king = pos->king[us];
     bitboard_t king_bb = mask(king);
     int pinner;
@@ -217,55 +217,47 @@ void pos_set_checkers_pinners_blockers(pos_t *pos)
     checkers |= tmpcheckers;
 
     /* maybe blockers = not checkers */
-    tmpblockers = targets & ~tmpcheckers;
+    maybeblockers = targets & ~tmpcheckers;
 
-    /* we find second targets, by removing only first ones (excl. checkers) */
-    targets = hyperbola_bishop_moves(occ ^ tmpblockers, king) ^ tmpcheckers;
+    /* we find second targets, by removing first ones (excl. checkers) */
+    if (maybeblockers) {
+        targets = hyperbola_bishop_moves(occ ^ maybeblockers, king) ^ tmpcheckers;
 
-    /* pinners = only B/Q */
-    tmppinners = targets & attackers;
-    pinners |= tmppinners;
-    //tmpblockers = 0;
+        /* pinners = only B/Q */
+        tmppinners = targets & attackers;
 
-    /* blockers = we find occupied squares between pinner and king */
-    bit_for_each64(pinner, tmpbb, tmppinners)
-        blockers |= bb_between[pinner][king] & tmpblockers;
-    //blockers |= tmpblockers;
+        /* blockers = we find occupied squares between pinner and king */
+        while (tmppinners) {
+            pinner = bb_next(&tmppinners);
+            pinners |= mask(pinner);
+            blockers |= bb_between[pinner][king] & maybeblockers;
+        }
+    }
 
     /* same for rook type */
     attackers = pos->bb[them][ROOK] | pos->bb[them][QUEEN];
-
-    /* targets is all "target" pieces if K was a bishop */
     targets = hyperbola_rook_moves(occ, king) & occ;
 
-    /* checkers = only opponent B/Q */
     tmpcheckers = targets & attackers;
     checkers |= tmpcheckers;
 
-    /* maybe blockers = not checkers */
-    tmpblockers = targets & ~tmpcheckers;
-
-    /* we find second targets, by removing only first ones (excl. checkers) */
-    targets = hyperbola_rook_moves(occ ^ tmpblockers, king) ^ tmpcheckers;
-
-    /* pinners = only B/Q */
-    tmppinners = targets & attackers;
-    pinners |= tmppinners;
-    //tmpblockers = 0;
-
-    /* blockers = we find occupied squares between pinner and king */
-    bit_for_each64(pinner, tmpbb, tmppinners)
-        blockers |= bb_between[pinner][king] & tmpblockers;
-    //blockers |= tmpblockers;
+    maybeblockers = targets & ~tmpcheckers;
+    if (maybeblockers) {
+        targets = hyperbola_rook_moves(occ ^ maybeblockers, king) ^ tmpcheckers;
+        tmppinners = targets & attackers;
+        while (tmppinners) {
+            pinner = bb_next(&tmppinners);
+            pinners |= mask(pinner);
+            blockers |= bb_between[pinner][king] & maybeblockers;
+        }
+    }
 
     /* pawns */
-    attackers =  pos->bb[them][PAWN];
-    targets = pawn_shift_upleft(king_bb, us) | pawn_shift_upright(king_bb, us);
-    checkers |= targets & attackers;
+    checkers |= bb_pawn_attacks[us][king] & pos->bb[them][PAWN];
 
     /* knight */
     attackers = pos->bb[them][KNIGHT];
-    targets = bb_knight_moves(attackers, king);
+    targets = bb_knight[king] & attackers;
     checkers |= targets;
 
     pos->checkers = checkers;
@@ -366,10 +358,10 @@ bitboard_t pos_king_blockers(const pos_t *pos, const color_t color, const bitboa
  *
  * @return: (if @strict is false) return true if check is ok, false otherwise.
  */
-bool pos_ok(const pos_t *pos, const bool strict)
+bool pos_ok(__unused const pos_t *pos, __unused const bool strict)
 {
     int n, count = 0, bbcount = 0, error = 0;
-    bitboard_t tmp;
+    __unused bitboard_t tmp;
 
     /* pawns on 1st ot 8th rank */
     tmp = (pos->bb[WHITE][PAWN] | pos->bb[BLACK][PAWN]) & (RANK_1bb | RANK_8bb);
@@ -391,7 +383,7 @@ bool pos_ok(const pos_t *pos, const bool strict)
     }
     for (square_t sq = 0; sq < 64; ++sq) {
         piece_t piece = pos->board[sq];
-        bitboard_t match;
+        __unused bitboard_t match;
         if (piece == EMPTY)
             continue;
         color_t c = COLOR(piece);
