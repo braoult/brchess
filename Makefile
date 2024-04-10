@@ -21,7 +21,7 @@ RMDIR     := rmdir
 MAKE      := make
 
 SRCDIR    := ./src
-INCDIR    := ./src					    # used by ./test sources
+INCDIR    := ./src                                          # used by ./test sources
 OBJDIR    := ./obj
 BINDIR    := ./bin
 DEPDIR    := ./dep
@@ -34,13 +34,13 @@ BRLIBDIR  := $(BRLIB)/lib
 CCLSROOT  := .ccls-root
 CCLSFILE  := compile_commands.json
 
-SRC       := $(wildcard $(SRCDIR)/*.c)			    # project sources
-SRC_FN    := $(notdir $(SRC))				    # source basename
+SRC       := $(wildcard $(SRCDIR)/*.c)                      # project sources
+SRC_FN    := $(notdir $(SRC))                               # source basename
 OBJ       := $(addprefix $(OBJDIR)/,$(SRC_FN:.c=.o))
 
 TSTSRC    := $(wildcard $(TSTDIR)/*.c)
 
-LIB       := br_$(shell uname -m)			    # library name
+LIB       := br_$(shell uname -m)                           # library name
 LIBS      := $(strip -l$(LIB) -lreadline)
 
 DEP_FN    := $(SRC_FN)
@@ -56,7 +56,6 @@ CPPFILES  := $(SRC:.c=.i) $(TSTSRC:.c=.i)
 CPPFLAGS  := -I$(BRINCDIR) -I$(INCDIR)
 
 CPPFLAGS  += -DNDEBUG                                       # assert
-
 CPPFLAGS  += -DBUG_ON                                       # brlib bug.h
 CPPFLAGS  += -DWARN_ON                                      # brlib bug.h
 
@@ -64,16 +63,16 @@ CPPFLAGS  += -DWARN_ON                                      # brlib bug.h
 #CPPFLAGS  += -DDEBUG_DEBUG                                  # enable log() functions
 #CPPFLAGS  += -DDEBUG_DEBUG_C                                # enable log() settings
 #CPPFLAGS  += -DDEBUG_POOL                                   # memory pools management
-#CPPFLAGS  += -DDEBUG_POS				     # position.c
+#CPPFLAGS  += -DDEBUG_POS                                    # position.c
 #CPPFLAGS  += -DDEBUG_MOVE                                   # move generation
 
 # fen.c
 #CPPFLAGS  += -DDEBUG_FEN                                    # FEN decoding
 
 # attack.c
-#CPPFLAGS  += -DDEBUG_ATTACK_ATTACKERS1			     # sq_attackers details
-CPPFLAGS  += -DDEBUG_ATTACK_ATTACKERS			    # sq_attackers
-CPPFLAGS  += -DDEBUG_ATTACK_PINNERS			    # sq_pinners details
+#CPPFLAGS  += -DDEBUG_ATTACK_ATTACKERS1                      # sq_attackers details
+CPPFLAGS  += -DDEBUG_ATTACK_ATTACKERS                       # sq_attackers
+CPPFLAGS  += -DDEBUG_ATTACK_PINNERS                         # sq_pinners details
 
 #CPPFLAGS  += -DDEBUG_EVAL                                   # eval functions
 #CPPFLAGS  += -DDEBUG_PIECE                                  # piece list management
@@ -88,9 +87,16 @@ CPPFLAGS  := $(strip $(CPPFLAGS))
 CFLAGS    := -std=gnu11
 
 ### dev OR release
+
 # dev
-#CFLAGS    += -O1
-#CFLAGS    += -g
+# CFLAGS    += -O1
+CFLAGS    += -g                                             # symbols (gdb, perf, etc.)
+CFLAGS    += -ginline-points                                # inlined funcs debug info
+# for gprof
+#CFLAGS += -pg
+# Next one may be useful for valgrind (when invalid instructions)
+#CFLAGS += -mno-tbm
+
 # release
 CFLAGS    += -Ofast
 
@@ -99,10 +105,6 @@ CFLAGS    += -flto
 CFLAGS    += -Wall
 CFLAGS    += -Wextra
 CFLAGS    += -Wmissing-declarations
-# for gprof
-#CFLAGS += -pg
-# Next one may be useful for valgrind (when invalid instructions)
-# CFLAGS += -mno-tbm
 
 CFLAGS    := $(strip $(CFLAGS))
 

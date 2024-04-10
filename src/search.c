@@ -1,4 +1,4 @@
-/* search.c - search good moves.
+/* search.c - perft + search.
  *
  * Copyright (C) 2023-2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
@@ -13,7 +13,7 @@
 
 #include <stdio.h>
 
-#include "brlib.h"
+#include <brlib.h>
 
 #include "position.h"
 #include "move-gen.h"
@@ -45,12 +45,13 @@ u64 perft(pos_t *pos, int depth, int ply)
 {
     int subnodes, movetmp = 0;
     u64 nodes = 0;
-    movelist_t pseudo = { .nmoves = 0 };
+    movelist_t pseudo;
     move_t move;
     state_t state;
 
     if (depth == 0)
         return 1;
+    pseudo.nmoves = 0;
     pos->checkers = pos_checkers(pos, pos->turn);
     pos_set_pinners_blockers(pos);
     state = pos->state;
@@ -74,7 +75,7 @@ u64 perft(pos_t *pos, int depth, int ply)
 }
 
 /**
- * perft2() - Perform perft on position
+ * perft_new_pinners() - Perform perft on position
  * @pos:   &position to search
  * @depth: Wanted depth.
  * @ply:   perft depth level.
@@ -82,68 +83,26 @@ u64 perft(pos_t *pos, int depth, int ply)
  * Run perft on a position. This function displays the available moves at @depth
  * level for each possible first move, and the total of moves.
  *
- * This version uses the algorithm:
- *    if (king in check)
- *      finish;
- *    if last depth
- *      return 1;
- *    gen pseudo-legal moves
- *    foreach pseudo-legal move...
- *
  * @return: total moves found at @depth level.
  */
-u64 perft2(pos_t *pos, int depth, int ply)
-{
-    int subnodes, nmove = 0;
-    u64 nodes = 0;
-    movelist_t pseudo = { .nmoves = 0 };
-    move_t move;
-    state_t state;
-
-    if (depth == 0)
-        return 1;
-    pos->checkers = pos_checkers(pos, pos->turn);
-    pos_set_pinners_blockers(pos);
-    state = pos->state;
-
-    pos_gen_pseudomoves(pos, &pseudo);
-
-    for (nmove = 0; nmove < pseudo.nmoves; ++nmove ) {
-        move = pseudo.move[nmove];
-        move_do(pos, move);
-        if (!is_in_check(pos, OPPONENT(pos->turn))) {
-            subnodes = perft2(pos, depth - 1, ply + 1);
-            nodes += subnodes;
-            if (ply == 1) {
-                char movestr[8];
-                printf("%s: %d\n", move_str(movestr, move, 0), subnodes);
-            }
-        }
-        move_undo(pos, move);
-        pos->state = state;
-    }
-    if (ply == 1)
-        printf("Total: %lu\n", nodes);
-    return nodes;
-}
-
 u64 perft_new_pinners(pos_t *pos, int depth, int ply)
 {
     int subnodes, movetmp = 0;
     u64 nodes = 0;
-    movelist_t pseudo = { .nmoves = 0 };
+    movelist_t pseudo;
     move_t move;
     state_t state;
 
     if (depth == 0)
         return 1;
+    pseudo.nmoves = 0;
     pos_set_checkers_pinners_blockers(pos);
     state = pos->state;
 
     pos_gen_pseudomoves(pos, &pseudo);
     while ((move =  pos_next_legal(pos, &pseudo, &movetmp)) != MOVE_NONE) {
         move_do(pos, move);
-        subnodes = perft(pos, depth - 1, ply + 1);
+        subnodes = perft_new_pinners(pos, depth - 1, ply + 1);
         if (ply == 1) {
             char movestr[8];
             printf("%s: %d\n", move_str(movestr, move, 0), subnodes);

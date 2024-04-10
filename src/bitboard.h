@@ -14,8 +14,8 @@
 #ifndef _BITBOARD_H
 #define _BITBOARD_H
 
-#include "brlib.h"
-#include "bitops.h"
+#include <brlib.h>
+#include <bitops.h>
 
 #include "chessdefs.h"
 #include "board.h"
@@ -39,9 +39,8 @@ extern bitboard_t bb_sqrank[64], bb_sqfile[64], bb_sqdiag[64], bb_sqanti[64];
 /* line (rank, file, diagonal or anti-diagonal) between two squares */
 extern bitboard_t bb_line[64][64];
 
-/* knight and king moves */
-extern bitboard_t bb_knight[64], bb_king[64];
-
+/* pawn, knight and king attacks */
+extern bitboard_t bb_knight[64], bb_king[64], bb_pawn_attacks[2][64];
 
 /* TODO (maybe C23?) when we can ensure an enum can be u64
  *
@@ -183,13 +182,64 @@ static __always_inline bitboard_t bb_file(int file)
 }
 */
 
+/**
+ * bb_first_bb() - return bitboard of first square of a bitboard.
+ * @bb: bitboard
+ *
+ * bb must be non-zero.
+ *
+ * @return: bitboard of first square (lsb) of @bb.
+ */
+static __always_inline square_t bb_first_bb(bitboard_t bb)
+{
+    return bb & -bb;
+}
+
+/**
+ * bb_next() - clear and return next (lsb) square of a bitboard.
+ * @bb: &bitboard
+ *
+ * The bitboard addressed by @bb must be non-zero.
+ *
+ * @return: first bit (lsb) of @bb.
+ */
+static __always_inline square_t bb_next(bitboard_t *bb)
+{
+    square_t sq = ctz64(*bb);
+    *bb &= *bb - 1;
+    return sq;
+}
+
+/**
+ * bb_multiple() - test if a bitboard has multiple bits.
+ * @bb: bitboard
+ *
+ * @return: true if @bb has more than 1 bit, false otherwise.
+ */
+static __always_inline bool bb_multiple(bitboard_t bb)
+{
+    return !!(bb & (bb - 1));
+}
+
+/**
+ * bb_shift() - shift bitboard
+ * @bb: bitboard
+ *
+ * No control is done on off-board shifting (i.e. shifting -1 from A2 gives H3).
+ *
+ * @return: true if @bb has more than 1 bit, false otherwise.
+ */
+static __always_inline bitboard_t bb_shift(bitboard_t bb, int shift)
+{
+   return shift >= 0 ? bb << shift : bb >> -shift;
+}
+
+
 #define bb_rank(r)        ((u64) RANK_1bb << ((r) * 8))
-#define BB_FILE(f)        ((u64) FILE_Abb << (f))
+#define bb_file(f)        ((u64) FILE_Abb << (f))
 
 #define bb_rel_rank(r, c) bb_rank(sq_rel_rank(r, c))
-
-//#define BB_REL_RANK(r, c) (RANK_1bb << (SQ_REL_RANK(r, c) * 8))
-//#define BB_REL_FILE(f, c) (FILE_Abb << (SQ_REL_RANK((f), (c))))
+#define bb_rel_file(f, c) bb_file(sq_rel_rank(f, c))
 
 /**
  * bb_sq_aligned() - check if two squares are aligned (same file or rank).
@@ -219,7 +269,7 @@ static __always_inline bool bb_sq_aligned3(square_t sq1, square_t sq2, square_t 
  * @sq1: square 1
  * @sq2: square 2
  *
- * @return: bitboard of @betw if between @sq1 and @sq2.
+ * @return: bitboard of @sq if between @sq1 and @sq2.
  */
 static __always_inline bitboard_t bb_sq_between(square_t sq, square_t sq1, square_t sq2)
 {
@@ -260,17 +310,20 @@ static __always_inline bitboard_t shift_nw(const bitboard_t bb)
     return (bb & ~FILE_Abb) << NORTH_WEST;
 }
 
-#define pawn_up_value(c)          ((c) == WHITE ? 8: -8)
 /* pawn moves/attacks (for bitboards) */
 #define pawn_shift_up(bb, c)      ((c) == WHITE ? shift_n(bb): shift_s(bb))
 #define pawn_shift_upleft(bb, c)  ((c) == WHITE ? shift_nw(bb): shift_se(bb))
 #define pawn_shift_upright(bb, c) ((c) == WHITE ? shift_ne(bb): shift_sw(bb))
+
+#define pawn_attacks_bb(bb, c)    (pawn_shift_upleft(bb, c) |                   \
+                                   pawn_shift_upright(bb, c))
+
 /* pawn move (for single pawn) - NO SQUARE CONTROL HERE !
  * Need to make functions with control instead.
  */
 #define pawn_push_up(sq, c)       ((sq) + ((c) == WHITE ? NORTH:      SOUTH))
-#define pawn_push_upleft(sq, c)   ((sq) + ((c) == WHITE ? NORTH_WEST: SOUTH_EAST))
-#define pawn_push_upright(sq, c)  ((sq) + ((c) == WHITE ? NORTH_EAST: SOUTH_WEST))
+//#define pawn_push_upleft(sq, c)   ((sq) + ((c) == WHITE ? NORTH_WEST: SOUTH_EAST))
+//#define pawn_push_upright(sq, c)  ((sq) + ((c) == WHITE ? NORTH_EAST: SOUTH_WEST))
 
 bitboard_t bitboard_between_excl(square_t sq1, square_t sq2);
 void bitboard_init(void);

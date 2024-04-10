@@ -27,7 +27,7 @@ bitboard_t bb_between_excl[64][64];
 bitboard_t bb_between[64][64];
 bitboard_t bb_line[64][64];
 
-bitboard_t bb_knight[64], bb_king[64];
+bitboard_t bb_knight[64], bb_king[64], bb_pawn_attacks[2][64];
 
 /*  vectors are clockwise from N */
 static int knight_vector[] = {
@@ -105,7 +105,9 @@ void bitboard_init(void)
     } ;
     bitboard_t tmpbb[64][4] = { 0 };
 
-    /* 1) square to bitboard, and in-between-sq2-excluded */
+    /* 1) square to bitboard
+     *    in-between, sq2 excluded
+     */
     for (square_t sq1 = A1; sq1 <= H8; ++sq1) {
         bb_sq[sq1] = mask(sq1);
         for (square_t sq2 = A1; sq2 <= H8; ++sq2)
@@ -151,18 +153,18 @@ void bitboard_init(void)
                     bb_line[sq1][sq2] = bb_sqdiag[sq1];
                 else if (bb_sqanti[sq1] == bb_sqanti[sq2])
                     bb_line[sq1][sq2] = bb_sqanti[sq1];
-
-                //if (bb_line[sq1][sq2]) {
-                //    printf("bb_line[%d][%d] = %16lx\n", sq1, sq2, bb_line[sq1][sq2]);
-                //}
             }
         }
     }
 
-    /* 3) knight and king moves */
+    /* 3) pawn, knight and king attacks
+     */
     for (square_t sq = A1; sq <= H8; ++sq) {
-        //rank_t r1 = sq_rank(sq);
-        //file_t f1 = sq_file(sq);
+        if (sq >= A2)
+            bb_pawn_attacks[BLACK][sq] = pawn_attacks_bb(mask(sq), BLACK);
+        if (sq <= H7)
+            bb_pawn_attacks[WHITE][sq] = pawn_attacks_bb(mask(sq), WHITE);
+
         for (int vec = 0; vec < 8; ++vec) {
             int dst = sq + knight_vector[vec];
             if (sq_ok(dst)) {

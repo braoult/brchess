@@ -35,10 +35,9 @@ struct fentest {
       ""
     },
      */
-    /* tests rank movegen bug - FIXED
-     */
-    //"4k3/pppppppp/8/8/8/8/PPPPPPPP/2BRK3 w - - 0 1",
-    //"4k3/pppppppp/8/8/8/8/PPPPPPPP/1B1R1K2 w - - 0 1",
+
+/* ***************** TEMP TESTS ABOVE ************************** */
+
     { __LINE__, MOVEGEN | MOVEDO | PERFT,
       "illegal white e.p.",
       "3k4/8/5K2/3pP3/8/2b5/8/8 w - d6 0 1",
@@ -92,43 +91,43 @@ struct fentest {
      * },
      */
     { __LINE__, ATTACK,
-      "checkers: a1 h1",
-      "1k6/8/8/8/8/8/8/r2K3r w - - 1 1"
+      "only 3 K moves (but impossible situation)",
+      "1k6/8/8/8/8/8/8/r2K3r w - - 0 1"
     },
     { __LINE__, ATTACK,
       "checkers: a8 h8",
-      "R2k3R/8/8/8/8/8/8/1K6 b - - 1 1"
+      "R2k3R/8/8/8/8/8/8/1K6 b - - 0 1"
     },
     { __LINE__, ATTACK,
       "checkers: b3 g3",
-      "1k6/8/8/8/8/1r1K2r1/8/8 w - - 1 1"
+      "1k6/8/8/8/8/1r1K2r1/8/8 w - - 0 1"
     },
 
     { __LINE__, ATTACK,
       "checkers: b6 g6",
-      "8/8/1R1k2R1/8/8/8/8/1K6 b - - 1 1"
+      "8/8/1R1k2R1/8/8/8/8/1K6 b - - 0 1"
     },
 
     { __LINE__, ATTACK,
       "checkers: g2 g7",
-      "8/k5r1/8/8/6K1/8/6r1/8 w - - 1 1"
+      "8/k5r1/8/8/6K1/8/6r1/8 w - - 0 1"
     },
     { __LINE__, ATTACK,
       "checkers: g2 g7",
-      "8/6R1/8/6k1/8/8/K5R1/8 b - - 1 1"
+      "8/6R1/8/6k1/8/8/K5R1/8 b - - 0 1"
     },
     { __LINE__, ATTACK,
       "checkers: d5 e3, pinners: none (2 pieces between attacker & K)",
-      "3k4/8/8/3r3b/b7/1N2nn2/2n1B3/rNBK1Rbr w - - 1 1"
+      "3k4/8/8/3r3b/b7/1N2nn2/2n1B3/rNBK1Rbr w - - 0 1"
     },
 
     { __LINE__, ATTACK,
       "checkers: d4 e6 pinners: h4 a5 a8 h8",
-      "Rn1k1r1R/4b3/1n2N3/B7/3R3B/8/8/3K4 b - - 1 1"
+      "Rn1k1r1R/4b3/1n2N3/B7/3R3B/8/8/3K4 b - - 0 1"
     },
     { __LINE__, ATTACK,
       "checkers: d5 e3, pinners: a1 h1 a4 h5",
-      "3k4/8/8/3r3b/b7/1N2n3/4B3/rN1K1R1r w - - 1 0"
+      "3k4/8/8/3r3b/b7/1N2n3/4B3/rN1K1R1r w - - 0 1"
     },
 
     { __LINE__, MOVEGEN | MOVEDO | PERFT,
@@ -386,10 +385,6 @@ struct fentest {
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
       "Stalemate & Checkmate",
       "8/8/2k5/5q2/5n2/8/5K2/8 b - - 0 1"
-    },
-    { __LINE__, MOVEDO | PERFT,
-      "simple movedo/undo: only 2 W knights",
-      "8/1k6/8/8/8/8/6K1/1NN5 w - - 0 1"
     },
     { __LINE__, MOVEDO | PERFT,
       "simple movedo/undo: only 2 W knights",
