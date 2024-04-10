@@ -42,6 +42,7 @@ bool pseudo_is_legal(const pos_t *pos, const move_t move)
     bitboard_t kingbb = pos->bb[us][KING];
     bitboard_t occ = pos_occ(pos);
     u64 pinned = mask(from) & pos->blockers;
+    u64 checkers = pos->checkers;
 
     /* (1) - Castling & King
      * For castling, we need to check intermediate squares attacks only.
@@ -49,12 +50,12 @@ bool pseudo_is_legal(const pos_t *pos, const move_t move)
      * king from occupation bitboard (to catch king moving away from checker
      * on same line) !
      */
-    if (is_castle(move)) {
-        square_t dir = to > from? 1: -1;
-        if (sq_attackers(pos, occ, from + dir, them))
-            return false;
-    }
-    if (from == king) {
+    if (unlikely(from == king)) {
+        if (unlikely(is_castle(move))) {
+            square_t dir = to > from? 1: -1;
+            if (sq_attackers(pos, occ, from + dir, them))
+                return false;
+        }
         return !sq_attackers(pos, occ ^ kingbb, to, them);
     }
 
@@ -68,18 +69,18 @@ bool pseudo_is_legal(const pos_t *pos, const move_t move)
      *   e.p., legal if the grabbed pawn is giving check
      *   pinned piece: always illegal
      */
-    if (pos->checkers) {
+    if (checkers) {
         if (pinned)
             return false;
-        if (bb_multiple(pos->checkers))
+        if (bb_multiple(checkers))
             return false;
-        square_t checker = ctz64(pos->checkers);
+        square_t checker = ctz64(checkers);
         if (is_enpassant(move)) {
             return pos->en_passant + sq_up(them) == checker;
         }
         return true;
-        bitboard_t between = bb_between[king][checker] | pos->checkers;
-        return mask(to) & between;
+        //bitboard_t between = bb_between[king][checker] | pos->checkers;
+        //return mask(to) & between;
     }
 
     /* (3) - pinned pieces
@@ -388,6 +389,30 @@ int pos_gen_pseudomoves(pos_t *pos, movelist_t *movelist)
         *moves++ = move_make_flags(from, to, M_DPUSH);
     }
 
+    /* pawn: captures */
+    /*
+     * tmp_bb = pawn_attacks_bb(pos->bb[us][PAWN], us) & enemy_pieces;
+     * //bb_print("FAIL", tmp_bb);
+     * to_bb = tmp_bb & ~rel_rank8;
+     * while (to_bb) {
+     *     to = bb_next(&to_bb);
+     *     from_bb = bb_pawn_attacks[them][to] & pos->bb[us][PAWN];
+     *     while (from_bb) {
+     *         from = bb_next(&from_bb);
+     *         *moves++ = move_make(from, to);
+     *     }
+     * }
+     * to_bb = tmp_bb & rel_rank8;
+     * while (to_bb) {
+     *     to = bb_next(&to_bb);
+     *     from_bb = bb_pawn_attacks[them][to] & pos->bb[us][PAWN];
+     *     while (from_bb) {
+     *         from = bb_next(&from_bb);
+     *         moves = move_make_promotions(moves, from, to);
+     *     }
+     * }
+     */
+
     /* pawn: captures left */
     bitboard_t filter = ~bb_rel_file(FILE_A, us);
     shift = sq_upleft(us);
@@ -427,18 +452,26 @@ int pos_gen_pseudomoves(pos_t *pos, movelist_t *movelist)
      * TODO: special case when in-check here ?
      */
     if ((to = pos->en_passant) != SQUARE_NONE) {
-        to_bb = mask(to);
-        /* if e.p not on file H, we may add an e.p move to "up-left" */
-        filter = ~bb_rel_file(FILE_A, us);
-        shift = sq_upleft(us);
-        if (bb_shift(pos->bb[us][PAWN] & filter, shift) & to_bb)
-            *moves++ = move_make_enpassant(to - shift, to);
-
-        filter = ~bb_rel_file(FILE_H, us);
-        shift = sq_upright(us);
-        if (bb_shift(pos->bb[us][PAWN] & filter, shift) & to_bb)
-            *moves++ = move_make_enpassant(to - shift, to);
+        from_bb = bb_pawn_attacks[them][to] & pos->bb[us][PAWN];
+        while (from_bb) {
+            from = bb_next(&from_bb);
+            *moves++ = move_make_enpassant(from, to);
+        }
     }
+    /*
+     * to_bb = mask(to);
+     *     /\* if e.p not on file H, we may add an e.p move to "up-left" *\/
+     *     filter = ~bb_rel_file(FILE_A, us);
+     *     shift = sq_upleft(us);
+     *     if (bb_shift(pos->bb[us][PAWN] & filter, shift) & to_bb)
+     *         *moves++ = move_make_enpassant(to - shift, to);
+     *
+     *     filter = ~bb_rel_file(FILE_H, us);
+     *     shift = sq_upright(us);
+     *     if (bb_shift(pos->bb[us][PAWN] & filter, shift) & to_bb)
+     *         *moves++ = move_make_enpassant(to - shift, to);
+     * }
+     */
 
     /* TODO: add function per piece, and type, for easier debug
      */

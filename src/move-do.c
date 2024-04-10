@@ -56,6 +56,7 @@ pos_t *move_do(pos_t *pos, const move_t move) //, state_t *state)
     piece_type_t ptype = PIECE(piece);
     color_t pcolor = COLOR(piece);
     piece_t new_piece = piece;
+    int up = sq_up(us);
 
     ++pos->clock_50;
     ++pos->plycount;
@@ -90,9 +91,9 @@ pos_t *move_do(pos_t *pos, const move_t move) //, state_t *state)
     } else if (ptype == PAWN) {                   /* pawn non capture or e.p. */
         pos->clock_50 = 0;
         if (is_dpush(move))                       /* if pawn double push, set e.p. */
-            pos->en_passant = from + sq_up(us);
+            pos->en_passant = from + up;
         else if (is_enpassant(move)) {            /* clear grabbed pawn */
-            square_t grabbed = pawn_push_up(to, them);
+            square_t grabbed = to - up;
             pos_clr_sq(pos, grabbed);
         }
     }
@@ -157,7 +158,7 @@ pos_t *move_undo(pos_t *pos, const move_t move)//, const state_t *state)
     color_t them = pos->turn, us = OPPONENT(them);
     square_t from = move_from(move), to = move_to(move);
     piece_t piece = pos->board[to];
-
+    int up = sq_up(them);
 
     if (is_promotion(move))
         piece = MAKE_PIECE(PAWN, us);
@@ -182,7 +183,7 @@ pos_t *move_undo(pos_t *pos, const move_t move)//, const state_t *state)
         pos_set_sq(pos, rookto, pos->board[rookfrom]);
         pos_clr_sq(pos, rookfrom);
     } else if (is_enpassant(move)) {              /* restore grabbed pawn */
-        square_t grabbed = pawn_push_up(to, them);
+        square_t grabbed = to + up;
         pos_set_sq(pos, grabbed, MAKE_PIECE(PAWN, them));
     }
 
