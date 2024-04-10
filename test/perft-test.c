@@ -299,6 +299,8 @@ int main(int __unused ac, __unused char**av)
         pos_del(savepos);
         pos_del(pos);
         i++;
+        /* to run first test only */
+        // exit(0);
     }
     if (run & 1)
         printf("total perft  %'ldms\n", ms1_total);

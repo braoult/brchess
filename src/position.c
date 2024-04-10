@@ -201,9 +201,8 @@ void pos_set_checkers_pinners_blockers(pos_t *pos)
     bitboard_t occ = pos_occ(pos);
     bitboard_t attackers;
     bitboard_t checkers = 0, blockers = 0, pinners = 0;
-    bitboard_t targets, tmpcheckers, maybeblockers, tmppinners, tmpbb;
+    bitboard_t targets, tmpcheckers, maybeblockers, tmppinners;
     square_t king = pos->king[us];
-    bitboard_t king_bb = mask(king);
     int pinner;
 
     /* bishop type - we attack with a bishop from king position */
@@ -216,7 +215,7 @@ void pos_set_checkers_pinners_blockers(pos_t *pos)
     tmpcheckers = targets & attackers;
     checkers |= tmpcheckers;
 
-    /* maybe blockers = not checkers */
+    /* maybe blockers = we remove checkers, to look "behind" */
     maybeblockers = targets & ~tmpcheckers;
 
     /* we find second targets, by removing first ones (excl. checkers) */
@@ -256,9 +255,7 @@ void pos_set_checkers_pinners_blockers(pos_t *pos)
     checkers |= bb_pawn_attacks[us][king] & pos->bb[them][PAWN];
 
     /* knight */
-    attackers = pos->bb[them][KNIGHT];
-    targets = bb_knight[king] & attackers;
-    checkers |= targets;
+    checkers |= bb_knight[king] & pos->bb[them][KNIGHT];
 
     pos->checkers = checkers;
     pos->pinners = pinners;
