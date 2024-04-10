@@ -251,10 +251,8 @@ void pos_set_checkers_pinners_blockers(pos_t *pos)
         }
     }
 
-    /* pawns */
+    /* pawns & knights */
     checkers |= bb_pawn_attacks[us][king] & pos->bb[them][PAWN];
-
-    /* knight */
     checkers |= bb_knight[king] & pos->bb[them][KNIGHT];
 
     pos->checkers = checkers;
