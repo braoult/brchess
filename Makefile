@@ -56,7 +56,6 @@ CPPFILES  := $(SRC:.c=.i) $(TSTSRC:.c=.i)
 CPPFLAGS  := -I$(BRINCDIR) -I$(INCDIR)
 
 CPPFLAGS  += -DNDEBUG                                       # assert
-
 CPPFLAGS  += -DBUG_ON                                       # brlib bug.h
 CPPFLAGS  += -DWARN_ON                                      # brlib bug.h
 
@@ -88,9 +87,16 @@ CPPFLAGS  := $(strip $(CPPFLAGS))
 CFLAGS    := -std=gnu11
 
 ### dev OR release
+
 # dev
-#CFLAGS    += -O1
-#CFLAGS    += -g
+# CFLAGS    += -O1
+CFLAGS    += -g						    # symbols (gdb, perf, etc.)
+CFLAGS    += -ginline-points				    # inlined funcs debug info
+# for gprof
+#CFLAGS += -pg
+# Next one may be useful for valgrind (when invalid instructions)
+#CFLAGS += -mno-tbm
+
 # release
 CFLAGS    += -Ofast
 
@@ -99,10 +105,6 @@ CFLAGS    += -flto
 CFLAGS    += -Wall
 CFLAGS    += -Wextra
 CFLAGS    += -Wmissing-declarations
-# for gprof
-#CFLAGS += -pg
-# Next one may be useful for valgrind (when invalid instructions)
-# CFLAGS += -mno-tbm
 
 CFLAGS    := $(strip $(CFLAGS))
 

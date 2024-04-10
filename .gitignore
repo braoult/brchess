@@ -4,6 +4,7 @@ vgcore.*
 *.i
 *.old
 *.save
+perf.data
 /GPATH
 /GRTAGS
 /GTAGS
