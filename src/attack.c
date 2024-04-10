@@ -40,7 +40,6 @@
  */
 bool sq_is_attacked(const pos_t *pos, const bitboard_t occ, const square_t sq, const color_t c)
 {
-    bitboard_t sqbb = mask(sq);
     color_t opp = OPPONENT(c);
 
     /* bishop / queen */

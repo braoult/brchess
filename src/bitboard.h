@@ -314,6 +314,7 @@ static __always_inline bitboard_t shift_nw(const bitboard_t bb)
 #define pawn_shift_up(bb, c)      ((c) == WHITE ? shift_n(bb): shift_s(bb))
 #define pawn_shift_upleft(bb, c)  ((c) == WHITE ? shift_nw(bb): shift_se(bb))
 #define pawn_shift_upright(bb, c) ((c) == WHITE ? shift_ne(bb): shift_sw(bb))
+
 #define pawn_attacks_bb(bb, c)    (pawn_shift_upleft(bb, c) |                   \
                                    pawn_shift_upright(bb, c))
 
@@ -321,8 +322,8 @@ static __always_inline bitboard_t shift_nw(const bitboard_t bb)
  * Need to make functions with control instead.
  */
 #define pawn_push_up(sq, c)       ((sq) + ((c) == WHITE ? NORTH:      SOUTH))
-#define pawn_push_upleft(sq, c)   ((sq) + ((c) == WHITE ? NORTH_WEST: SOUTH_EAST))
-#define pawn_push_upright(sq, c)  ((sq) + ((c) == WHITE ? NORTH_EAST: SOUTH_WEST))
+//#define pawn_push_upleft(sq, c)   ((sq) + ((c) == WHITE ? NORTH_WEST: SOUTH_EAST))
+//#define pawn_push_upright(sq, c)  ((sq) + ((c) == WHITE ? NORTH_EAST: SOUTH_WEST))
 
 bitboard_t bitboard_between_excl(square_t sq1, square_t sq2);
 void bitboard_init(void);
