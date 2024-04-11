@@ -54,7 +54,6 @@ pos_t *move_do(pos_t *pos, const move_t move) //, state_t *state)
     piece_t piece = pos->board[from];
     piece_t captured = pos->board[to];
     piece_type_t ptype = PIECE(piece);
-    color_t pcolor = COLOR(piece);
     piece_t new_piece = piece;
     int up = sq_up(us);
 
@@ -64,7 +63,7 @@ pos_t *move_do(pos_t *pos, const move_t move) //, state_t *state)
     pos->turn = them;
     pos->captured = captured;
 
-    bug_on(pcolor != us);
+    bug_on(COLOR(piece) != us);
 
     if (is_promotion(move)) {
         bug_on(sq_rank(to) != sq_rel_rank(RANK_8, us));

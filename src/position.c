@@ -120,50 +120,29 @@ bool pos_cmp(__unused const pos_t *pos1, __unused const pos_t *pos2)
 {
 #define _cmpf(a) (pos1->a != pos2->a)
     bool ret = false;
-    if (warn_on(_cmpf(node_count)))
-        goto end;
-    if (warn_on(_cmpf(turn)))
+
+    if (_cmpf(node_count) || _cmpf(turn))
         goto end;
 
     /* move_do/undo position state */
-    if (warn_on(_cmpf(en_passant)))
+    if (_cmpf(en_passant) || _cmpf(castle) ||
+        _cmpf(clock_50) || _cmpf(plycount))
         goto end;
-    if (warn_on(_cmpf(castle)))
-        goto end;
-    if (warn_on(_cmpf(clock_50)))
-        goto end;
-    if (warn_on(_cmpf(plycount)))
-        goto end;
-    //if (warn_on(_cmpf(captured)))
-    //    goto end;
 
     for (square_t sq = A1; sq <= H8; ++sq)
-        if (warn_on(_cmpf(board[sq])))
+        if (_cmpf(board[sq]))
             goto end;
 
     for (color_t color = WHITE; color <= BLACK; ++color) {
         for (piece_type_t piece = 0; piece <= KING; ++piece)
-            if (warn_on(_cmpf(bb[color][piece])))
+            if (_cmpf(bb[color][piece]))
                 goto end;
-        //pos->controlled[color] = 0;
-        if (warn_on(_cmpf(king[color])))
+        if (_cmpf(king[color]))
             goto end;
     }
 
-    if (warn_on(_cmpf(checkers)))
+    if (_cmpf(checkers) ||_cmpf(pinners) || _cmpf(blockers))
         goto end;
-    if (warn_on(_cmpf(pinners)))
-        goto end;
-    if (warn_on(_cmpf(blockers)))
-        goto end;
-
-    /*
-     * if (warn_on(_cmpf(moves.nmoves)))
-     *     goto end;
-     * for (int i = 0; i < pos1->moves.nmoves; ++i)
-     *     if (warn_on(_cmpf(moves.move[i])))
-     *         goto end;
-     */
 
     ret = true;
 end:
@@ -353,14 +332,13 @@ bitboard_t pos_king_blockers(const pos_t *pos, const color_t color, const bitboa
  *
  * @return: (if @strict is false) return true if check is ok, false otherwise.
  */
-bool pos_ok(__unused const pos_t *pos, __unused const bool strict)
+bool pos_ok(const pos_t *pos, const bool strict)
 {
     int n, count = 0, bbcount = 0, error = 0;
-    __unused bitboard_t tmp;
 
     /* pawns on 1st ot 8th rank */
-    tmp = (pos->bb[WHITE][PAWN] | pos->bb[BLACK][PAWN]) & (RANK_1bb | RANK_8bb);
-    error += warn_on(tmp);
+    error += warn_on((pos->bb[WHITE][PAWN] | pos->bb[BLACK][PAWN]) &
+                     (RANK_1bb | RANK_8bb));
 
     for (color_t color = WHITE; color <= BLACK; ++color) {
         /* pawn count */
@@ -396,7 +374,8 @@ bool pos_ok(__unused const pos_t *pos, __unused const bool strict)
     /* kings distance is less than 2 */
     error += warn_on(sq_dist(pos->king[WHITE], pos->king[BLACK]) < 2);
 
-    bug_on(strict && error);
+    if (strict)
+        bug_on(error);
     return error? false: true;
 }
 
