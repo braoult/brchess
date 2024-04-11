@@ -52,8 +52,7 @@ u64 perft(pos_t *pos, int depth, int ply)
     if (depth == 0)
         return 1;
     pseudo.nmoves = 0;
-    pos->checkers = pos_checkers(pos, pos->turn);
-    pos_set_pinners_blockers(pos);
+    pos_set_checkers_pinners_blockers(pos);
     state = pos->state;
 
     pos_gen_pseudomoves(pos, &pseudo);
