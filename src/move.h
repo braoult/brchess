@@ -101,7 +101,8 @@ static inline move_t move_make(square_t from, square_t to)
 
 static inline move_t move_make_flags(square_t from, square_t to, move_flags_t flags)
 {
-    return move_set_flags(move_make(from, to), flags);
+    return (to << M_OFF_TO) | from | flags;
+    //move_set_flags(move_make(from, to), flags);
 }
 
 static inline move_t move_make_capture(square_t from, square_t to)

@@ -230,19 +230,64 @@ static inline __unused move_t *gen_pseudo_king(move_t *moves, square_t from,
  */
 
 /**
- * move_make_promotions() - generate all promotions for given pawn and dest.
+ * moves_gen_flags() - generate all moves from square to bitboard (with flags).
+ * @moves: &move_t array where to store moves
+ * @from: square_t piece position
+ * @to_bb: destination bitboard
+ * @flags: flags to apply
+ *
+ * Generate (at address @moves) moves from square @from to each square in @to_bb,
+ * with flags @flags.
+ *
+ * @Return: New @moves.
+ */
+static inline __unused move_t *moves_gen_flags(move_t *moves, square_t from, bitboard_t to_bb,
+    __unused move_flags_t flags)
+{
+    square_t to;
+    while(to_bb) {
+        to = bb_next(&to_bb);
+        *moves++ = move_make_flags(from, to, flags);
+    }
+    return moves;
+}
+
+/**
+ * move_gen_promotions() - generate all promotions for given pawn and dest.
  * @moves: &move_t array where to store moves
  * @from: pawn position
  * @to: promotion square
  *
- * Generate all (Q/R/B/N) promotion moves on @to for pawn @from.
+ * Generate  (at address @moves) all promotion (Q/R/B/N) moves on @to for
+ * pawn @from.
  *
- * @Return: New @moves (incremented by 4).
+ * @Return: New @moves.
  */
-static inline move_t *move_make_promotions(move_t *moves, square_t from, square_t to)
+static inline move_t *move_gen_promotions(move_t *moves, square_t from, square_t to)
 {
     for (piece_type_t pt = QUEEN; pt >= KNIGHT; --pt)
         *moves++ = move_make_promote(from, to, pt);
+    return moves;
+}
+
+/**
+ * moves_gen() - generate all moves from square to bitboard.
+ * @moves: &move_t array where to store moves
+ * @from: square_t piece position
+ * @to_bb: destination bitboard
+ *
+ * Generate (at address @moves) moves from square @from to each square in @to_bb.
+ *
+ * @Return: New @moves.
+ */
+static inline move_t *moves_gen(move_t *moves, square_t from, bitboard_t to_bb)
+{
+    square_t to;
+    // bb_print(sq_to_string(from), to_bb);
+    while(to_bb) {
+        to = bb_next(&to_bb);
+        *moves++ = move_make(from, to);
+    }
     return moves;
 }
 
@@ -289,12 +334,13 @@ int pos_gen_pseudomoves(pos_t *pos, movelist_t *movelist)
 
     //*nmoves = 0;
 
-    /* king - MUST BE FIRST (we stop if doubler check) */
+    /* king - MUST BE FIRST */
     to_bb = bb_king_moves(dest_squares, king);
-    while(to_bb) {
-        to = bb_next(&to_bb);
-        *moves++ = move_make(king, to);
-    }
+    moves = moves_gen(moves, king, to_bb);
+    //while(to_bb) {
+    //    to = bb_next(&to_bb);
+    //    *moves++ = move_make(king, to);
+    //}
 
     if (bb_multiple(pos->checkers))               /* double check, we stop here */
         goto finish;
@@ -334,19 +380,21 @@ int pos_gen_pseudomoves(pos_t *pos, movelist_t *movelist)
     while (from_bb) {
         from = bb_next(&from_bb);
         to_bb = hyperbola_bishop_moves(occ, from) & dest_squares;
-        while(to_bb) {
-            to = bb_next(&to_bb);
-            *moves++ = move_make(from, to);
-        }
+        moves = moves_gen(moves, from, to_bb);
+        //while(to_bb) {
+        //    to = bb_next(&to_bb);
+        //    *moves++ = move_make(from, to);
+        //}
     }
     from_bb = pos->bb[us][ROOK] | pos->bb[us][QUEEN];
     while (from_bb) {
         from = bb_next(&from_bb);
         to_bb = hyperbola_rook_moves(occ, from) & dest_squares;
-        while(to_bb) {
-            to = bb_next(&to_bb);
-            *moves++ = move_make(from, to);
-        }
+        moves = moves_gen(moves, from, to_bb);
+        //while(to_bb) {
+        //    to = bb_next(&to_bb);
+        //    *moves++ = move_make(from, to);
+        //}
     }
 
     /* knight */
@@ -354,10 +402,11 @@ int pos_gen_pseudomoves(pos_t *pos, movelist_t *movelist)
     while (from_bb) {
         from = bb_next(&from_bb);
         to_bb = bb_knight_moves(dest_squares, from);
-        while(to_bb) {
-            to = bb_next(&to_bb);
-            *moves++ = move_make(from, to);
-        }
+        moves = moves_gen(moves, from, to_bb);
+        //while(to_bb) {
+        //    to = bb_next(&to_bb);
+        //    *moves++ = move_make(from, to);
+        //}
     }
 
     /* pawn: relative rank and files */
@@ -374,11 +423,11 @@ int pos_gen_pseudomoves(pos_t *pos, movelist_t *movelist)
         from = to - shift;
         *moves++ = move_make(from, to);
     }
-    to_bb = tmp_bb & rel_rank8 & dest_squares;           /* promotions */
+    to_bb = tmp_bb & rel_rank8 & dest_squares;    /* promotions */
     while(to_bb) {
         to = bb_next(&to_bb);
         from = to - shift;
-        moves = move_make_promotions(moves, from, to);
+        moves = move_gen_promotions(moves, from, to);
     }
 
     /* possible second push */
@@ -428,7 +477,7 @@ int pos_gen_pseudomoves(pos_t *pos, movelist_t *movelist)
     while (to_bb) {
         to = bb_next(&to_bb);
         from = to - shift;
-        moves = move_make_promotions(moves, from, to);
+        moves = move_gen_promotions(moves, from, to);
     }
 
     /* pawn: captures right */
@@ -445,7 +494,7 @@ int pos_gen_pseudomoves(pos_t *pos, movelist_t *movelist)
     while (to_bb) {
         to = bb_next(&to_bb);
         from = to - shift;
-        moves = move_make_promotions(moves, from, to);
+        moves = move_gen_promotions(moves, from, to);
     }
 
     /* pawn: en-passant
@@ -458,20 +507,6 @@ int pos_gen_pseudomoves(pos_t *pos, movelist_t *movelist)
             *moves++ = move_make_enpassant(from, to);
         }
     }
-    /*
-     * to_bb = mask(to);
-     *     /\* if e.p not on file H, we may add an e.p move to "up-left" *\/
-     *     filter = ~bb_rel_file(FILE_A, us);
-     *     shift = sq_upleft(us);
-     *     if (bb_shift(pos->bb[us][PAWN] & filter, shift) & to_bb)
-     *         *moves++ = move_make_enpassant(to - shift, to);
-     *
-     *     filter = ~bb_rel_file(FILE_H, us);
-     *     shift = sq_upright(us);
-     *     if (bb_shift(pos->bb[us][PAWN] & filter, shift) & to_bb)
-     *         *moves++ = move_make_enpassant(to - shift, to);
-     * }
-     */
 
     /* TODO: add function per piece, and type, for easier debug
      */
