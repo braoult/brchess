@@ -148,12 +148,8 @@ pos_t *move_do(pos_t *pos, const move_t move) //, state_t *state)
  *
  * @return: pos.
  */
-pos_t *move_undo(pos_t *pos, const move_t move)//, const state_t *state)
+pos_t *move_undo(pos_t *pos, const move_t move)
 {
-//#   ifdef DEBUG_MOVE
-    //log(1, "new move: ");
-    //move_print(0, move, M_PR_NL | M_PR_LONG);
-//#   endif
     color_t them = pos->turn, us = OPPONENT(them);
     square_t from = move_from(move), to = move_to(move);
     piece_t piece = pos->board[to];

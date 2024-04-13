@@ -53,10 +53,10 @@ bool pseudo_is_legal(const pos_t *pos, const move_t move)
     if (unlikely(from == king)) {
         if (unlikely(is_castle(move))) {
             square_t dir = to > from? 1: -1;
-            if (sq_attackers(pos, occ, from + dir, them))
+            if (sq_is_attacked(pos, occ, from + dir, them))
                 return false;
         }
-        return !sq_attackers(pos, occ ^ kingbb, to, them);
+        return !sq_is_attacked(pos, occ ^ kingbb, to, them);
     }
 
     /* (2) - King is in check

@@ -101,7 +101,6 @@ bitboard_t sq_attackers(const pos_t *pos, const bitboard_t occ, const square_t s
 {
     bitboard_t attackers = 0, tmp;
     bitboard_t sqbb = mask(sq);
-    //bitboard_t occ = pos_occ(pos);
     bitboard_t to;
     color_t opp = OPPONENT(c);
 
