@@ -70,15 +70,14 @@ CPPFLAGS  += -DWARN_ON                                      # brlib bug.h
 #CPPFLAGS  += -DDEBUG_FEN                                    # FEN decoding
 
 # attack.c
-#CPPFLAGS  += -DDEBUG_ATTACK_ATTACKERS1                      # sq_attackers details
-CPPFLAGS  += -DDEBUG_ATTACK_ATTACKERS                       # sq_attackers
-CPPFLAGS  += -DDEBUG_ATTACK_PINNERS                         # sq_pinners details
+#CPPFLAGS  += -DDEBUG_ATTACK_ATTACKERS                       # sq_attackers
+#CPPFLAGS  += -DDEBUG_ATTACK_PINNERS                         # sq_pinners details
 
 #CPPFLAGS  += -DDEBUG_EVAL                                   # eval functions
 #CPPFLAGS  += -DDEBUG_PIECE                                  # piece list management
 #CPPFLAGS  += -DDEBUG_SEARCH                                 # move search
 
-CPPFLAGS  += -DDIAGRAM_SYM                                  # diagram with symbols
+CPPFLAGS  += -DDIAGRAM_SYM                                  # UTF8 symbols in diagrams
 
 # remove extraneous spaces (due to spaces before comments)
 CPPFLAGS  := $(strip $(CPPFLAGS))

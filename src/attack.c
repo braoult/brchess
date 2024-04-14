@@ -108,12 +108,12 @@ bitboard_t sq_attackers(const pos_t *pos, const bitboard_t occ, const square_t s
     to =  pos->bb[c][PAWN];
     tmp = pawn_shift_upleft(sqbb, opp) & to;
     attackers |= tmp;
-#   ifdef DEBUG_ATTACK_ATTACKERS1
+#   ifdef DEBUG_ATTACK_ATTACKERS
     bb_print("att pawn upleft", tmp);
 #   endif
     tmp = pawn_shift_upright(sqbb, opp) & to;
     attackers |= tmp;
-#   ifdef DEBUG_ATTACK_ATTACKERS1
+#   ifdef DEBUG_ATTACK_ATTACKERS
     bb_print("att pawn upright", tmp);
 #   endif
 
@@ -121,13 +121,13 @@ bitboard_t sq_attackers(const pos_t *pos, const bitboard_t occ, const square_t s
     to = pos->bb[c][KNIGHT];
     tmp = bb_knight_moves(to, sq);
     attackers |= tmp;
-#   ifdef DEBUG_ATTACK_ATTACKERS1
+#   ifdef DEBUG_ATTACK_ATTACKERS
     bb_print("att knight", tmp);
 #   endif
     to = pos->bb[c][KING];
     tmp = bb_king_moves(to, sq);
     attackers |= tmp;
-#   ifdef DEBUG_ATTACK_ATTACKERS1
+#   ifdef DEBUG_ATTACK_ATTACKERS
     bb_print("att king", tmp);
 #   endif
 
@@ -135,7 +135,7 @@ bitboard_t sq_attackers(const pos_t *pos, const bitboard_t occ, const square_t s
     to = pos->bb[c][BISHOP] | pos->bb[c][QUEEN];
     tmp = hyperbola_bishop_moves(occ, sq) & to;
     attackers |= tmp;
-#   ifdef DEBUG_ATTACK_ATTACKERS1
+#   ifdef DEBUG_ATTACK_ATTACKERS
     bb_print("att bishop/queen", tmp);
 #   endif
 
@@ -143,7 +143,7 @@ bitboard_t sq_attackers(const pos_t *pos, const bitboard_t occ, const square_t s
     to = pos->bb[c][ROOK] | pos->bb[c][QUEEN];
     tmp = hyperbola_rook_moves(occ, sq) & to;
     attackers |= tmp;
-#   ifdef DEBUG_ATTACK_ATTACKERS1
+#   ifdef DEBUG_ATTACK_ATTACKERS
     bb_print("att rook/queen", tmp);
     bb_print("ATTACKERS", attackers);
     printf("attackers=%lx\n", attackers);

@@ -18,8 +18,8 @@
 #include <ctype.h>
 #include <assert.h>
 
-#include "brlib.h"
-#include "bitops.h"
+#include <brlib.h>
+#include <bitops.h>
 
 #include "chessdefs.h"
 #include "position.h"
@@ -65,6 +65,7 @@ pos_t *pos_dup(const pos_t *pos)
 /**
  * pos_del() - delete a position.
  * @pos: &position.
+ *
  */
 void pos_del(pos_t *pos)
 {
@@ -158,7 +159,7 @@ end:
  * Get a bitboard of all checkers on @color king.
  * Just a wrapper over @sq_attackers().
  *
- * @return: a bitboard of attackers.
+ * @return: a bitboard of checkers.
  */
 bitboard_t pos_checkers(const pos_t *pos, const color_t color)
 {
@@ -171,7 +172,7 @@ bitboard_t pos_checkers(const pos_t *pos, const color_t color)
  * @pos:   &position
  *
  * Set position checkers, pinners and blockers on player-to-play king.
- * It should be faster than @pos_checkers + @pos_set_pinners_blockers, as
+ * It should be slightly faster than @pos_checkers + @pos_set_pinners_blockers, as
  * some calculation will be done once.
  */
 void pos_set_checkers_pinners_blockers(pos_t *pos)
