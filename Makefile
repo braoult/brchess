@@ -129,6 +129,38 @@ DEPFLAGS   = -MMD -MP -MF $(DEPDIR)/$*.d
 ALL_CFLAGS  = $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS)
 ALL_LDFLAGS = $(LDFLAGS) $(LIBS)
 
+##################################### Multi-targets
+# We can have an issue with Make's "-j" option, in some situations,
+# for example "make -j2 clean testing".
+# See https://stackoverflow.com/a/8496333/3079831
+
+# Check if job server supported:
+ifeq ($(filter jobserver, $(.FEATURES)),)
+# Job server not supported: sub-makes will only start one job unless
+# you specify a higher number here.  Here we use a MS Windows environment
+# variable specifying number of processors.
+JOBSARG := -j $(NUMBER_OF_PROCESSORS)
+else
+# Job server is supported; let GNU Make work as normal.
+JOBSARG :=
+endif
+
+# .FEATURES only works in GNU Make 3.81+.
+# If GNU make is older, assume job server support.
+ifneq ($(firstword $(sort 3.81 $(MAKE_VERSION))),3.81)
+# If you are using GNU Make < 3.81 that does not support job servers, you
+# might want to specify -jN parameter here instead.
+JOBSARG :=
+endif
+
+ifneq ($(words $(MAKECMDGOALS)),1)
+.NOTPARALLEL:
+# The "all" target is required in the list,
+# in case user invokes make with no targets.
+$(sort all $(MAKECMDGOALS)):
+	@$(MAKE) $(JOBSARG) -f $(firstword $(MAKEFILE_LIST)) $@
+else
+
 ##################################### General targets
 .PHONY: all compile clean cleanall
 
@@ -379,3 +411,6 @@ wtf:
 
 zob:
 	$(CC) $(LDFLAGS) $(CPPFLAGS) $(CFLAGS) $< $(LIBS) src/util.c -o util
+
+##################################### End of multi-targets
+endif
