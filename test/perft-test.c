@@ -222,32 +222,55 @@ static __unused void compare_moves(movelist_t *fish, movelist_t *me)
     printf("F(%2d): %s\nM(%2d): %s\n", n1, str1, n2, str2);
 }
 
+static int usage(char *prg)
+{
+    fprintf(stderr, "Usage: %s [-d depth] [-p pertf-modules] -n\n", prg);
+    return 1;
+}
 
 int main(int __unused ac, __unused char**av)
 {
     int i = 0, test_line;
-    u64 sf_count, my_count;
+    u64 sf_count = 0, my_count;
     char *fen;
     pos_t *pos, *savepos, *fishpos = pos_new();
     movelist_t fishmoves;
     //move_t move;
-    FILE *outfd;
+    FILE *outfd = NULL;
     s64 ms1 = 0, ms1_total = 0;
     s64 ms2 = 0, ms2_total = 0;
 
-    int depth = 6, run = 3;
+    int opt, depth = 6, run = 3;
+    bool sf_run = true;
 
-    if (ac > 1)
-        depth = atoi(av[1]);
-    if (ac > 2)
-        run =  atoi(av[2]) & 3;
-    printf("depth = %d run=%d\n", depth, run);
+    while ((opt = getopt(ac, av, "nd:p:")) != -1) {
+        switch (opt) {
+            case 'd':
+                depth = atoi(optarg);
+                break;
+            case 'p': /* 1 or 2 */
+                run = atoi(optarg);
+                break;
+            case 'n':
+                sf_run = false;
+                break;
+            default:
+                    return usage(*av);
+        }
+    }
+    //if (ac > 1)
+    //    depth = atoi(av[1]);
+    //if (ac > 2)
+    //    run =  atoi(av[2]) & 3;
+    printf("depth = %d run = %x sf = %s\n", depth, run, sf_run? "true": "false");
 
     if (!run)
         exit(0);
     setlocale(LC_NUMERIC, "");
     setlinebuf(stdout);                           /* line-buffered stdout */
-    outfd = open_stockfish();
+
+    if (sf_run)
+        outfd = open_stockfish();
 
     bitboard_init();
     hyperbola_init();
@@ -259,7 +282,9 @@ int main(int __unused ac, __unused char**av)
             printf("wrong fen %d: [%s]\n", i, fen);
             continue;
         }
-        sf_count = send_stockfish_fen(outfd, fishpos, &fishmoves, fen, depth);
+        if (sf_run)
+            sf_count = send_stockfish_fen(outfd, fishpos, &fishmoves, fen, depth);
+
         savepos = pos_dup(pos);
 
         if (run & 1) {
@@ -268,7 +293,7 @@ int main(int __unused ac, __unused char**av)
             ms1 = clock_elapsed_ms(&clock);
             ms1_total += ms1;
 
-            if (sf_count == my_count) {
+            if (!sf_run || sf_count == my_count) {
                 printf("pt1 OK : line=%3d perft=%'lu %'ldms lps=%'lu \"%s\"\n",
                        test_line, my_count, ms1,
                        ms1? my_count*1000l/ms1: 0,
@@ -285,7 +310,7 @@ int main(int __unused ac, __unused char**av)
             ms2 = clock_elapsed_ms(&clock);
             ms2_total += ms2;
 
-            if (sf_count == my_count) {
+            if (!sf_run || sf_count == my_count) {
                 printf("pt2 OK : line=%3d perft=%'lu %'ldms lps=%'lu \"%s\"\n",
                        test_line, my_count, ms2,
                        ms2? my_count*1000l/ms2: 0,
