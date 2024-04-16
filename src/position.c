@@ -316,11 +316,11 @@ bitboard_t pos_king_blockers(const pos_t *pos, const color_t color, const bitboa
  * - total number of pieces > 16 or zero (per color)
  * - number of kings != 1 (per color)
  * - discrepancy between board and king (per color)
- * - discrepancy between piece bitboards and ALL_PIECES bitboards (per color)
  * - discrepancy between bitboards and board (per color)
  * - side-to-move already checking opponent king
  * - side-to-move in check more than twice
  * - kings distance is 1
+ * - TODO: discrepancy between piece bitboards and ALL_PIECES bitboards (per color)
  *
  * In case of errors, and @strict is true, @bug_on() is called, and program will
  * be terminated.
@@ -328,14 +328,19 @@ bitboard_t pos_king_blockers(const pos_t *pos, const color_t color, const bitboa
  * (eg after fen parsing), and with @strict == true otherwise (as we have some data
  * corruption).
  *
- * TODO: add more checks:
- * - kings attacking each other
- *
  * @return: (if @strict is false) return true if check is ok, false otherwise.
  */
 bool pos_ok(const pos_t *pos, const bool strict)
 {
     int n, count = 0, bbcount = 0, error = 0;
+
+    /* force BUG_ON and WARN_ON */
+#   pragma push_macro("BUG_ON")
+#   pragma push_macro("WARN_ON")
+#   undef BUG_ON
+#   define BUG_ON
+#   undef WARN_ON
+#   define WARN_ON
 
     /* pawns on 1st ot 8th rank */
     error += warn_on((pos->bb[WHITE][PAWN] | pos->bb[BLACK][PAWN]) &
@@ -357,7 +362,7 @@ bool pos_ok(const pos_t *pos, const bool strict)
     }
     for (square_t sq = 0; sq < 64; ++sq) {
         piece_t piece = pos->board[sq];
-        __unused bitboard_t match;
+        bitboard_t match;
         if (piece == EMPTY)
             continue;
         color_t c = COLOR(piece);
@@ -366,18 +371,22 @@ bool pos_ok(const pos_t *pos, const bool strict)
         error += warn_on(!match);
         count++;
     }
-    /* occupied occupation is different from bitboards */
+    /* occupied board is different from bitboards */
     error += warn_on(count != bbcount);
     /* is opponent already in check ? */
     error += warn_on(pos_checkers(pos, OPPONENT(pos->turn)));
     /* is color to play in check more than twice ? */
-    error += warn_on(popcount64(pos_checkers(pos, OPPONENT(pos->turn))) > 2);
+    error += warn_on(popcount64(pos_checkers(pos, pos->turn)) > 2);
     /* kings distance is less than 2 */
     error += warn_on(sq_dist(pos->king[WHITE], pos->king[BLACK]) < 2);
 
-    if (strict)
+    if (strict) {
         bug_on(error);
+        /* not reached */
+    }
     return error? false: true;
+#   pragma pop_macro("WARN_ON")
+#   pragma pop_macro("BUG_ON")
 }
 
 /**

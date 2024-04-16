@@ -32,7 +32,7 @@ typedef struct __pos_s {
 
     /* data which cannot be recovered by move_undo (like castle_rights, ...),
      * or would be expensive to recover (checkers, ...)
-     * following data can be accessed either directly, either via "movesave"
+     * following data can be accessed either directly, either via "state"
      * structure name.
      * For example, pos->en_passant and pos->state.en_passant are the same.
      * This allows a memcpy on this data (to save/restore position state).
@@ -40,8 +40,8 @@ typedef struct __pos_s {
     struct_group_tagged(state_s, state,
                         square_t en_passant;
                         castle_rights_t castle;
-                        u16 clock_50;
-                        u16 plycount;             /* plies so far, start from 1 */
+                        int clock_50;
+                        int plycount;             /* plies so far, start from 1 */
                         piece_t captured;         /* only for move_undo */
                         bitboard_t checkers;      /* opponent checkers */
                         bitboard_t pinners;       /* opponent pinners */

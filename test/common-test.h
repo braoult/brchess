@@ -29,12 +29,11 @@ struct fentest {
     char *fen;
 } fentest[] = {
     /*
-    { __LINE__.
-      ATTACK,
-      "checkers: ",
+    { __LINE__, 1,
+      "",
       ""
     },
-     */
+    */
 
 /* ***************** TEMP TESTS ABOVE ************************** */
 
