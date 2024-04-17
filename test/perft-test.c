@@ -306,7 +306,7 @@ int main(int __unused ac, __unused char**av)
 
         if (run & 2) {
             clock_start(&clock);
-            my_count = perft_new_pinners(pos, depth, 1);
+            my_count = perft_test(pos, depth, 1);
             ms2 = clock_elapsed_ms(&clock);
             ms2_total += ms2;
 

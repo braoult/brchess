@@ -77,7 +77,7 @@ u64 perft(pos_t *pos, int depth, int ply)
 }
 
 /**
- * perft_new_pinners() - Perform perft on position
+ * perft_test() - Perform perft on position, experiment version.
  * @pos:   &position to search
  * @depth: Wanted depth.
  * @ply:   perft depth level.
@@ -85,42 +85,34 @@ u64 perft(pos_t *pos, int depth, int ply)
  * Run perft on a position. This function displays the available moves at @depth
  * level for each possible first move, and the total of moves.
  *
- * This version uses the algorithm:
- *    if last depth
- *      return 1;
- *    gen pseudo-legal moves
- *    loop for each legal move in pseudo-legal list
- *      do-move
- *      perft (depth -1)
- *      undo-move
- *
  * @return: total moves found at @depth level.
  */
-u64 perft_new_pinners(pos_t *pos, int depth, int ply)
+u64 perft_test(pos_t *pos, int depth, int ply)
 {
-    int subnodes, movetmp = 0;
+    int subnodes;
     u64 nodes = 0;
-    movelist_t pseudo;
-    move_t move;
+    movelist_t movelist;
+    move_t *move, *last;
     state_t state;
 
-    pseudo.nmoves = 0;
+    movelist.nmoves = 0;
     pos_set_checkers_pinners_blockers(pos);
     state = pos->state;
 
-    pos_gen_pseudo(pos, &pseudo);
-    while ((move =  pos_next_legal(pos, &pseudo, &movetmp)) != MOVE_NONE) {
+    pos_legal(pos, pos_gen_pseudo(pos, &movelist));
+    last = movelist.move + movelist.nmoves;
+    for (move = movelist.move; move < last; ++move) {
         if (depth == 1) {
             nodes++;
         } else {
-            move_do(pos, move);
-            subnodes = perft_new_pinners(pos, depth - 1, ply + 1);
+            move_do(pos, *move);
+            subnodes = perft(pos, depth - 1, ply + 1);
             if (ply == 1) {
                 char movestr[8];
-                printf("%s: %d\n", move_str(movestr, move, 0), subnodes);
+                printf("%s: %d\n", move_str(movestr, *move, 0), subnodes);
             }
             nodes += subnodes;
-            move_undo(pos, move);
+            move_undo(pos, *move);
             pos->state = state;
         }
     }

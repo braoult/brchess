@@ -91,7 +91,7 @@ pos_t *pos_clear(pos_t *pos)
     pos->castle = 0;
     pos->clock_50 = 0;
     pos->plycount = 0;
-    //pos->captured = NO_PIECE;
+    pos->captured = NO_PIECE;
 
     for (square_t sq = A1; sq <= H8; ++sq)
         pos->board[sq] = EMPTY;
