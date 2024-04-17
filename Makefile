@@ -88,9 +88,9 @@ CFLAGS    := -std=gnu11
 ### dev OR release
 
 # dev
-# CFLAGS    += -O1
 CFLAGS    += -g                                             # symbols (gdb, perf, etc.)
 CFLAGS    += -ginline-points                                # inlined funcs debug info
+#CFLAGS    += -Og
 # for gprof
 #CFLAGS += -pg
 # Next one may be useful for valgrind (when invalid instructions)
