@@ -33,8 +33,8 @@
  * This version uses the algorithm:
  *    if last depth
  *      return 1;
- *    gen pseudo-legal moves
- *    loop for each legal move
+ *    gen legal moves
+ *    loop for legal move
  *      do-move
  *      perft (depth -1)
  *      undo-move
@@ -43,29 +43,32 @@
  */
 u64 perft(pos_t *pos, int depth, int ply)
 {
-    int subnodes, movetmp = 0;
+    int subnodes;
     u64 nodes = 0;
-    movelist_t pseudo;
-    move_t move;
+    movelist_t movelist;
+    move_t *move, *last;
     state_t state;
 
-    if (depth == 0)
-        return 1;
-    pseudo.nmoves = 0;
+    movelist.nmoves = 0;
     pos_set_checkers_pinners_blockers(pos);
     state = pos->state;
 
-    pos_gen_pseudomoves(pos, &pseudo);
-    while ((move =  pos_next_legal(pos, &pseudo, &movetmp)) != MOVE_NONE) {
-        move_do(pos, move);
-        subnodes = perft(pos, depth - 1, ply + 1);
-        if (ply == 1) {
-            char movestr[8];
-            printf("%s: %d\n", move_str(movestr, move, 0), subnodes);
+    pos_legal(pos, pos_gen_pseudo(pos, &movelist));
+    last = movelist.move + movelist.nmoves;
+    for (move = movelist.move; move < last; ++move) {
+        if (depth == 1) {
+            nodes++;
+        } else {
+            move_do(pos, *move);
+            subnodes = perft(pos, depth - 1, ply + 1);
+            if (ply == 1) {
+                char movestr[8];
+                printf("%s: %d\n", move_str(movestr, *move, 0), subnodes);
+            }
+            nodes += subnodes;
+            move_undo(pos, *move);
+            pos->state = state;
         }
-        nodes += subnodes;
-        move_undo(pos, move);
-        pos->state = state;
     }
 
     if (ply == 1)
@@ -82,6 +85,15 @@ u64 perft(pos_t *pos, int depth, int ply)
  * Run perft on a position. This function displays the available moves at @depth
  * level for each possible first move, and the total of moves.
  *
+ * This version uses the algorithm:
+ *    if last depth
+ *      return 1;
+ *    gen pseudo-legal moves
+ *    loop for each legal move in pseudo-legal list
+ *      do-move
+ *      perft (depth -1)
+ *      undo-move
+ *
  * @return: total moves found at @depth level.
  */
 u64 perft_new_pinners(pos_t *pos, int depth, int ply)
@@ -92,23 +104,25 @@ u64 perft_new_pinners(pos_t *pos, int depth, int ply)
     move_t move;
     state_t state;
 
-    if (depth == 0)
-        return 1;
     pseudo.nmoves = 0;
     pos_set_checkers_pinners_blockers(pos);
     state = pos->state;
 
-    pos_gen_pseudomoves(pos, &pseudo);
+    pos_gen_pseudo(pos, &pseudo);
     while ((move =  pos_next_legal(pos, &pseudo, &movetmp)) != MOVE_NONE) {
-        move_do(pos, move);
-        subnodes = perft_new_pinners(pos, depth - 1, ply + 1);
-        if (ply == 1) {
-            char movestr[8];
-            printf("%s: %d\n", move_str(movestr, move, 0), subnodes);
+        if (depth == 1) {
+            nodes++;
+        } else {
+            move_do(pos, move);
+            subnodes = perft_new_pinners(pos, depth - 1, ply + 1);
+            if (ply == 1) {
+                char movestr[8];
+                printf("%s: %d\n", move_str(movestr, move, 0), subnodes);
+            }
+            nodes += subnodes;
+            move_undo(pos, move);
+            pos->state = state;
         }
-        nodes += subnodes;
-        move_undo(pos, move);
-        pos->state = state;
     }
 
     if (ply == 1)
@@ -314,24 +328,24 @@ u64 perft_new_pinners(pos_t *pos, int depth, int ply)
  * @return: The @pos negamax evaluation.
  */
 /*int ab_negamax(pos_t *pos, int alpha, int beta, int depth)
-{
-    move_t *move;
-    pos_t *newpos;
-    eval_t best = EVAL_MIN, score;
+  {
+  move_t *move;
+  pos_t *newpos;
+  eval_t best = EVAL_MIN, score;
 
-    if(depth == 0) {
-       //return quiesce( alpha, beta );
-        moves_gen_all_nomoves(pos);
-       score = eval(pos) * color;
-       return score;
-    }
-   for ( all moves)  {
-      score = -alphaBeta( -beta, -alpha, depthleft - 1 );
-      if( score >= beta )
-         return beta;   //  fail hard beta-cutoff
-      if( score > alpha )
-         alpha = score; // alpha acts like max in MiniMax
-   }
-   return alpha;
-}
+  if(depth == 0) {
+  //return quiesce( alpha, beta );
+  moves_gen_all_nomoves(pos);
+  score = eval(pos) * color;
+  return score;
+  }
+  for ( all moves)  {
+  score = -alphaBeta( -beta, -alpha, depthleft - 1 );
+  if( score >= beta )
+  return beta;   //  fail hard beta-cutoff
+  if( score > alpha )
+  alpha = score; // alpha acts like max in MiniMax
+  }
+  return alpha;
+  }
 */

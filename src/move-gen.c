@@ -138,24 +138,52 @@ move_t pos_next_legal(const pos_t *pos, movelist_t *movelist, int *start)
 }
 
 /**
- * pos_all_legal() - get the list of legal moves from pseudo-legal.
+ * pos_legal_dup() - get legal moves from pseudo-legal ones in new list.
  * @pos:  position
- * @movelist: &pseudo-legal movelist_t
- * @dest: &destination movelist_t
+ * @pseudo: &movelist_t pseudo-legal moves list
+ * @legal: &movelist_t legal moves
  *
  * The pseudo-legal moves must be already calculated before calling this function.
- * No check is done on @dest limits.
+ * No check is done on @legal limits.
+ * This function is similar to pos_legal(), but creates a new list for legal moves.
+ * It should only be used for debug purpose, when we want to keep a copy of
+ * pseudo-legal moves.
  *
- * @Return: @dest
+ * @return: @legal
  */
-movelist_t *pos_all_legal(const pos_t *pos, movelist_t *movelist, movelist_t *dest)
+movelist_t *pos_legal_dup(const pos_t *pos, movelist_t *pseudo, movelist_t *legal)
 {
-    int tmp = dest->nmoves = 0;
+    int tmp = legal->nmoves = 0;
     move_t move;
 
-    while ((move = pos_next_legal(pos, movelist, &tmp)) != MOVE_NONE)
-        dest->move[dest->nmoves++] = move;
-    return dest;
+    while ((move = pos_next_legal(pos, pseudo, &tmp)) != MOVE_NONE)
+        legal->move[legal->nmoves++] = move;
+    return legal;
+}
+
+/**
+ * pos_legal() - get legal moves from pseudo-legal ones in new list.
+ * @pos:  position
+ * @list: &movelist_t pseudo-legal moves list
+ *
+ * The pseudo-legal moves must be already calculated before calling this function.
+ * @list is replaced by legal moves.
+ *
+ * @return: @list
+ */
+movelist_t *pos_legal(const pos_t *pos, movelist_t *list)
+{
+    move_t *cur = list->move, *last = list->move + list->nmoves;
+
+    while (cur < last) {
+        if (pseudo_is_legal(pos, *cur))
+            cur++;
+        else {
+            *cur = *--last;
+        }
+    }
+    list->nmoves = last - list->move;
+    return list;
 }
 
 /**
@@ -292,7 +320,7 @@ static inline move_t *moves_gen(move_t *moves, square_t from, bitboard_t to_bb)
 }
 
 /**
- * pos_gen_pseudomoves() - generate position pseudo-legal moves
+ * pos_gen_pseudo() - generate position pseudo-legal moves
  * @pos: position
  * @movelist: &movelist_t array to store pseudo-moves
  *
@@ -312,9 +340,9 @@ static inline move_t *moves_gen(move_t *moves, square_t from, bitboard_t to_bb)
  *
  * TODO: move code to specific functions (especially castling, pawn push/capture)
  *
- * @Return: The total number of moves.
+ * @Return: movelist
  */
-int pos_gen_pseudomoves(pos_t *pos, movelist_t *movelist)
+movelist_t *pos_gen_pseudo(pos_t *pos, movelist_t *movelist)
 {
     color_t us               = pos->turn;
     color_t them             = OPPONENT(us);
@@ -511,5 +539,7 @@ int pos_gen_pseudomoves(pos_t *pos, movelist_t *movelist)
     /* TODO: add function per piece, and type, for easier debug
      */
 finish:
-    return movelist->nmoves = moves - movelist->move;
+    movelist->nmoves = moves - movelist->move;
+    return movelist;
+    //return movelist->nmoves = moves - movelist->move;
 }

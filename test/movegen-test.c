@@ -216,7 +216,7 @@ int main(int __unused ac, __unused char**av)
     FILE *outfd;
     char *fen;
     pos_t *pos, *fishpos = pos_new();
-    movelist_t pseudo, legal, fishmoves;
+    movelist_t pseudo, fishmoves;
     //bitboard_t wrong = 0x5088000040, tmp, loop;
     //bit_for_each64(loop, tmp, )
     //printf("fishpos 1=%p\n", fishpos);
@@ -239,9 +239,9 @@ int main(int __unused ac, __unused char**av)
         send_stockfish_fen(outfd, fishpos, &fishmoves, fen);
 
         pos_set_checkers_pinners_blockers(pos);
-        pos_gen_pseudomoves(pos, &pseudo);
+        pos_gen_pseudo(pos, &pseudo);
         //moves_print(&pseudo, 0);
-        pos_all_legal(pos, &pseudo, &legal);
+        pos_legal(pos, &pseudo);
 
         //moves_print(&legal, 0);
         //printf("Fu ");
@@ -253,7 +253,7 @@ int main(int __unused ac, __unused char**av)
 
         /* sort and print movelists */
         move_sort_by_sq(&fishmoves);
-        move_sort_by_sq(&legal);
+        move_sort_by_sq(&pseudo);
         // printf("\nFs ");
         // moves_print(fishpos, 0);
         // fflush(stdout);
@@ -262,14 +262,14 @@ int main(int __unused ac, __unused char**av)
         // fflush(stdout);
 
         /* compare movelists */
-        if (!movelists_equal(&fishmoves, &legal)) {
+        if (!movelists_equal(&fishmoves, &pseudo)) {
             pos_print(pos);
             printf("F: ");
             moves_print(&fishmoves, 0);
             printf("M: ");
-            moves_print(&legal, 0);
+            moves_print(&pseudo, 0);
         } else {
-            printf("[%s]: OK (%d Moves)\n", fen, legal.nmoves);
+            printf("[%s]: OK (%d Moves)\n", fen, pseudo.nmoves);
             //moves_print(&fishpos->moves, 0);
         }
         //compare_moves(&fishpos->moves, &legal);

@@ -47,7 +47,7 @@ int main(int __unused ac, __unused char**av)
         pos->checkers = pos_checkers(pos, pos->turn);
         pos_set_pinners_blockers(pos);
 
-        pos_gen_pseudomoves(pos, &pseudo);
+        pos_gen_pseudo(pos, &pseudo);
         savepos = pos_dup(pos);
 
         state_t state = pos->state;

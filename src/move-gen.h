@@ -23,7 +23,9 @@
 
 bool pseudo_is_legal(const pos_t *pos, const move_t move);
 move_t pos_next_legal(const pos_t *pos, movelist_t *movelist, int *start);
-movelist_t *pos_all_legal(const pos_t *pos, movelist_t *movelist, movelist_t *dest);
-int pos_gen_pseudomoves(pos_t *pos, movelist_t *movelist);
+movelist_t *pos_legal_dup(const pos_t *pos, movelist_t *pseudo, movelist_t *legal);
+movelist_t *pos_legal(const pos_t *pos, movelist_t *list);
+
+movelist_t *pos_gen_pseudo(pos_t *pos, movelist_t *movelist);
 
 #endif  /* MOVEGEN_H */
