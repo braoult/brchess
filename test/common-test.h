@@ -412,22 +412,22 @@ struct fentest {
     { __LINE__, 0, NULL, NULL }
 };
 
-static int cur = -1;
+static int fentest_cur = -1;
 
 static char *next_fen(uint module)
 {
-    cur++;
-    while (fentest[cur].fen && !(fentest[cur].modules & module))
-        cur++;
-    return fentest[cur].fen;
+    fentest_cur++;
+    while (fentest[fentest_cur].fen && !(fentest[fentest_cur].modules & module))
+        fentest_cur++;
+    return fentest[fentest_cur].fen;
 }
 
 static __unused char* cur_comment()
 {
-    return fentest[cur].comment;
+    return fentest[fentest_cur].comment;
 }
 
 static __unused int cur_line()
 {
-    return fentest[cur].line;
+    return fentest[fentest_cur].line;
 }

@@ -97,12 +97,14 @@ CFLAGS    += -ginline-points                                # inlined funcs debu
 #CFLAGS += -mno-tbm
 
 # release
-CFLAGS    += -Ofast
+CFLAGS    += -O3
 
 CFLAGS    += -march=native
 CFLAGS    += -flto
+CFLAGS    += -funroll-loops
 CFLAGS    += -Wall
 CFLAGS    += -Wextra
+CFLAGS    += -Wshadow
 CFLAGS    += -Wmissing-declarations
 
 CFLAGS    := $(strip $(CFLAGS))
