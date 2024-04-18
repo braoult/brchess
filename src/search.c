@@ -41,7 +41,7 @@
  *
  * @return: total moves found at @depth level.
  */
-u64 perft(pos_t *pos, int depth, int ply)
+u64 perft(pos_t *pos, int depth, int ply, bool output)
 {
     int subnodes;
     u64 nodes = 0;
@@ -60,8 +60,8 @@ u64 perft(pos_t *pos, int depth, int ply)
             nodes++;
         } else {
             move_do(pos, *move);
-            subnodes = perft(pos, depth - 1, ply + 1);
-            if (ply == 1) {
+            subnodes = perft(pos, depth - 1, ply + 1, output);
+            if (output && ply == 1) {
                 char movestr[8];
                 printf("%s: %d\n", move_str(movestr, *move, 0), subnodes);
             }
@@ -71,7 +71,7 @@ u64 perft(pos_t *pos, int depth, int ply)
         }
     }
 
-    if (ply == 1)
+    if (output && ply == 1)
         printf("Total: %lu\n", nodes);
     return nodes;
 }
@@ -87,7 +87,7 @@ u64 perft(pos_t *pos, int depth, int ply)
  *
  * @return: total moves found at @depth level.
  */
-u64 perft_test(pos_t *pos, int depth, int ply)
+u64 perft_test(pos_t *pos, int depth, int ply, bool output)
 {
     int subnodes;
     u64 nodes = 0;
@@ -97,7 +97,6 @@ u64 perft_test(pos_t *pos, int depth, int ply)
 
     movelist.nmoves = 0;
     pos_set_checkers_pinners_blockers(pos);
-    state = pos->state;
 
     pos_legal(pos, pos_gen_pseudo(pos, &movelist));
     last = movelist.move + movelist.nmoves;
@@ -105,19 +104,18 @@ u64 perft_test(pos_t *pos, int depth, int ply)
         if (depth == 1) {
             nodes++;
         } else {
-            move_do(pos, *move);
-            subnodes = perft(pos, depth - 1, ply + 1);
-            if (ply == 1) {
+            move_do2(pos, *move, &state);
+            subnodes = perft(pos, depth - 1, ply + 1, output);
+            if (output && ply == 1) {
                 char movestr[8];
                 printf("%s: %d\n", move_str(movestr, *move, 0), subnodes);
             }
             nodes += subnodes;
-            move_undo(pos, *move);
-            pos->state = state;
+            move_undo2(pos, *move, &state);
         }
     }
 
-    if (ply == 1)
+    if (output && ply == 1)
         printf("Total: %lu\n", nodes);
     return nodes;
 }

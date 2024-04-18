@@ -19,4 +19,7 @@
 pos_t *move_do(pos_t *pos, const move_t move);//, state_t *state);
 pos_t *move_undo(pos_t *pos, const move_t move);//, const state_t *state);
 
+pos_t *move_do2(pos_t *pos, const move_t move, state_t *state);
+pos_t *move_undo2(pos_t *pos, const move_t move, const state_t *state);
+
 #endif  /* MOVE_DO_H */

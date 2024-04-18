@@ -110,7 +110,7 @@ CFLAGS    += -Wmissing-declarations
 CFLAGS    := $(strip $(CFLAGS))
 
 # development CFLAGS - unused - TODO
-#DEV_CFLAGS := -O1
+#DEV_CFLAGS := -Og
 #DEV_CFLAGS += -g
 
 # release CFLAGS - unused - TODO

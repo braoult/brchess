@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <locale.h>
+#include <limits.h>
 
 #include "chessdefs.h"
 #include "fen.h"
@@ -105,6 +106,7 @@ static u64 send_stockfish_fen(FILE *desc, pos_t *pos, movelist_t *movelist,
     //sprintf(str, "stockfish \"position fen %s\ngo perft depth\n\"", fen);
     fprintf(desc, "position fen %s\ngo perft %d\n", fen, depth);
     //fflush(desc);
+
     while ((buflen = getline(&buf, &alloc, stdin)) > 0) {
         buf[--buflen] = 0;
         if (buflen == 0)
@@ -233,17 +235,25 @@ int main(int __unused ac, __unused char**av)
     int i = 0, test_line;
     u64 sf_count = 0, my_count;
     char *fen;
-    pos_t *pos, *savepos, *fishpos = pos_new();
+    pos_t *pos;
+    pos_t *fishpos = pos_new();
     movelist_t fishmoves;
     //move_t move;
     FILE *outfd = NULL;
-    s64 ms1 = 0, ms1_total = 0;
-    s64 ms2 = 0, ms2_total = 0;
+    struct {
+        s64 count, ms;
+        s64 minlps, maxlps;
+        int skipped;
+    } res[2] = {
+        { .minlps=LONG_MAX },
+        { .minlps=LONG_MAX },
+    };
+    s64 ms, lps;
 
     int opt, depth = 6, run = 3;
-    bool sf_run = true;
+    bool sf_run = true, perft_output = false;
 
-    while ((opt = getopt(ac, av, "nd:p:")) != -1) {
+    while ((opt = getopt(ac, av, "vnd:p:")) != -1) {
         switch (opt) {
             case 'd':
                 depth = atoi(optarg);
@@ -253,6 +263,9 @@ int main(int __unused ac, __unused char**av)
                 break;
             case 'n':
                 sf_run = false;
+                break;
+            case 'v':
+                perft_output = true;
                 break;
             default:
                     return usage(*av);
@@ -285,18 +298,29 @@ int main(int __unused ac, __unused char**av)
         if (sf_run)
             sf_count = send_stockfish_fen(outfd, fishpos, &fishmoves, fen, depth);
 
-        savepos = pos_dup(pos);
+        // savepos = pos_dup(pos);
 
         if (run & 1) {
             clock_start(&clock);
-            my_count = perft(pos, depth, 1);
-            ms1 = clock_elapsed_ms(&clock);
-            ms1_total += ms1;
+            my_count = perft(pos, depth, 1, perft_output);
+            ms = clock_elapsed_ms(&clock);
+            if (!ms) {
+                res[0].skipped++;
+                lps = 0;
+            } else {
+                lps = my_count * 1000l / ms;
+                res[0].ms += ms;
+                res[0].count += my_count;
+                if (lps > res[0].maxlps)
+                    res[0].maxlps = lps;
+                if (lps < res[0].minlps)
+                    res[0].minlps = lps;
+            }
 
             if (!sf_run || sf_count == my_count) {
                 printf("pt1 OK : line=%3d perft=%'lu %'ldms lps=%'lu \"%s\"\n",
-                       test_line, my_count, ms1,
-                       ms1? my_count*1000l/ms1: 0,
+                       test_line, my_count, ms,
+                       lps,
                        fen);
             } else  {
                 printf("pt1 ERR: line=%3d sf=%'lu me=%'lu \"%s\"\n",
@@ -306,14 +330,25 @@ int main(int __unused ac, __unused char**av)
 
         if (run & 2) {
             clock_start(&clock);
-            my_count = perft_test(pos, depth, 1);
-            ms2 = clock_elapsed_ms(&clock);
-            ms2_total += ms2;
+            my_count = perft_test(pos, depth, 1, perft_output);
+            ms = clock_elapsed_ms(&clock);
+            if (!ms) {
+                res[1].skipped++;
+                lps = 0;
+            } else {
+                lps = my_count * 1000l / ms;
+                res[1].ms += ms;
+                res[1].count += my_count;
+                if (lps > res[1].maxlps)
+                    res[1].maxlps = lps;
+                if (lps < res[1].minlps)
+                    res[1].minlps = lps;
+            }
 
             if (!sf_run || sf_count == my_count) {
                 printf("pt2 OK : line=%3d perft=%'lu %'ldms lps=%'lu \"%s\"\n",
-                       test_line, my_count, ms2,
-                       ms2? my_count*1000l/ms2: 0,
+                       test_line, my_count, ms,
+                       lps,
                        fen);
             } else  {
                 printf("pt2 ERR: line=%3d sf=%'lu me=%'lu \"%s\"\n",
@@ -321,15 +356,23 @@ int main(int __unused ac, __unused char**av)
             }
         }
         printf("\n");
-        pos_del(savepos);
+        // pos_del(savepos);
         pos_del(pos);
         i++;
         /* to run first test only */
         // exit(0);
     }
     if (run & 1)
-        printf("total perft  %'ldms\n", ms1_total);
+        printf("total perft  %'lums %'lums lps=%'lu min=%'lu max=%'lu (skipped %d)\n",
+               res[0].count, res[0].ms,
+               res[0].count * 1000l / res[0].ms,
+               res[0].minlps, res[0].maxlps,
+               res[0].skipped);
     if (run & 2)
-        printf("total perft2 %'ldms\n", ms2_total);
+        printf("total perft2 %'lums %'lums lps=%'lu min=%'lu max=%'lu (skipped %d)\n",
+               res[1].count, res[1].ms,
+               res[1].count * 1000l / res[1].ms,
+               res[1].minlps, res[1].maxlps,
+               res[1].skipped);
     return 0;
 }
