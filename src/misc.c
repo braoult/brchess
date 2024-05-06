@@ -12,6 +12,9 @@
  */
 
 #include <time.h>
+#include <stdlib.h>
+
+#include <bug.h>
 
 #include "chessdefs.h"
 
@@ -109,4 +112,41 @@ s64 clock_elapsed_ms(mclock_t *clock)
 double clock_elapsed_sec(mclock_t *clock)
 {
     return (double) clock_elapsed_μs(clock) / (double) MICRO_IN_SEC;
+}
+
+static u64 rand_seed = 1ull;
+
+/**
+ * rand_init() - initialize random generator seed.
+ * @seed: u64, the random generator seed.
+ *
+ * No change is made is performed if If @seed is zero. By default, @seed is
+ * 1.
+ * This seed is used by rand64().
+ */
+void rand_init(u64 seed)
+{
+    if (seed)
+        rand_seed = seed;
+}
+
+/**
+ * rand64() - get a random number, xorshift method.
+ *
+ * Source:
+ *   https://en.wikipedia.org/wiki/Xorshift#xorshift*
+ * We do not want true random numbers, like those offered by getrandom(2), as we
+ * need to be able to get predictable results.
+ * Note: For predictable results in MT, we should use separate seeds.
+ *
+ * @return: a 64 bits random number.
+ */
+u64 rand64(void)
+{
+    bug_on(rand_seed == 0ull);
+
+    rand_seed ^= rand_seed >> 12;
+    rand_seed ^= rand_seed << 25;
+    rand_seed ^= rand_seed >> 27;
+    return rand_seed * 0x2545f4914f6cdd1dull;
 }
