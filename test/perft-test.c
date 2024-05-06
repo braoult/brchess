@@ -362,17 +362,23 @@ int main(int __unused ac, __unused char**av)
         /* to run first test only */
         // exit(0);
     }
-    if (run & 1)
+    if (run & 1) {
+        if (!res[0].ms)
+            res[0].ms = 1;
         printf("total perft  %'lums %'lums lps=%'lu min=%'lu max=%'lu (skipped %d)\n",
                res[0].count, res[0].ms,
                res[0].count * 1000l / res[0].ms,
                res[0].minlps, res[0].maxlps,
                res[0].skipped);
-    if (run & 2)
+    }
+    if (run & 2) {
+        if (!res[1].ms)
+            res[1].ms = 1;
         printf("total perft2 %'lums %'lums lps=%'lu min=%'lu max=%'lu (skipped %d)\n",
                res[1].count, res[1].ms,
                res[1].count * 1000l / res[1].ms,
                res[1].minlps, res[1].maxlps,
                res[1].skipped);
+    }
     return 0;
 }
