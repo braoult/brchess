@@ -129,8 +129,8 @@ bitboard_t hyperbola_moves(const bitboard_t pieces, const square_t sq,
     bitboard_t r = bswap64(o);
     square_t  r_sq = FLIP_V(sq);
 
-    return (         (o - 2 * mask(sq)   )
-            ^ bswap64(r - 2 * mask(r_sq)))
+    return (         (o - 2 * BIT(sq)   )
+            ^ bswap64(r - 2 * BIT(r_sq)))
         & mask;
 }
 

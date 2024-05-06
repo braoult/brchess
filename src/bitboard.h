@@ -260,7 +260,7 @@ static __always_inline bool bb_sq_aligned(square_t sq1, square_t sq2)
  */
 static __always_inline bool bb_sq_aligned3(square_t sq1, square_t sq2, square_t sq3)
 {
-    return bb_line[sq1][sq2] & mask(sq3);
+    return bb_line[sq1][sq2] & BIT(sq3);
 }
 
 /**
@@ -273,7 +273,7 @@ static __always_inline bool bb_sq_aligned3(square_t sq1, square_t sq2, square_t 
  */
 static __always_inline bitboard_t bb_sq_between(square_t sq, square_t sq1, square_t sq2)
 {
-    return bb_between_excl[sq1][sq2] & mask(sq);
+    return bb_between_excl[sq1][sq2] & BIT(sq);
 }
 
 /* TODO: when OK, replace with macros */

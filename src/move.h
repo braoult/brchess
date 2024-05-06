@@ -47,13 +47,13 @@ enum {
 };
 
 typedef enum {
-    M_CAPTURE   = mask(M_OFF_FLAGS + 0),
-    M_ENPASSANT = mask(M_OFF_FLAGS + 1),
-    M_PROMOTION = mask(M_OFF_FLAGS + 2),
-    M_CASTLE_K  = mask(M_OFF_FLAGS + 3),          /* maybe only one ? */
-    M_CASTLE_Q  = mask(M_OFF_FLAGS + 5),          /* maybe only one ? */
-    M_CHECK     = mask(M_OFF_FLAGS + 6),          /* maybe unknown/useless ? */
-    M_DPUSH     = mask(M_OFF_FLAGS + 7)           /* pawn double push */
+    M_CAPTURE   = BIT(M_OFF_FLAGS + 0),
+    M_ENPASSANT = BIT(M_OFF_FLAGS + 1),
+    M_PROMOTION = BIT(M_OFF_FLAGS + 2),
+    M_CASTLE_K  = BIT(M_OFF_FLAGS + 3),           /* maybe only one ? */
+    M_CASTLE_Q  = BIT(M_OFF_FLAGS + 5),           /* maybe only one ? */
+    M_CHECK     = BIT(M_OFF_FLAGS + 6),           /* maybe unknown/useless ? */
+    M_DPUSH     = BIT(M_OFF_FLAGS + 7)            /* pawn double push */
 } move_flags_t;
 
 #define move_set_flags(move, flags) ((move) | (flags))

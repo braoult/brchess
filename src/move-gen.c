@@ -41,7 +41,7 @@ bool pseudo_is_legal(const pos_t *pos, const move_t move)
     square_t king = pos->king[us];
     bitboard_t kingbb = pos->bb[us][KING];
     bitboard_t occ = pos_occ(pos);
-    u64 pinned = mask(from) & pos->blockers;
+    u64 pinned = BIT(from) & pos->blockers;
     u64 checkers = pos->checkers;
 
     /* (1) - Castling & King
@@ -86,8 +86,8 @@ bool pseudo_is_legal(const pos_t *pos, const move_t move)
     /* (3) - pinned pieces
      * We verify here that pinned piece P stays on line King-P.
      */
-    if (mask(from) & pos->blockers) {
-        return bb_line[from][king] & mask(to);    /* is to on pinner line ? */
+    if (BIT(from) & pos->blockers) {
+        return bb_line[from][king] & BIT(to);    /* is to on pinner line ? */
     }
 
     /* (4) - En-passant
@@ -99,7 +99,7 @@ bool pseudo_is_legal(const pos_t *pos, const move_t move)
         bitboard_t rank5 = us == WHITE? RANK_5bb: RANK_4bb;
 
         if ((pos->bb[us][KING] & rank5)) {
-            bitboard_t exclude = mask(pos->en_passant - sq_up(us)) | mask(from);
+            bitboard_t exclude = BIT(pos->en_passant - sq_up(us)) | BIT(from);
             bitboard_t rooks = (pos->bb[them][ROOK] | pos->bb[them][QUEEN]) & rank5;
 
             while (rooks) {

@@ -208,7 +208,7 @@ void pos_set_checkers_pinners_blockers(pos_t *pos)
         /* blockers = we find occupied squares between pinner and king */
         while (tmppinners) {
             pinner = bb_next(&tmppinners);
-            pinners |= mask(pinner);
+            pinners |= BIT(pinner);
             blockers |= bb_between[pinner][king] & maybeblockers;
         }
     }
@@ -226,7 +226,7 @@ void pos_set_checkers_pinners_blockers(pos_t *pos)
         tmppinners = targets & attackers;
         while (tmppinners) {
             pinner = bb_next(&tmppinners);
-            pinners |= mask(pinner);
+            pinners |= BIT(pinner);
             blockers |= bb_between[pinner][king] & maybeblockers;
         }
     }
@@ -367,7 +367,7 @@ bool pos_ok(const pos_t *pos, const bool strict)
             continue;
         color_t c = COLOR(piece);
         piece_type_t p = PIECE(piece);
-        match = pos->bb[c][p] & mask(sq);
+        match = pos->bb[c][p] & BIT(sq);
         error += warn_on(!match);
         count++;
     }

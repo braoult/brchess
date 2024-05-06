@@ -30,9 +30,12 @@ typedef struct __pos_s {
     u64 node_count;                               /* evaluated nodes */
     int turn;                                     /* WHITE or BLACK */
 
-    /* data which cannot be recovered by move_undo (like castle_rights, ...),
-     * or would be expensive to recover (checkers, ...)
-     * following data can be accessed either directly, either via "state"
+    /* data which cannot be recovered by move_undo (like castle_rights, ...).
+     *
+     * Attention: checkers/pinners/blockers are not included here, and
+     * are not available in move_undo or any following legality check.
+     *
+     * Following data can be accessed either directly, either via "state"
      * structure name.
      * For example, pos->en_passant and pos->state.en_passant are the same.
      * This allows a memcpy on this data (to save/restore position state).
@@ -42,17 +45,15 @@ typedef struct __pos_s {
                         castle_rights_t castle;
                         int clock_50;
                         int plycount;             /* plies so far, start from 1 */
-                        piece_t captured;         /* only for move_undo */
-                        bitboard_t checkers;      /* opponent checkers */
-                        bitboard_t pinners;       /* opponent pinners */
-                        bitboard_t blockers;      /* pieces blocking pin */
+                        piece_t captured;         /* only used in move_undo */
         );
+    bitboard_t checkers;                          /* opponent checkers */
+    bitboard_t pinners;                           /* opponent pinners */
+    bitboard_t blockers;                          /* pieces blocking pin */
 
     piece_t board[BOARDSIZE];
     bitboard_t bb[2][PIECE_TYPE_MAX];             /* bb[0][PAWN], bb[1][ALL_PIECES] */
-    //bitboard_t controlled[2];                     /* unsure */
     square_t king[2];                             /* dup with bb, faster retrieval */
-    //movelist_t moves;
 } pos_t;
 
 typedef struct state_s state_t;
@@ -72,8 +73,8 @@ static __always_inline void pos_set_sq(pos_t *pos, square_t square, piece_t piec
     color_t color = COLOR(piece);
     piece_type_t type = PIECE(piece);
     pos->board[square] = piece;
-    pos->bb[color][type] |= mask(square);
-    pos->bb[color][ALL_PIECES] |= mask(square);
+    pos->bb[color][type] |= BIT(square);
+    pos->bb[color][ALL_PIECES] |= BIT(square);
     if (type == KING)
         pos->king[color] = square;
 }
@@ -91,8 +92,8 @@ static __always_inline void pos_clr_sq(pos_t *pos, square_t square)
     piece_type_t type = PIECE(piece);
     color_t color = COLOR(piece);
     pos->board[square] = EMPTY;
-    pos->bb[color][type] &= ~mask(square);
-    pos->bb[color][ALL_PIECES] &= ~mask(square);
+    pos->bb[color][type] &= ~BIT(square);
+    pos->bb[color][ALL_PIECES] &= ~BIT(square);
     if (type == KING)
         pos->king[color] = SQUARE_NONE;
 }

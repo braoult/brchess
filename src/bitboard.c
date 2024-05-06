@@ -53,8 +53,8 @@ static int king_vector[8] = {
 bitboard_t bitboard_between_excl(square_t sq1, square_t sq2)
 {
     const bitboard_t m1 = -1;
-    const bitboard_t a2a7 = C64(0x0001010101010100);
-    const bitboard_t b7h1 = C64(0x0002040810204080);
+    const bitboard_t a2a7 = U64(0x0001010101010100);
+    const bitboard_t b7h1 = U64(0x0002040810204080);
     bitboard_t btwn_bits, ray_bits;
     u32 rank_diff, file_diff, anti_diff, diag_diff;
 
@@ -109,7 +109,7 @@ void bitboard_init(void)
      *    in-between, sq2 excluded
      */
     for (square_t sq1 = A1; sq1 <= H8; ++sq1) {
-        bb_sq[sq1] = mask(sq1);
+        bb_sq[sq1] = BIT(sq1);
         for (square_t sq2 = A1; sq2 <= H8; ++sq2)
             bb_between_excl[sq1][sq2] = bitboard_between_excl(sq1, sq2);
     }
@@ -121,15 +121,15 @@ void bitboard_init(void)
         file_t f = sq_file(sq);
         rank_t r = sq_rank(sq);
         for (int vec = 0; vec < 4; ++vec) {
-            tmpbb[sq][vec] |= mask(sq_make(f, r));
+            tmpbb[sq][vec] |= BIT(sq_make(f, r));
             for (int dir = -1; dir <= 1; dir += 2) {
                 file_t df = dir * vecs[vec].df, f2 = f + df;
                 rank_t dr = dir * vecs[vec].dr, r2 = r + dr;
                 bitboard_t mask_between = 0;
                 while (sq_coord_ok(f2) && sq_coord_ok(r2)) {
                     square_t dest = sq_make(f2, r2);
-                    tmpbb[sq][vec] |= mask(dest);
-                    mask_between |= mask(dest);
+                    tmpbb[sq][vec] |= BIT(dest);
+                    mask_between |= BIT(dest);
                     bb_between[sq][dest] = mask_between;
                     f2 += df, r2 += dr;
                 }
@@ -161,9 +161,9 @@ void bitboard_init(void)
      */
     for (square_t sq = A1; sq <= H8; ++sq) {
         if (sq >= A2)
-            bb_pawn_attacks[BLACK][sq] = pawn_attacks_bb(mask(sq), BLACK);
+            bb_pawn_attacks[BLACK][sq] = pawn_attacks_bb(BIT(sq), BLACK);
         if (sq <= H7)
-            bb_pawn_attacks[WHITE][sq] = pawn_attacks_bb(mask(sq), WHITE);
+            bb_pawn_attacks[WHITE][sq] = pawn_attacks_bb(BIT(sq), WHITE);
 
         for (int vec = 0; vec < 8; ++vec) {
             int dst = sq + knight_vector[vec];
@@ -281,7 +281,7 @@ char *bb_rank_sprint(char *str, const uchar bb8)
 {
     file_t f;
     for (f = FILE_A; f <= FILE_H; ++f) {
-        *(str + f) = bb8 & mask(f) ? '1': '.';
+        *(str + f) = bb8 & BIT(f) ? '1': '.';
     }
     *(str + f) = 0;
     //printf(" 0 1 2 3 4 5 6 7\n");

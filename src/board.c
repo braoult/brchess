@@ -93,7 +93,7 @@ void board_print_mask(const piece_t *board, const bitboard_t mask)
         for (int file = 0; file < 8; ++file) {
             square_t sq = sq_make(file, rank);
             piece_t pc = board[sq];
-            bitboard_t set = mask(sq) & mask;
+            bitboard_t set = BIT(sq) & mask;
             printf("%s", set? REVERSE : " ");
 #           ifdef DIAGRAM_SYM
             printf("%s", pc? piece_to_sym(pc): " ");

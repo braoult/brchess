@@ -17,8 +17,8 @@
 #include "brlib.h"                                /* brlib types */
 
 #define ONE                1ull
-#define C64(const_u64)     const_u64##ULL
-#define mask(i)            ( (u64) (ONE << (i)) )
+#define U64(const_u64)     const_u64##ULL
+#define BIT(i)            ( (u64) (ONE << (i)) )
 
 #define BOARDSIZE          (8*8)
 
@@ -50,17 +50,19 @@
 /* castle_t bits structure
  */
 typedef enum {
-    CASTLE_WK = (1 << 0),                         /* 0x01 00000001 */
-    CASTLE_WQ = (1 << 1),                         /* 0x02 00000010 */
-    CASTLE_BK = (1 << 2),                         /* 0x04 00000100 */
-    CASTLE_BQ = (1 << 3),                         /* 0x08 00001000 */
+    CASTLE_NONE = 0,
+    CASTLE_WK   = (1 << 0),                       /* 0001 */
+    CASTLE_WQ   = (1 << 1),                       /* 0010 */
+    CASTLE_BK   = (1 << 2),                       /* 0100 */
+    CASTLE_BQ   = (1 << 3),                       /* 1000 */
 
-    CASTLE_W  = (CASTLE_WK | CASTLE_WQ),          /* 00000011 W castle mask */
-    CASTLE_B  = (CASTLE_BK | CASTLE_BQ),          /* 00001100 B castle mask */
+    CASTLE_W    = (CASTLE_WK | CASTLE_WQ),        /* 0011 =  3 = W castle mask */
+    CASTLE_B    = (CASTLE_BK | CASTLE_BQ),        /* 1100 = 12 = B castle mask */
+    CASTLE_ALL  = (CASTLE_W | CASTLE_B),          /* 1111 = 15 */
 
     CASTLE_K  = (1 << 0),                         /* generic K/Q, bits 0 and 1 */
     CASTLE_Q  = (1 << 1),
-    CASTLE_KQ = (CASTLE_K |CASTLE_Q)
+    CASTLE_KQ = (CASTLE_K |CASTLE_Q),
 } castle_rights_t;
 
 /* determine is oo or ooo is possible with castle flags f and color c
@@ -170,5 +172,8 @@ void clock_start(mclock_t *clock);
 s64 clock_elapsed_μs(mclock_t *clock);
 s64 clock_elapsed_ms(mclock_t *clock);
 double clock_elapsed_sec(mclock_t *clock);
+
+void rand_init(u64 seed);
+u64 rand64(void);
 
 #endif  /* _CHESSDEFS_H */

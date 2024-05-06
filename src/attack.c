@@ -109,7 +109,7 @@ bool is_in_check(const pos_t *pos, const color_t color)
 bitboard_t sq_attackers(const pos_t *pos, const bitboard_t occ, const square_t sq, const color_t c)
 {
     bitboard_t attackers = 0, tmp;
-    bitboard_t sqbb = mask(sq);
+    bitboard_t sqbb = BIT(sq);
     bitboard_t to;
     color_t opp = OPPONENT(c);
 
@@ -186,7 +186,7 @@ bitboard_t sq_pinners(const pos_t *pos, const square_t sq, const color_t color)
         bitboard_t between = bb_between_excl[maybe_pinner][sq];
         /* keep only squares between AND on sq diag/anti */
         if (popcount64(between & lines) == 1)
-            pinners |= mask(maybe_pinner);
+            pinners |= BIT(maybe_pinner);
     }
 
     /* same for rook type */
@@ -195,7 +195,7 @@ bitboard_t sq_pinners(const pos_t *pos, const square_t sq, const color_t color)
     bit_for_each64(maybe_pinner, tmp, attackers) {
         bitboard_t between = bb_between_excl[maybe_pinner][sq];
         if (popcount64(between & lines) == 1)
-            pinners |= mask(maybe_pinner);
+            pinners |= BIT(maybe_pinner);
     }
 #   ifdef DEBUG_ATTACK_ATTACKERS1
     char str[32];

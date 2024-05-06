@@ -162,7 +162,7 @@ pos_t *fen2pos(pos_t *pos, const char *fen)
     char *p;
     short rank, file, tmp;
     piece_t piece;
-    int consumed, err_line = 0, err_pos, err_char;
+    int consumed, err_line = 0, err_pos = 0, err_char = 0;
     pos_t tmppos;
 
     pos_clear(&tmppos);
@@ -324,7 +324,7 @@ char *pos2fen(const pos_t *pos, char *fen)
         fen[cur++] = '-';
     } else {
         for (int i = 0; i < 4; ++i)
-            if (pos->castle & mask(i))
+            if (pos->castle & BIT(i))
                 fen[cur++] = castle_str[i];
     }
     fen[cur++] = ' ';
