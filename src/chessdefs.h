@@ -173,6 +173,8 @@ s64 clock_elapsed_μs(mclock_t *clock);
 s64 clock_elapsed_ms(mclock_t *clock);
 double clock_elapsed_sec(mclock_t *clock);
 
+#define RAND_SEED_DEFAULT U64(1)
+
 void rand_init(u64 seed);
 u64 rand64(void);
 

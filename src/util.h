@@ -17,12 +17,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "bug.h"
+#include <bug.h>
 
 #include "chessdefs.h"
 
 #undef safe_malloc
 #undef safe_free
+
+/* force BUG_ON, to get a program abort for failed malloc/free
+ */
+#pragma push_macro("BUG_ON")
+#undef BUG_ON
+#define BUG_ON
 
 #define safe_malloc(size) ({                   \
             void *_ret = malloc(size);         \
@@ -34,5 +40,9 @@
         bug_on(ptr == NULL);                   \
         free(ptr);                             \
     } while (0)
+
+/* restore BUG_ON
+ */
+#   pragma pop_macro("BUG_ON")
 
 #endif  /* UTIL_H */

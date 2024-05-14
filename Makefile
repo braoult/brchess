@@ -56,7 +56,6 @@ CPPFILES  := $(SRC:.c=.i) $(TSTSRC:.c=.i)
 CPPFLAGS  := -I$(BRINCDIR) -I$(INCDIR)
 
 CPPFLAGS  += -DNDEBUG                                       # assert
-CPPFLAGS  += -DBUG_ON                                       # brlib bug.h
 CPPFLAGS  += -DWARN_ON                                      # brlib bug.h
 
 #CPPFLAGS  += -DDEBUG                                        # global - unused
@@ -78,6 +77,9 @@ CPPFLAGS  += -DWARN_ON                                      # brlib bug.h
 #CPPFLAGS  += -DDEBUG_SEARCH                                 # move search
 
 CPPFLAGS  += -DDIAGRAM_SYM                                  # UTF8 symbols in diagrams
+
+# Never comment this one !
+CPPFLAGS  += -DBUG_ON                                       # brlib bug.h
 
 # remove extraneous spaces (due to spaces before comments)
 CPPFLAGS  := $(strip $(CPPFLAGS))
