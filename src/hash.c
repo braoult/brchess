@@ -105,23 +105,6 @@ key zobrist_calc(pos_t *pos)
  * @return: hash table size in Mb. If memory allocation fails, the function does
  * not return.
  */
-#include <stdio.h>
-#include <locale.h>
-
-static void zob(char *str, size_t alloc)
-{
-    extern char etext, edata, end;
-    printf("%s %lu ", str, alloc);
-    //printf("    program text (etext)      %10p\n", &etext);
-    //printf("    initialized data (edata)  %10p\n", &edata);
-    //printf("    uninitialized data (end)  %10p\n", &end);
-
-    fflush(stdout);
-
-    printf("\n\tpress a key...");
-    getchar();
-}
-
 int hash_create(s32 sizemb)
 {
     size_t bytes, target_nbuckets;
@@ -129,12 +112,12 @@ int hash_create(s32 sizemb)
 
     static_assert(sizeof(hentry_t) == 16, "fatal: hentry_t size != 16");
 
-    printf("mb = %'7u ", sizemb);
+    //printf("mb = %'7u ", sizemb);
     /* adjust tt size */
     if (sizemb <= 0)
         sizemb = HASH_SIZE_DEFAULT;
     sizemb = clamp(sizemb, HASH_SIZE_MIN, HASH_SIZE_MAX);
-    printf("-> %'6d ", sizemb);
+    //printf("-> %'6d ", sizemb);
 
     bytes = sizemb * 1024ull * 1024ull;           /* bytes wanted */
     target_nbuckets = bytes / sizeof(bucket_t);   /* target buckets */
@@ -160,10 +143,10 @@ int hash_create(s32 sizemb)
         //printf("bits=%2d size=%'15lu/%'6d Mb/%'14lu buckets ",
         //       hash_tt.nbits, hash_tt.bytes, hash_tt.mb, hash_tt.nbuckets);
         //printf("mask=%9x\n", hash_tt.mask);
-    } else {
-        printf("unchanged (cleared)\n");
-        //hash_clear();
     }
+    //else {
+    //    printf("unchanged (cleared)\n");
+    //}
     /* attention - may fail ! */
     hash_clear();
 
@@ -195,41 +178,4 @@ void hash_delete()
     if (hash_tt.keys)
         safe_free(hash_tt.keys);
     memset(&hash_tt, 0, sizeof(hash_tt));
-}
-
-// #define zob()
-
-int main()
-{
-    printf("entry=%lu bucket=%lu\n", sizeof(hentry_t), sizeof(bucket_t));
-    zob("before alloc", 0);
-    setlocale(LC_NUMERIC, "");
-    hash_create(-1);
-    zob("after", -1);
-    hash_create(1);
-    hash_create(2);
-    hash_create(3);
-    hash_create(4);
-    hash_create(10);
-    zob("after", 10);
-    hash_create(20);
-    hash_create(40);
-    hash_create(100);
-    zob("after", 100);
-    hash_create(200);
-    hash_create(400);
-    hash_create(1000);
-    zob("after", 1000);
-    hash_create(1000);
-    zob("after", 1024);
-    //hash_create(2000);
-    //zob("after", 100);
-    hash_create(4096);
-    zob("after", 4096);
-    //hash_create(32767);
-    //hash_create(32768);
-    //hash_create(32769);
-    //hash_create(65536);
-    //hash_create(400000);
-    return 0;
 }
