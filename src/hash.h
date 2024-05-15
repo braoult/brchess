@@ -90,6 +90,7 @@ extern hasht_t hash_tt;                           /* main transposition table */
 
 void zobrist_init(void);
 key_t zobrist_calc(pos_t *pos);
+bool zobrist_verify(pos_t *pos);
 
 int hash_create(int Mb);
 void hash_clear(void);

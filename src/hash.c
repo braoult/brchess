@@ -51,6 +51,7 @@ void zobrist_init(void)
 
 /**
  * zobrist_calc() - calculate a position zobrist hash.
+ * @pos: &position
  *
  * Normally, Zobrist keys are incrementally calculated when doing or
  * undoing a move.
@@ -58,6 +59,7 @@ void zobrist_init(void)
  * - When starting a new position
  * - To verify incremental Zobrist calculation is correct
  *
+ * @return: @pos Zobrist key
  */
 key_t zobrist_calc(pos_t *pos)
 {
@@ -76,11 +78,63 @@ key_t zobrist_calc(pos_t *pos)
             }
         }
     }
-    key ^= pos->castle;
-    key ^= EP_ZOBRIST_IDX(pos->en_passant);
+    key ^= zobrist_castling[pos->castle];
+    key ^= zobrist_ep[EP_ZOBRIST_IDX(pos->en_passant)];
 
     return key;
 }
+
+/**
+ * zobrist_verify() - verify current position Zobrist key.
+ * @pos: &position
+ *
+ * Verify that position Zobrist key matches a full Zobrist calculation.
+ * This function cannot be called if DEBUG_HASH is not set.
+ *
+ * @return: True if Zobrist key is OK.
+ */
+#ifdef DEBUG_HASH
+bool zobrist_verify(pos_t *pos)
+{
+    key_t diff, key = zobrist_calc(pos);
+
+    if (pos->key == key)
+        return true;
+
+    printf("key verify: cur=%#lx != %#lx\n", pos->key, key);
+
+    /* try to find-out the key in different zobrist tables */
+    diff = pos->key ^ key;
+
+    for (color_t c = WHITE; c <= BLACK; ++c) {
+        for (piece_type_t p = PAWN; p <= KING; ++p)
+            for (square_t sq = A1; sq <= H8; ++sq)
+                if (diff == zobrist_pieces[MAKE_PIECE(p, c)][sq]) {
+                    warn(true, "zobrist difference is piece:[%s][%s]\n",
+                         piece_to_fen(MAKE_PIECE(p, c)), sq_to_string(sq));
+                    goto end;
+                }
+    }
+    for (castle_rights_t c = CASTLE_NONE; c <= CASTLE_ALL; ++c)
+        if (diff == zobrist_castling[c]) {
+            warn(true, "zobrist difference is castling:[%d]\n", c);
+            goto end;
+        }
+
+    for (file_t f = FILE_A; f <= FILE_H; ++f)
+        if (diff == zobrist_ep[f]) {
+            warn(true, "zobrist difference is ep:[%d]\n", f);
+            goto end;
+        }
+    if (diff == zobrist_turn) {
+        warn(true, "zobrist difference is turn\n");
+        goto end;
+    }
+    warn(true, "zobrist diff %lx is unknown\n", diff);
+end:
+    return false;
+}
+#endif
 
 /**
  * hash_create() - hashtable creation.

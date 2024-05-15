@@ -250,8 +250,10 @@ end:
     }
     if (fen_check(&tmppos) < 0)
         return NULL;
+    tmppos.key = zobrist_calc(&tmppos);
     if (!pos)
-        pos = pos_dup(&tmppos);
+        pos = pos_new();
+    pos_copy(&tmppos, pos);
     //puts("prout 1");
     //pos_print_raw(&tmppos, 1);
     //puts("prout 2");
