@@ -24,7 +24,7 @@
 #define HASH_SIZE_MIN        4
 #define HASH_SIZE_MAX    32768                    /* 32Gb */
 
-typedef u64 key;
+#define key_t u64                                 /* cannot use typedef for key_t */
 
 /**
  * hentry_t: hashtable bucket.
@@ -33,7 +33,7 @@ typedef u64 key;
  * 16 bytes in future, it should be updated to be exactly 32 bytes.
  */
 typedef struct {
-    key key;                                      /* zobrist */
+    key_t key;                                    /* zobrist */
     union {
         u64 data;
         struct {
@@ -81,9 +81,18 @@ typedef struct {
  */
 #define EP_ZOBRIST_IDX(ep) ( ( (ep) >> 3 ) | sq_file(ep) )
 
+extern key_t zobrist_pieces[16][64];
+extern key_t zobrist_castling[4 * 4 + 1];
+extern key_t zobrist_turn;                        /* for black, XOR each ply */
+extern key_t zobrist_ep[9];                       /* 0-7: ep file, 8: SQUARE_NONE */
+
+extern hasht_t hash_tt;                           /* main transposition table */
+
 void zobrist_init(void);
+key_t zobrist_calc(pos_t *pos);
+
 int hash_create(int Mb);
-void hash_clear();
-void hash_delete();
+void hash_clear(void);
+void hash_delete(void);
 
 #endif  /* HASH_H */

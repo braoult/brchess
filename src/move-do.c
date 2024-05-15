@@ -23,6 +23,7 @@
 #include "move.h"
 #include "position.h"
 #include "move-do.h"
+#include "hash.h"
 
 /**
  * move_do() - do move.
@@ -39,8 +40,12 @@
  *   - castling
  *   - en-passant
  * - captured piece (excl. en-passant)
+ * - tt hash values are updated for:
+ *   - side-to-move
+ *   - en-passant
+ *   - castling rights.
  *
- * @return: pos.
+ * @return: updated pos.
  */
 pos_t *move_do(pos_t *pos, const move_t move) //, state_t *state)
 {
@@ -56,6 +61,9 @@ pos_t *move_do(pos_t *pos, const move_t move) //, state_t *state)
     piece_type_t ptype = PIECE(piece);
     piece_t new_piece = piece;
     int up = sq_up(us);
+
+    /* update turn, reset castling and ep */
+    pos->key ^= zobrist_turn;
 
     ++pos->clock_50;
     ++pos->plycount;
@@ -119,7 +127,8 @@ pos_t *move_do(pos_t *pos, const move_t move) //, state_t *state)
         else if (from == rel_h1)
             pos->castle = clr_oo(pos->castle, us);
     }
-    if (can_castle(pos->castle, them)) {          /* do we save time with this test ? */
+
+    if (can_castle(pos->castle, them)) {
         square_t rel_a8 = sq_rel(A8, us);
         square_t rel_h8 = sq_rel(H8, us);
         if (to == rel_a8)
@@ -127,6 +136,7 @@ pos_t *move_do(pos_t *pos, const move_t move) //, state_t *state)
         else if (to == rel_h8)
             pos->castle = clr_oo(pos->castle, them);
     }
+
 
     return pos;
 }

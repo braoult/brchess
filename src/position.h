@@ -16,11 +16,12 @@
 
 #include <stdint.h>
 
-#include "brlib.h"
-#include "bitops.h"
-#include "struct-group.h"
+#include <brlib.h>
+#include <bitops.h>
+#include <struct-group.h>
 
 #include "chessdefs.h"
+#include "hash.h"
 #include "bitboard.h"
 #include "piece.h"
 #include "move.h"
@@ -41,6 +42,7 @@ typedef struct __pos_s {
      * This allows a memcpy on this data (to save/restore position state).
      */
     struct_group_tagged(state_s, state,
+                        key_t key;
                         square_t en_passant;
                         castle_rights_t castle;
                         int clock_50;

@@ -59,9 +59,9 @@ void zobrist_init(void)
  * - To verify incremental Zobrist calculation is correct
  *
  */
-key zobrist_calc(pos_t *pos)
+key_t zobrist_calc(pos_t *pos)
 {
-    key key = 0;
+    key_t key = 0;
 
     if (pos->turn == BLACK)
         key ^= zobrist_turn;

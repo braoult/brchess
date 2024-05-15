@@ -346,7 +346,7 @@ FEN_OBJS      := $(PIECE_OBJS) fen.o position.o bitboard.o board.o \
 BB_OBJS       := $(FEN_OBJS)
 MOVEGEN_OBJS  := $(BB_OBJS) move.o move-gen.o
 ATTACK_OBJS   := $(MOVEGEN_OBJS)
-MOVEDO_OBJS   := $(ATTACK_OBJS) move-do.o
+MOVEDO_OBJS   := $(ATTACK_OBJS) move-do.o hash.o
 PERFT_OBJS    := $(MOVEDO_OBJS) search.o misc.o
 
 TEST          := $(addprefix $(BINDIR)/,$(TEST))
