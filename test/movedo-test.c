@@ -32,10 +32,7 @@ int main(int __unused ac, __unused char**av)
     movelist_t pseudo;
     move_t move;
 
-    setlinebuf(stdout);                           /* line-buffered stdout */
-
-    bitboard_init();
-    hyperbola_init();
+    init_all();
 
     while ((fen = next_fen(MOVEDO))) {
         test_line = cur_line();

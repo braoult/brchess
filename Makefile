@@ -68,6 +68,9 @@ CPPFLAGS  += -DWARN_ON                                      # brlib bug.h
 # fen.c
 #CPPFLAGS  += -DDEBUG_FEN                                    # FEN decoding
 
+# hash
+CPPFLAGS  += -DDEBUG_HASH                                    # chk zobrist consistency
+
 # attack.c
 #CPPFLAGS  += -DDEBUG_ATTACK_ATTACKERS                       # sq_attackers
 #CPPFLAGS  += -DDEBUG_ATTACK_PINNERS                         # sq_pinners details
@@ -342,12 +345,12 @@ TEST          += movedo-test perft-test
 
 PIECE_OBJS    := piece.o
 FEN_OBJS      := $(PIECE_OBJS) fen.o position.o bitboard.o board.o \
-	hyperbola-quintessence.o attack.o
+	hyperbola-quintessence.o attack.o hash.o init.o
 BB_OBJS       := $(FEN_OBJS)
 MOVEGEN_OBJS  := $(BB_OBJS) move.o move-gen.o
 ATTACK_OBJS   := $(MOVEGEN_OBJS)
-MOVEDO_OBJS   := $(ATTACK_OBJS) move-do.o hash.o
-PERFT_OBJS    := $(MOVEDO_OBJS) search.o misc.o
+MOVEDO_OBJS   := $(ATTACK_OBJS) move-do.o misc.o
+PERFT_OBJS    := $(MOVEDO_OBJS) search.o
 
 TEST          := $(addprefix $(BINDIR)/,$(TEST))
 
@@ -387,7 +390,7 @@ bin/attack-test: test/attack-test.c test/common-test.h $(ATTACK_OBJS)
 
 bin/movedo-test: test/movedo-test.c test/common-test.h $(MOVEDO_OBJS)
 	@echo compiling $@ test executable.
-	@$(CC) $(ALL_CFLAGS) $< $(MOVEDO_OBJS) $(ALL_LDFLAGS) -o $@
+	$(CC) $(ALL_CFLAGS) $< $(MOVEDO_OBJS) $(ALL_LDFLAGS) -o $@
 
 bin/perft-test: test/perft-test.c test/common-test.h $(PERFT_OBJS)
 	@echo compiling $@ test executable.

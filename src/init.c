@@ -21,7 +21,7 @@
 
 #include "hash.h"
 
-void init_all()
+void init_all(void)
 {
     /* for printf() numeric thousands separator */
     setlocale(LC_NUMERIC, "");
@@ -37,6 +37,6 @@ void init_all()
 
     /* zobrist tables & default tt hashtable */
     zobrist_init();
-    hash_create(HASH_DEFAULT);
+    hash_create(HASH_SIZE_DEFAULT);
 
 }

@@ -178,4 +178,6 @@ double clock_elapsed_sec(mclock_t *clock);
 void rand_init(u64 seed);
 u64 rand64(void);
 
+void init_all(void);
+
 #endif  /* _CHESSDEFS_H */

@@ -277,16 +277,13 @@ int main(int __unused ac, __unused char**av)
     //    run =  atoi(av[2]) & 3;
     printf("depth = %d run = %x sf = %s\n", depth, run, sf_run? "true": "false");
 
+    init_all();
+
     if (!run)
         exit(0);
-    setlocale(LC_NUMERIC, "");
-    setlinebuf(stdout);                           /* line-buffered stdout */
 
     if (sf_run)
         outfd = open_stockfish();
-
-    bitboard_init();
-    hyperbola_init();
 
     CLOCK_DEFINE(clock, CLOCK_PROCESS);
     while ((fen = next_fen(PERFT | MOVEDO))) {
