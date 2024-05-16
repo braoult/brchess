@@ -288,7 +288,6 @@ int main(int __unused ac, __unused char**av)
     CLOCK_DEFINE(clock, CLOCK_PROCESS);
     while ((fen = next_fen(PERFT | MOVEDO))) {
         test_line = cur_line();
-        printf("pos = %p\n", pos);
         if (!(fenpos = fen2pos(pos, fen))) {
             printf("wrong fen %d: [%s]\n", i, fen);
             continue;
