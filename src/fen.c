@@ -184,6 +184,8 @@ pos_t *fen2pos(pos_t *pos, const char *fen)
                   piece, PIECE(piece), COLOR(piece));
 #           endif
             pos_set_sq(&tmppos, sq_make(file, rank), piece);
+            if (PIECE(piece) == KING)
+                tmppos.king[COLOR(piece)] = sq_make(file, rank);
             file++;
         } else {                                  /* error */
             err_line = __LINE__, err_char = *cur, err_pos = cur - fen;

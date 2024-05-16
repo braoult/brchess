@@ -68,8 +68,8 @@ CPPFLAGS  += -DWARN_ON                                      # brlib bug.h
 # fen.c
 #CPPFLAGS  += -DDEBUG_FEN                                    # FEN decoding
 
-# hash
-CPPFLAGS  += -DDEBUG_HASH                                    # chk zobrist consistency
+# hash.c
+#CPPFLAGS  += -HASH_VERIFY                                    # chk zobrist consistency
 
 # attack.c
 #CPPFLAGS  += -DDEBUG_ATTACK_ATTACKERS                       # sq_attackers
@@ -390,7 +390,7 @@ bin/attack-test: test/attack-test.c test/common-test.h $(ATTACK_OBJS)
 
 bin/movedo-test: test/movedo-test.c test/common-test.h $(MOVEDO_OBJS)
 	@echo compiling $@ test executable.
-	$(CC) $(ALL_CFLAGS) $< $(MOVEDO_OBJS) $(ALL_LDFLAGS) -o $@
+	@$(CC) $(ALL_CFLAGS) $< $(MOVEDO_OBJS) $(ALL_LDFLAGS) -o $@
 
 bin/perft-test: test/perft-test.c test/common-test.h $(PERFT_OBJS)
 	@echo compiling $@ test executable.

@@ -93,7 +93,7 @@ key_t zobrist_calc(pos_t *pos)
  *
  * @return: True if Zobrist key is OK.
  */
-#ifdef DEBUG_HASH
+#ifdef ZOBRIST_VERIFY
 bool zobrist_verify(pos_t *pos)
 {
     key_t diff, key = zobrist_calc(pos);
