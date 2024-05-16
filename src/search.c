@@ -60,7 +60,13 @@ u64 perft(pos_t *pos, int depth, int ply, bool output)
             nodes++;
         } else {
             move_do(pos, *move);
-            subnodes = perft(pos, depth - 1, ply + 1, output);
+            if (depth == 2) {
+                movelist_t movelist2;
+                pos_set_checkers_pinners_blockers(pos);
+                subnodes = pos_legal(pos, pos_gen_pseudo(pos, &movelist2))->nmoves;
+            } else {
+                subnodes = perft(pos, depth - 1, ply + 1, output);
+            }
             if (output && ply == 1) {
                 char movestr[8];
                 printf("%s: %d\n", move_str(movestr, *move, 0), subnodes);
@@ -105,7 +111,13 @@ u64 perft_test(pos_t *pos, int depth, int ply, bool output)
             nodes++;
         } else {
             move_do2(pos, *move, &state);
-            subnodes = perft_test(pos, depth - 1, ply + 1, output);
+            if (depth == 2) {
+                movelist_t movelist2;
+                pos_set_checkers_pinners_blockers(pos);
+                subnodes = pos_legal(pos, pos_gen_pseudo(pos, &movelist2))->nmoves;
+            } else {
+                subnodes = perft_test(pos, depth - 1, ply + 1, output);
+            }
             if (output && ply == 1) {
                 char movestr[8];
                 printf("%s: %d\n", move_str(movestr, *move, 0), subnodes);
