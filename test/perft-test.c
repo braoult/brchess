@@ -235,7 +235,7 @@ int main(int __unused ac, __unused char**av)
     int i = 0, test_line;
     u64 sf_count = 0, my_count;
     char *fen;
-    pos_t *pos;
+    pos_t *pos = NULL, *fenpos;
     pos_t *fishpos = pos_new();
     movelist_t fishmoves;
     //move_t move;
@@ -288,10 +288,12 @@ int main(int __unused ac, __unused char**av)
     CLOCK_DEFINE(clock, CLOCK_PROCESS);
     while ((fen = next_fen(PERFT | MOVEDO))) {
         test_line = cur_line();
-        if (!(pos = fen2pos(NULL, fen))) {
+        printf("pos = %p\n", pos);
+        if (!(fenpos = fen2pos(pos, fen))) {
             printf("wrong fen %d: [%s]\n", i, fen);
             continue;
         }
+        pos = fenpos;
         if (sf_run)
             sf_count = send_stockfish_fen(outfd, fishpos, &fishmoves, fen, depth);
 
@@ -354,11 +356,11 @@ int main(int __unused ac, __unused char**av)
         }
         printf("\n");
         // pos_del(savepos);
-        pos_del(pos);
         i++;
         /* to run first test only */
         // exit(0);
     }
+    pos_del(pos);
     if (run & 1) {
         if (!res[0].ms)
             res[0].ms = 1;
