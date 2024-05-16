@@ -105,7 +105,7 @@ u64 perft_test(pos_t *pos, int depth, int ply, bool output)
             nodes++;
         } else {
             move_do2(pos, *move, &state);
-            subnodes = perft(pos, depth - 1, ply + 1, output);
+            subnodes = perft_test(pos, depth - 1, ply + 1, output);
             if (output && ply == 1) {
                 char movestr[8];
                 printf("%s: %d\n", move_str(movestr, *move, 0), subnodes);
