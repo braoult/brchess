@@ -352,11 +352,12 @@ bool pos_ok(const pos_t *pos, const bool strict)
 
     /* force BUG_ON and WARN_ON */
 #   pragma push_macro("BUG_ON")
+#   pragma push_macro("WARN_ON")
 #   undef BUG_ON
 #   define BUG_ON
-#   pragma push_macro("WARN_ON")
 #   undef WARN_ON
 #   define WARN_ON
+#   include <bug.h>
 
     /* pawns on 1st ot 8th rank */
     error += warn_on((pos->bb[WHITE][PAWN] | pos->bb[BLACK][PAWN]) &
