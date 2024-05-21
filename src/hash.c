@@ -32,21 +32,26 @@ hasht_t hash_tt;                                  /* main transposition table */
 /**
  * zobrist_init() - initialize zobrist tables.
  *
- * Initialize all zobrist random bitmasks.
+ * Initialize all zobrist random bitmasks. Must be called before any other
+ * zobrist function, and can be called once only (further calls will be ignored).
  */
 void zobrist_init(void)
 {
-    for (color_t c = WHITE; c <= BLACK; ++c) {
-        for (piece_type_t p = PAWN; p <= KING; ++p)
-            for (square_t sq = A1; sq <= H8; ++sq)
-                zobrist_pieces[MAKE_PIECE(p, c)][sq] = rand64();
+    static bool called = false;
+    if (!called) {
+        called = true;
+        for (color_t c = WHITE; c <= BLACK; ++c) {
+            for (piece_type_t p = PAWN; p <= KING; ++p)
+                for (square_t sq = A1; sq <= H8; ++sq)
+                    zobrist_pieces[MAKE_PIECE(p, c)][sq] = rand64();
+        }
+        for (castle_rights_t c = CASTLE_NONE; c <= CASTLE_ALL; ++c)
+            zobrist_castling[c] = rand64();
+        for (file_t f = FILE_A; f <= FILE_H; ++f)
+            zobrist_ep[f] = rand64();
+        zobrist_ep[8] = 0;                        /* see EP_ZOBRIST_IDX macro */
+        zobrist_turn = rand64();
     }
-    for (castle_rights_t c = CASTLE_NONE; c <= CASTLE_ALL; ++c)
-        zobrist_castling[c] = rand64();
-    for (file_t f = FILE_A; f <= FILE_H; ++f)
-        zobrist_ep[f] = rand64();
-    zobrist_ep[8] = 0;
-    zobrist_turn = rand64();
 }
 
 /**
@@ -89,7 +94,7 @@ key_t zobrist_calc(pos_t *pos)
  * @pos: &position
  *
  * Verify that position Zobrist key matches a full Zobrist calculation.
- * This function cannot be called if DEBUG_HASH is not set.
+ * This function cannot be called if ZOBRIST_VERIFY is not set.
  *
  * @return: True if Zobrist key is OK.
  */
@@ -132,7 +137,7 @@ bool zobrist_verify(pos_t *pos)
     }
     warn(true, "zobrist diff %lx is unknown\n", diff);
 end:
-    return false;
+    bug_on(false);
 }
 #endif
 
