@@ -235,16 +235,16 @@ int main(int __unused ac, __unused char**av)
     int i = 0, test_line;
     u64 sf_count = 0, my_count;
     char *fen;
-    pos_t *pos;
+    pos_t *pos = NULL, *fenpos;
     pos_t *fishpos = pos_new();
     movelist_t fishmoves;
-    //move_t move;
     FILE *outfd = NULL;
     struct {
         s64 count, ms;
         s64 minlps, maxlps;
         int skipped;
-    } res[2] = {
+    } res[3] = {
+        { .minlps=LONG_MAX },
         { .minlps=LONG_MAX },
         { .minlps=LONG_MAX },
     };
@@ -271,34 +271,47 @@ int main(int __unused ac, __unused char**av)
                     return usage(*av);
         }
     }
-    //if (ac > 1)
-    //    depth = atoi(av[1]);
-    //if (ac > 2)
-    //    run =  atoi(av[2]) & 3;
-    printf("depth = %d run = %x sf = %s\n", depth, run, sf_run? "true": "false");
+
+    printf("perft: depth = %d run = %x stockfish = %s\n",
+           depth, run, sf_run? "true": "false");
+
+    init_all();
 
     if (!run)
         exit(0);
-    setlocale(LC_NUMERIC, "");
-    setlinebuf(stdout);                           /* line-buffered stdout */
 
     if (sf_run)
         outfd = open_stockfish();
 
-    bitboard_init();
-    hyperbola_init();
-
-    CLOCK_DEFINE(clock, CLOCK_PROCESS);
+    CLOCK_DEFINE(clock, CLOCK_MONOTONIC);
     while ((fen = next_fen(PERFT | MOVEDO))) {
         test_line = cur_line();
-        if (!(pos = fen2pos(NULL, fen))) {
+        if (!(fenpos = fen2pos(pos, fen))) {
             printf("wrong fen %d: [%s]\n", i, fen);
             continue;
         }
-        if (sf_run)
+        pos = fenpos;
+        if (sf_run) {
+            clock_start(&clock);
             sf_count = send_stockfish_fen(outfd, fishpos, &fishmoves, fen, depth);
-
-        // savepos = pos_dup(pos);
+            ms = clock_elapsed_ms(&clock);
+            if (!ms) {
+                res[2].skipped++;
+                lps = 0;
+            } else {
+                lps = sf_count * 1000l / ms;
+                res[2].ms += ms;
+                res[2].count += sf_count;
+                if (lps > res[2].maxlps)
+                    res[2].maxlps = lps;
+                if (lps < res[2].minlps)
+                    res[2].minlps = lps;
+            }
+            printf("SF     : line=%3d perft=%'lu %'ldms lps=%'lu \"%s\"\n",
+                   test_line, sf_count, ms,
+                   lps,
+                   fen);
+        }
 
         if (run & 1) {
             clock_start(&clock);
@@ -357,10 +370,19 @@ int main(int __unused ac, __unused char**av)
         }
         printf("\n");
         // pos_del(savepos);
-        pos_del(pos);
         i++;
         /* to run first test only */
         // exit(0);
+    }
+    pos_del(pos);
+    if (sf_run) {
+        if (!res[2].ms)
+            res[2].ms = 1;
+        printf("total SF     %'lums %'lums lps=%'lu min=%'lu max=%'lu (skipped %d)\n",
+               res[2].count, res[2].ms,
+               res[2].count * 1000l / res[2].ms,
+               res[2].minlps, res[2].maxlps,
+               res[2].skipped);
     }
     if (run & 1) {
         if (!res[0].ms)

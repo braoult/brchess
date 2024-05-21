@@ -16,11 +16,13 @@
 
 #include <stdint.h>
 
-#include "brlib.h"
-#include "bitops.h"
-#include "struct-group.h"
+#include <brlib.h>
+#include <bitops.h>
+#include <struct-group.h>
+#include <bug.h>
 
 #include "chessdefs.h"
+#include "hash.h"
 #include "bitboard.h"
 #include "piece.h"
 #include "move.h"
@@ -41,6 +43,7 @@ typedef struct __pos_s {
      * This allows a memcpy on this data (to save/restore position state).
      */
     struct_group_tagged(state_s, state,
+                        key_t key;
                         square_t en_passant;
                         castle_rights_t castle;
                         int clock_50;
@@ -72,11 +75,16 @@ static __always_inline void pos_set_sq(pos_t *pos, square_t square, piece_t piec
 {
     color_t color = COLOR(piece);
     piece_type_t type = PIECE(piece);
+
+    bug_on(pos->board[square] != EMPTY);
+
     pos->board[square] = piece;
     pos->bb[color][type] |= BIT(square);
     pos->bb[color][ALL_PIECES] |= BIT(square);
-    if (type == KING)
-        pos->king[color] = square;
+    //if (type == KING)
+    //    pos->king[color] = square;
+
+    //pos->key ^= zobrist_pieces[piece][square];
 }
 
 /**
@@ -91,11 +99,16 @@ static __always_inline void pos_clr_sq(pos_t *pos, square_t square)
     piece_t piece = pos->board[square];
     piece_type_t type = PIECE(piece);
     color_t color = COLOR(piece);
+
+    bug_on(pos->board[square] == EMPTY);
+
+    //pos->key ^= zobrist_pieces[piece][square];
+
     pos->board[square] = EMPTY;
     pos->bb[color][type] &= ~BIT(square);
     pos->bb[color][ALL_PIECES] &= ~BIT(square);
-    if (type == KING)
-        pos->king[color] = SQUARE_NONE;
+    //if (type == KING)
+    //    pos->king[color] = SQUARE_NONE;
 }
 
 /**
@@ -156,6 +169,7 @@ static __always_inline int pos_between_count(const pos_t *pos,
 
 pos_t *pos_new();
 pos_t *pos_dup(const pos_t *pos);
+pos_t *pos_copy(const pos_t *from, pos_t *to);
 void pos_del(pos_t *pos);
 pos_t *pos_clear(pos_t *pos);
 bool pos_cmp(const pos_t *pos1, const pos_t *pos2);

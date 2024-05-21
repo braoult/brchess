@@ -184,6 +184,8 @@ pos_t *fen2pos(pos_t *pos, const char *fen)
                   piece, PIECE(piece), COLOR(piece));
 #           endif
             pos_set_sq(&tmppos, sq_make(file, rank), piece);
+            if (PIECE(piece) == KING)
+                tmppos.king[COLOR(piece)] = sq_make(file, rank);
             file++;
         } else {                                  /* error */
             err_line = __LINE__, err_char = *cur, err_pos = cur - fen;
@@ -250,8 +252,10 @@ end:
     }
     if (fen_check(&tmppos) < 0)
         return NULL;
+    tmppos.key = zobrist_calc(&tmppos);
     if (!pos)
-        pos = pos_dup(&tmppos);
+        pos = pos_new();
+    pos_copy(&tmppos, pos);
     //puts("prout 1");
     //pos_print_raw(&tmppos, 1);
     //puts("prout 2");

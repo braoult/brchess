@@ -23,6 +23,7 @@
 #include "move.h"
 #include "position.h"
 #include "move-do.h"
+#include "hash.h"
 
 /**
  * move_do() - do move.
@@ -39,8 +40,12 @@
  *   - castling
  *   - en-passant
  * - captured piece (excl. en-passant)
+ * - tt hash values are updated for:
+ *   - side-to-move
+ *   - en-passant
+ *   - castling rights.
  *
- * @return: pos.
+ * @return: updated pos.
  */
 pos_t *move_do(pos_t *pos, const move_t move) //, state_t *state)
 {
@@ -56,6 +61,12 @@ pos_t *move_do(pos_t *pos, const move_t move) //, state_t *state)
     piece_type_t ptype = PIECE(piece);
     piece_t new_piece = piece;
     int up = sq_up(us);
+    key_t key = pos->key;
+
+    /* update key: switch turn, reset castling and ep */
+    key ^= zobrist_turn;
+    key ^= zobrist_castling[pos->castle];
+    key ^= zobrist_ep[EP_ZOBRIST_IDX(pos->en_passant)];
 
     ++pos->clock_50;
     ++pos->plycount;
@@ -74,6 +85,7 @@ pos_t *move_do(pos_t *pos, const move_t move) //, state_t *state)
         pos->clock_50 = 0;
         //pos->captured = pos->board[to];           /* save capture info */
         bug_on(pos->board[to] == EMPTY || COLOR(pos->captured) != them);
+        key ^= zobrist_pieces[captured][to];
         pos_clr_sq(pos, to);                      /* clear square */
     } else if (is_castle(move)) {                 /* handle rook move */
         square_t rookfrom, rookto;
@@ -84,20 +96,26 @@ pos_t *move_do(pos_t *pos, const move_t move) //, state_t *state)
             rookfrom = sq_rel(A1, us);
             rookto = sq_rel(D1, us);
         }
+        key ^= zobrist_pieces[pos->board[rookfrom]][rookto] ^
+            zobrist_pieces[pos->board[rookfrom]][rookfrom];
         pos_set_sq(pos, rookto, pos->board[rookfrom]);
         pos_clr_sq(pos, rookfrom);
-        pos->castle = clr_castle(pos->castle, us);
+        //pos->castle = clr_castle(pos->castle, us);
     } else if (ptype == PAWN) {                   /* pawn non capture or e.p. */
         pos->clock_50 = 0;
-        if (is_dpush(move))                       /* if pawn double push, set e.p. */
+        if (is_dpush(move)) {                     /* if pawn double push, set e.p. */
             pos->en_passant = from + up;
-        else if (is_enpassant(move)) {            /* clear grabbed pawn */
+            /* update ep key */
+            key ^= zobrist_ep[EP_ZOBRIST_IDX(pos->en_passant)];
+        } else if (is_enpassant(move)) {          /* clear grabbed pawn */
             square_t grabbed = to - up;
+            key ^= zobrist_pieces[pos->board[grabbed]][grabbed];
             pos_clr_sq(pos, grabbed);
         }
     }
 
-    pos_clr_sq(pos, from);                        /* always clear "from" and set "to" */
+    key ^= zobrist_pieces[piece][from] ^ zobrist_pieces[new_piece][to];
+    pos_clr_sq(pos, from);                        /* clear "from" and set "to" */
     pos_set_sq(pos, to, new_piece);
 
     if (ptype == KING)
@@ -119,7 +137,7 @@ pos_t *move_do(pos_t *pos, const move_t move) //, state_t *state)
         else if (from == rel_h1)
             pos->castle = clr_oo(pos->castle, us);
     }
-    if (can_castle(pos->castle, them)) {          /* do we save time with this test ? */
+    if (can_castle(pos->castle, them)) {
         square_t rel_a8 = sq_rel(A8, us);
         square_t rel_h8 = sq_rel(H8, us);
         if (to == rel_a8)
@@ -127,6 +145,13 @@ pos_t *move_do(pos_t *pos, const move_t move) //, state_t *state)
         else if (to == rel_h8)
             pos->castle = clr_oo(pos->castle, them);
     }
+
+    /* update castle key */
+    key ^= zobrist_castling[pos->castle];
+
+    pos->key = key;
+
+    bug_on(zobrist_verify(pos) == false);
 
     return pos;
 }
@@ -143,8 +168,14 @@ pos_t *move_do2(pos_t *pos, const move_t move, state_t *state)
     piece_type_t ptype = PIECE(piece);
     piece_t new_piece = piece;
     int up = sq_up(us);
+    key_t key = pos->key;
 
     *state = pos->state;                          /* save irreversible changes */
+
+    /* update key: switch turn, reset castling and ep */
+    key ^= zobrist_turn;
+    key ^= zobrist_castling[pos->castle];
+    key ^= zobrist_ep[EP_ZOBRIST_IDX(pos->en_passant)];
 
     ++pos->clock_50;
     ++pos->plycount;
@@ -163,6 +194,7 @@ pos_t *move_do2(pos_t *pos, const move_t move, state_t *state)
         pos->clock_50 = 0;
         //pos->captured = pos->board[to];           /* save capture info */
         bug_on(pos->board[to] == EMPTY || COLOR(pos->captured) != them);
+        key ^= zobrist_pieces[captured][to];
         pos_clr_sq(pos, to);                      /* clear square */
     } else if (is_castle(move)) {                 /* handle rook move */
         square_t rookfrom, rookto;
@@ -173,20 +205,27 @@ pos_t *move_do2(pos_t *pos, const move_t move, state_t *state)
             rookfrom = sq_rel(A1, us);
             rookto = sq_rel(D1, us);
         }
+        key ^= zobrist_pieces[pos->board[rookfrom]][rookto];
+        key ^= zobrist_pieces[pos->board[rookfrom]][rookfrom];
         pos_set_sq(pos, rookto, pos->board[rookfrom]);
         pos_clr_sq(pos, rookfrom);
         pos->castle = clr_castle(pos->castle, us);
     } else if (ptype == PAWN) {                   /* pawn non capture or e.p. */
         pos->clock_50 = 0;
-        if (is_dpush(move))                       /* if pawn double push, set e.p. */
+        if (is_dpush(move)) {                     /* if pawn double push, set e.p. */
             pos->en_passant = from + up;
-        else if (is_enpassant(move)) {            /* clear grabbed pawn */
+            /* update key */
+            key ^= zobrist_ep[EP_ZOBRIST_IDX(pos->en_passant)];
+        } else if (is_enpassant(move)) {          /* clear grabbed pawn */
             square_t grabbed = to - up;
+            key ^= zobrist_pieces[pos->board[grabbed]][grabbed];
             pos_clr_sq(pos, grabbed);
         }
     }
 
-    pos_clr_sq(pos, from);                        /* always clear "from" and set "to" */
+    key ^= zobrist_pieces[piece][from];
+    key ^= zobrist_pieces[new_piece][to];
+    pos_clr_sq(pos, from);                        /* clear "from" and set "to" */
     pos_set_sq(pos, to, new_piece);
 
     if (ptype == KING)
@@ -208,7 +247,7 @@ pos_t *move_do2(pos_t *pos, const move_t move, state_t *state)
         else if (from == rel_h1)
             pos->castle = clr_oo(pos->castle, us);
     }
-    if (can_castle(pos->castle, them)) {          /* do we save time with this test ? */
+    if (can_castle(pos->castle, them)) {
         square_t rel_a8 = sq_rel(A8, us);
         square_t rel_h8 = sq_rel(H8, us);
         if (to == rel_a8)
@@ -216,6 +255,13 @@ pos_t *move_do2(pos_t *pos, const move_t move, state_t *state)
         else if (to == rel_h8)
             pos->castle = clr_oo(pos->castle, them);
     }
+
+    /* update castle key */
+    key ^= zobrist_castling[pos->castle];
+
+    pos->key = key;
+
+    bug_on(zobrist_verify(pos) == false);
 
     return pos;
 }

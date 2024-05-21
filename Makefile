@@ -55,8 +55,9 @@ CPPFILES  := $(SRC:.c=.i) $(TSTSRC:.c=.i)
 ##################################### pre-processor flags
 CPPFLAGS  := -I$(BRINCDIR) -I$(INCDIR)
 
-CPPFLAGS  += -DNDEBUG                                       # assert
+CPPFLAGS  += -DNDEBUG                                       # assert (unused)
 CPPFLAGS  += -DWARN_ON                                      # brlib bug.h
+CPPFLAGS  += -DBUG_ON                                       # brlib bug.h
 
 #CPPFLAGS  += -DDEBUG                                        # global - unused
 #CPPFLAGS  += -DDEBUG_DEBUG                                  # enable log() functions
@@ -68,6 +69,9 @@ CPPFLAGS  += -DWARN_ON                                      # brlib bug.h
 # fen.c
 #CPPFLAGS  += -DDEBUG_FEN                                    # FEN decoding
 
+# hash.c
+#CPPFLAGS  += -HASH_VERIFY                                    # chk zobrist consistency
+
 # attack.c
 #CPPFLAGS  += -DDEBUG_ATTACK_ATTACKERS                       # sq_attackers
 #CPPFLAGS  += -DDEBUG_ATTACK_PINNERS                         # sq_pinners details
@@ -77,9 +81,6 @@ CPPFLAGS  += -DWARN_ON                                      # brlib bug.h
 #CPPFLAGS  += -DDEBUG_SEARCH                                 # move search
 
 CPPFLAGS  += -DDIAGRAM_SYM                                  # UTF8 symbols in diagrams
-
-# Never comment this one !
-CPPFLAGS  += -DBUG_ON                                       # brlib bug.h
 
 # remove extraneous spaces (due to spaces before comments)
 CPPFLAGS  := $(strip $(CPPFLAGS))
@@ -342,12 +343,12 @@ TEST          += movedo-test perft-test
 
 PIECE_OBJS    := piece.o
 FEN_OBJS      := $(PIECE_OBJS) fen.o position.o bitboard.o board.o \
-	hyperbola-quintessence.o attack.o
+	hyperbola-quintessence.o attack.o hash.o init.o
 BB_OBJS       := $(FEN_OBJS)
 MOVEGEN_OBJS  := $(BB_OBJS) move.o move-gen.o
 ATTACK_OBJS   := $(MOVEGEN_OBJS)
-MOVEDO_OBJS   := $(ATTACK_OBJS) move-do.o
-PERFT_OBJS    := $(MOVEDO_OBJS) search.o misc.o
+MOVEDO_OBJS   := $(ATTACK_OBJS) move-do.o misc.o
+PERFT_OBJS    := $(MOVEDO_OBJS) search.o
 
 TEST          := $(addprefix $(BINDIR)/,$(TEST))
 

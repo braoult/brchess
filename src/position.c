@@ -63,6 +63,21 @@ pos_t *pos_dup(const pos_t *pos)
 }
 
 /**
+ * pos_copy() - copy a position into another one.
+ * @from: &position to duplicate.
+ * @to: &destination position.
+ *
+ * Return a copy of @from into @to.
+ *
+ * @Return: @to.
+ */
+pos_t *pos_copy(const pos_t *from, pos_t *to)
+{
+    *to = *from;
+    return to;
+}
+
+/**
  * pos_del() - delete a position.
  * @pos: &position.
  *
@@ -87,6 +102,7 @@ pos_t *pos_clear(pos_t *pos)
     pos->turn = WHITE;
 
     /* move_do/undo position state */
+    pos->key = 0;
     pos->en_passant = SQUARE_NONE;
     pos->castle = 0;
     pos->clock_50 = 0;
@@ -341,6 +357,7 @@ bool pos_ok(const pos_t *pos, const bool strict)
 #   define BUG_ON
 #   undef WARN_ON
 #   define WARN_ON
+#   include <bug.h>
 
     /* pawns on 1st ot 8th rank */
     error += warn_on((pos->bb[WHITE][PAWN] | pos->bb[BLACK][PAWN]) &
