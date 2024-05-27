@@ -68,7 +68,7 @@ static const char *castle_str = "KQkq";
  * - inconsistent castle flags (if K & R are not in correct position)
  * - inconsistent en-passant square (turn, bad pawn position)
  *
- * pos_check() is also called, leading to fatal errors if something is wrong.
+ * pos_ok() is also called, leading to fatal errors if something is wrong.
  *
  * @return: 0 if OK, 1 if OK after fix, -1 if fatal issue.
  */
@@ -76,19 +76,22 @@ static int fen_check(pos_t *pos)
 {
     char *colstr[2] = { "white", "black"};
     int warning = 0;
+    color_t us = pos->turn, them = OPPONENT(us);
+    int up = sq_up(us);                           /* pawn up */
+    square_t ep = pos->en_passant;
 
     /* en passant, depends on who plays next */
-    if (pos->en_passant != SQUARE_NONE) {
-        rank_t eprank = sq_rank(pos->en_passant);
-        file_t epfile = sq_file(pos->en_passant);
-        rank_t rank5 = sq_rel_rank(RANK_5, pos->turn);
-        rank_t rank6 = sq_rel_rank(RANK_6, pos->turn);
-        rank_t rank7 = sq_rel_rank(RANK_7, pos->turn);
-        piece_t pawn = pos->turn == WHITE? B_PAWN: W_PAWN;
+    if (ep != SQUARE_NONE) {
+        rank_t eprank = sq_rank(ep);
+        rank_t rank6 = sq_rel_rank(RANK_6, us);
+        piece_t pawn = MAKE_PIECE(PAWN, them);
+        bitboard_t att = bb_pawn_attacks[them][ep] & pos->bb[us][PAWN];
+
         if (warn(eprank != rank6 ||
-                 pos->board[sq_make(epfile, rank5)] != pawn ||
-                 pos->board[sq_make(epfile, rank6)] != EMPTY ||
-                 pos->board[sq_make(epfile, rank7)] != EMPTY,
+                 pos->board[ep - up] != pawn ||
+                 pos->board[ep] != EMPTY ||
+                 pos->board[ep + up] != EMPTY ||
+                 att == 0ull,
                  "fen warn: wrong en-passant settings. (fixed)\n")) {
 #           ifdef DEBUG_FEN
             printf("ep5=%o ep6=%o ep7=%o\n", sq_make(epfile, rank5),
@@ -100,7 +103,7 @@ static int fen_check(pos_t *pos)
     }
 
     for (int color = WHITE; color <= BLACK; ++color) {
-        rank_t rank1 = color == WHITE? RANK_1: RANK_8;
+        rank_t rank1 = sq_rel_rank(RANK_1, color);
 
         /* castling */
         /* where K and R should be for valid castle flag */
@@ -338,8 +341,8 @@ char *pos2fen(const pos_t *pos, char *fen)
     if (pos->en_passant == SQUARE_NONE) {
         fen[cur++] = '-';
     } else {
-        fen[cur++] = FILE2C(sq_file(pos->en_passant));
-        fen[cur++] = RANK2C(sq_rank(pos->en_passant));
+        strcpy(fen+cur, sq_to_string(pos->en_passant));
+        cur += 2;
     }
     fen[cur++] = ' ';
 

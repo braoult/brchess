@@ -287,7 +287,7 @@ int main(int __unused ac, __unused char**av)
     while ((fen = next_fen(PERFT | MOVEDO))) {
         test_line = cur_line();
         if (!(fenpos = fen2pos(pos, fen))) {
-            printf("wrong fen %d: [%s]\n", i, fen);
+            printf("wrong fen line = %d: [%s]\n", test_line, fen);
             continue;
         }
         pos = fenpos;

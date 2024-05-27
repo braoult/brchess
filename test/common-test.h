@@ -394,6 +394,14 @@ struct fentest {
       "5n2/1k6/8/8/5K2/8/P7/1N6 w - - 0 1"
     },
     { __LINE__, FEN,
+      "legal EP",
+      "4k3/8/8/3pP3/8/8/8/4K3 w - d6 0 1"
+    },
+    { __LINE__, FEN,
+      "illegal EP, fix-able by fen parser",
+      "4k3/8/8/3p1P2/8/8/8/4K3 w - d6 0 1"
+    },
+    { __LINE__, FEN,
       "illegal EP and castle flags, fix-able by fen parser, SF crash",
       "4k3/8/8/8/7B/8/8/4K3 w KQkq e6 0 1"
     },

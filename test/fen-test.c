@@ -31,8 +31,7 @@ int main(__unused int ac, __unused char**av)
     bitboard_init();
 
     while ((fen = next_fen(FEN))) {
-        printf("***** [%s] ", fen);
-        fflush(stdout);
+        printf("line %3d: [%s] ", cur_line(), fen);
         if (!(pos = fen2pos(NULL, fen))) {
             printf("**INVALID\n");
         } else {

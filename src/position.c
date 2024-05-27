@@ -336,7 +336,7 @@ bitboard_t pos_king_blockers(const pos_t *pos, const color_t color, const bitboa
  * - side-to-move already checking opponent king
  * - side-to-move in check more than twice
  * - kings distance is 1
- * - TODO: discrepancy between piece bitboards and ALL_PIECES bitboards (per color)
+ * - TODO: - castling / e.p. flags
  *
  * In case of errors, and @strict is true, @bug_on() is called, and program will
  * be terminated.
@@ -349,6 +349,7 @@ bitboard_t pos_king_blockers(const pos_t *pos, const color_t color, const bitboa
 bool pos_ok(const pos_t *pos, const bool strict)
 {
     int n, count = 0, bbcount = 0, error = 0;
+    color_t us = pos->turn, them = OPPONENT(us);
 
     /* force BUG_ON and WARN_ON */
 #   pragma push_macro("BUG_ON")
@@ -391,12 +392,11 @@ bool pos_ok(const pos_t *pos, const bool strict)
     /* occupied board is different from bitboards */
     error += warn_on(count != bbcount);
     /* is opponent already in check ? */
-    error += warn_on(pos_checkers(pos, OPPONENT(pos->turn)));
+    error += warn_on(pos_checkers(pos, them));
     /* is color to play in check more than twice ? */
-    error += warn_on(popcount64(pos_checkers(pos, pos->turn)) > 2);
+    error += warn_on(popcount64(pos_checkers(pos, us)) > 2);
     /* kings distance is less than 2 */
     error += warn_on(sq_dist(pos->king[WHITE], pos->king[BLACK]) < 2);
-
     if (strict) {
         bug_on(error);
         /* not reached */
