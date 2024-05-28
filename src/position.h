@@ -180,7 +180,7 @@ bitboard_t pos_checkers(const pos_t *pos, const color_t color);
 bitboard_t pos_king_pinners(const pos_t *pos, const color_t color);
 bitboard_t pos_king_blockers(const pos_t *pos, const color_t color, const bitboard_t );
 
-bool pos_ok(const pos_t *pos, const bool strict);
+bool pos_ok(pos_t *pos, const bool strict);
 
 void pos_print(const pos_t *pos);
 void pos_print_mask(const pos_t *pos, const bitboard_t mask);

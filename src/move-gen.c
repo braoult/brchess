@@ -96,17 +96,14 @@ bool pseudo_is_legal(const pos_t *pos, const move_t move)
      * would discover a R/Q horizontal check.
      */
     if (is_enpassant(move)) {
-        bitboard_t rank5 = us == WHITE? RANK_5bb: RANK_4bb;
+        bitboard_t rank5 = bb_rel_rank(RANK_1, us);
 
         if ((pos->bb[us][KING] & rank5)) {
             bitboard_t exclude = BIT(pos->en_passant - sq_up(us)) | BIT(from);
             bitboard_t rooks = (pos->bb[them][ROOK] | pos->bb[them][QUEEN]) & rank5;
 
-            while (rooks) {
-                square_t rook = bb_next(&rooks);
-                if (hyperbola_rank_moves(occ ^ exclude, rook) & kingbb)
-                    return false;
-            }
+            if (hyperbola_rank_moves(occ ^ exclude, king) & rooks)
+                return false;
         }
     }
     return true;
@@ -467,62 +464,25 @@ movelist_t *pos_gen_pseudo(pos_t *pos, movelist_t *movelist)
     }
 
     /* pawn: captures */
-    /*
-     * tmp_bb = pawn_attacks_bb(pos->bb[us][PAWN], us) & enemy_pieces;
-     * //bb_print("FAIL", tmp_bb);
-     * to_bb = tmp_bb & ~rel_rank8;
-     * while (to_bb) {
-     *     to = bb_next(&to_bb);
-     *     from_bb = bb_pawn_attacks[them][to] & pos->bb[us][PAWN];
-     *     while (from_bb) {
-     *         from = bb_next(&from_bb);
-     *         *moves++ = move_make(from, to);
-     *     }
-     * }
-     * to_bb = tmp_bb & rel_rank8;
-     * while (to_bb) {
-     *     to = bb_next(&to_bb);
-     *     from_bb = bb_pawn_attacks[them][to] & pos->bb[us][PAWN];
-     *     while (from_bb) {
-     *         from = bb_next(&from_bb);
-     *         moves = move_make_promotions(moves, from, to);
-     *     }
-     * }
-     */
-
-    /* pawn: captures left */
-    bitboard_t filter = ~bb_rel_file(FILE_A, us);
-    shift = sq_upleft(us);
-    tmp_bb = bb_shift(pos->bb[us][PAWN] & filter, shift) & enemy_pieces;
-
+    tmp_bb = bb_pawns_attacks(pos->bb[us][PAWN], shift) & enemy_pieces;
+    //bb_print("FAIL", tmp_bb);
     to_bb = tmp_bb & ~rel_rank8;
     while (to_bb) {
         to = bb_next(&to_bb);
-        from = to - shift;
-        *moves++ = move_make(from, to);
+        from_bb = bb_pawn_attacks[them][to] & pos->bb[us][PAWN];
+        while (from_bb) {
+            from = bb_next(&from_bb);
+            *moves++ = move_make(from, to);
+        }
     }
     to_bb = tmp_bb & rel_rank8;
     while (to_bb) {
         to = bb_next(&to_bb);
-        from = to - shift;
-        moves = move_gen_promotions(moves, from, to);
-    }
-
-    /* pawn: captures right */
-    filter = ~bb_rel_file(FILE_H, us);
-    shift = sq_upright(us);
-    tmp_bb = bb_shift(pos->bb[us][PAWN] & filter, shift) & enemy_pieces;
-    to_bb = tmp_bb & ~rel_rank8;
-    while (to_bb) {
-        to = bb_next(&to_bb);
-        from = to - shift;
-        *moves++ = move_make(from, to);
-    }
-    to_bb = tmp_bb & rel_rank8;
-    while (to_bb) {
-        to = bb_next(&to_bb);
-        from = to - shift;
-        moves = move_gen_promotions(moves, from, to);
+        from_bb = bb_pawn_attacks[them][to] & pos->bb[us][PAWN];
+        while (from_bb) {
+            from = bb_next(&from_bb);
+            moves = move_gen_promotions(moves, from, to);
+        }
     }
 
     /* pawn: en-passant

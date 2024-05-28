@@ -61,18 +61,20 @@ static const char *castle_str = "KQkq";
 #define SKIP_BLANK(p) for(;isspace(*(p)); (p)++)
 
 /**
- * fen_check(pos_t *pos) - test (and try to fix) fen-generated position.
- * @pos: position
+ * fen_ok() - test (and try to fix) fen-generated position.
+ * @pos:    &position
+ * @fixit:  action flag
  *
- * Test and fix the following:
+ * Test and possibly fix the following:
  * - inconsistent castle flags (if K & R are not in correct position)
- * - inconsistent en-passant square (turn, bad pawn position)
+ * - inconsistent en-passant square (turn, bad pawns positions)
  *
- * pos_ok() is also called, leading to fatal errors if something is wrong.
+ * if @fixit is true, any error above will be fixed, and pos_ok() will
+ is also called, leading to fatal errors if something is wrong.
  *
  * @return: 0 if OK, 1 if OK after fix, -1 if fatal issue.
  */
-static int fen_check(pos_t *pos)
+int fen_ok(pos_t *pos, bool fixit)
 {
     char *colstr[2] = { "white", "black"};
     int warning = 0;
@@ -87,18 +89,17 @@ static int fen_check(pos_t *pos)
         piece_t pawn = MAKE_PIECE(PAWN, them);
         bitboard_t att = bb_pawn_attacks[them][ep] & pos->bb[us][PAWN];
 
-        if (warn(eprank != rank6 ||
-                 pos->board[ep - up] != pawn ||
-                 pos->board[ep] != EMPTY ||
-                 pos->board[ep + up] != EMPTY ||
-                 att == 0ull,
-                 "fen warn: wrong en-passant settings. (fixed)\n")) {
-#           ifdef DEBUG_FEN
-            printf("ep5=%o ep6=%o ep7=%o\n", sq_make(epfile, rank5),
-                   sq_make(epfile, rank6), sq_make(epfile, rank7));
-#           endif
+        if (eprank != rank6 ||
+            pos->board[ep - up] != pawn ||
+            pos->board[ep] != EMPTY ||
+            pos->board[ep + up] != EMPTY ||
+            att == 0ull) {
+
             warning++;
-            pos->en_passant = SQUARE_NONE;
+            if (fixit) {
+                warn(true, "pos warn: wrong en-passant settings (fixed).\n");
+                pos->en_passant = SQUARE_NONE;
+            }
         }
     }
 
@@ -112,28 +113,28 @@ static int fen_check(pos_t *pos)
         bitboard_t r_q  = bb_sq[sq_make(FILE_A, rank1)];
 
        /* where they are */
-        bitboard_t kings = pos->bb[color][KING];
-        bitboard_t rooks = pos->bb[color][ROOK];
+        bitboard_t kingbb = pos->bb[color][KING];
+        bitboard_t rookbb = pos->bb[color][ROOK];
         castle_rights_t castle_k = color == WHITE? CASTLE_WK: CASTLE_BK;
         castle_rights_t castle_q = color == WHITE? CASTLE_WQ: CASTLE_BQ;
-        if (pos->castle & castle_k) {
-            if (warn(!(k & kings && r_k & rooks),
-                     "fen warn: wrong %s short castling K or R position (fixed)\n",
-                     colstr[color])) {
-                warning++;
+        if (pos->castle & castle_k && !(k & kingbb && r_k & rookbb)) {
+            warning++;
+            if (fixit) {
+                warn(true, "fen warn: wrong %s short castling (fixed)\n",
+                     colstr[color]);
                 pos->castle &= ~castle_k;
             }
         }
-        if (pos->castle & castle_q) {
-            if (warn(!(k & kings && r_q & rooks),
-                     "fen warn: wrong %s long castling K or R position (fixed)\n",
-                     colstr[color])) {
-                warning++;
+        if (pos->castle & castle_q && !(k & kingbb && r_q & rookbb)) {
+            warning++;
+            if (fixit) {
+                warn(true, "fen warn: wrong %s long castling (fixed)\n",
+                     colstr[color]);
                 pos->castle &= ~castle_q;
             }
         }
     }
-    return pos_ok(pos, 0) ? warning: -1;
+    return warning;
 }
 
 /**
@@ -253,15 +254,15 @@ end:
              err_line, err_pos, err_char, err_char)) {
         return NULL;
     }
-    if (fen_check(&tmppos) < 0)
-        return NULL;
+
+    fen_ok(&tmppos, true);                        /* fix e.p & castling flags */
+    if (!pos_ok(&tmppos, false))
+        return NULL;                              /* invalid position: ignored */
+
     tmppos.key = zobrist_calc(&tmppos);
     if (!pos)
         pos = pos_new();
     pos_copy(&tmppos, pos);
-    //puts("prout 1");
-    //pos_print_raw(&tmppos, 1);
-    //puts("prout 2");
 #   ifdef DEBUG_FEN
     pos_print_raw(&tmppos, 1);
 #   endif

@@ -234,12 +234,25 @@ static __always_inline bitboard_t bb_shift(bitboard_t bb, int shift)
    return shift >= 0 ? bb << shift : bb >> -shift;
 }
 
+/**
+ * bb_pawns_attacks() - shift up pawns on both diagonals (attacks)
+ * @bb:      pawns bitboard
+ * @push:    shift value for pawn up
+ *
+ * Get the possible attacks for all @bb pawns.
+ *
+ * @return: squares attacked by @bbpawns
+ */
+static __always_inline bitboard_t bb_pawns_attacks(const bitboard_t bb, int push)
+{
+    return bb_shift(bb & ~FILE_Abb, push - 1) | bb_shift(bb & ~FILE_Hbb, push + 1);
+}
 
 #define bb_rank(r)        ((u64) RANK_1bb << ((r) * 8))
 #define bb_file(f)        ((u64) FILE_Abb << (f))
 
 #define bb_rel_rank(r, c) bb_rank(sq_rel_rank(r, c))
-#define bb_rel_file(f, c) bb_file(sq_rel_rank(f, c))
+#define bb_rel_file(f, c) bb_file(sq_rel_rank(f, c)) /* likely useless */
 
 /**
  * bb_sq_aligned() - check if two squares are aligned (same file or rank).
@@ -275,55 +288,6 @@ static __always_inline bitboard_t bb_sq_between(square_t sq, square_t sq1, squar
 {
     return bb_between_excl[sq1][sq2] & BIT(sq);
 }
-
-/* TODO: when OK, replace with macros */
-static __always_inline bitboard_t shift_n(const bitboard_t bb)
-{
-    return bb << NORTH;
-}
-static __always_inline bitboard_t shift_ne(const bitboard_t bb)
-{
-    return (bb & ~FILE_Hbb) << NORTH_EAST;
-}
-static __always_inline bitboard_t shift_e(const bitboard_t bb)
-{
-    return (bb & ~FILE_Hbb) << EAST;
-}
-static __always_inline bitboard_t shift_se(const bitboard_t bb)
-{
-    return (bb & ~FILE_Hbb) >> -SOUTH_EAST;
-}
-static __always_inline bitboard_t shift_s(const bitboard_t bb)
-{
-    return bb >> -SOUTH;
-}
-static __always_inline bitboard_t shift_sw(const bitboard_t bb)
-{
-    return (bb & ~FILE_Abb) >> -SOUTH_WEST;
-}
-static __always_inline bitboard_t shift_w(const bitboard_t bb)
-{
-    return (bb & ~FILE_Abb) >> -WEST;
-}
-static __always_inline bitboard_t shift_nw(const bitboard_t bb)
-{
-    return (bb & ~FILE_Abb) << NORTH_WEST;
-}
-
-/* pawn moves/attacks (for bitboards) */
-#define pawn_shift_up(bb, c)      ((c) == WHITE ? shift_n(bb): shift_s(bb))
-#define pawn_shift_upleft(bb, c)  ((c) == WHITE ? shift_nw(bb): shift_se(bb))
-#define pawn_shift_upright(bb, c) ((c) == WHITE ? shift_ne(bb): shift_sw(bb))
-
-#define pawn_attacks_bb(bb, c)    (pawn_shift_upleft(bb, c) |                   \
-                                   pawn_shift_upright(bb, c))
-
-/* pawn move (for single pawn) - NO SQUARE CONTROL HERE !
- * Need to make functions with control instead.
- */
-#define pawn_push_up(sq, c)       ((sq) + ((c) == WHITE ? NORTH:      SOUTH))
-//#define pawn_push_upleft(sq, c)   ((sq) + ((c) == WHITE ? NORTH_WEST: SOUTH_EAST))
-//#define pawn_push_upright(sq, c)  ((sq) + ((c) == WHITE ? NORTH_EAST: SOUTH_WEST))
 
 bitboard_t bitboard_between_excl(square_t sq1, square_t sq2);
 void bitboard_init(void);

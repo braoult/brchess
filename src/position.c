@@ -346,7 +346,7 @@ bitboard_t pos_king_blockers(const pos_t *pos, const color_t color, const bitboa
  *
  * @return: (if @strict is false) return true if check is ok, false otherwise.
  */
-bool pos_ok(const pos_t *pos, const bool strict)
+bool pos_ok(pos_t *pos, const bool strict)
 {
     int n, count = 0, bbcount = 0, error = 0;
     color_t us = pos->turn, them = OPPONENT(us);
@@ -397,6 +397,9 @@ bool pos_ok(const pos_t *pos, const bool strict)
     error += warn_on(popcount64(pos_checkers(pos, us)) > 2);
     /* kings distance is less than 2 */
     error += warn_on(sq_dist(pos->king[WHITE], pos->king[BLACK]) < 2);
+    /* e.p. and castling rights check */
+    error += fen_ok(pos, false);
+
     if (strict) {
         bug_on(error);
         /* not reached */

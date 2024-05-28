@@ -20,6 +20,7 @@
 
 extern const char *startfen;                      /* startup position */
 
+extern int fen_ok(pos_t *pos, bool fixit);
 extern pos_t *startpos(pos_t *pos);
 extern pos_t *fen2pos(pos_t *pos, const char *fen);
 extern char *pos2fen(const pos_t *pos, char *fen);

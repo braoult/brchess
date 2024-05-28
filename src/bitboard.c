@@ -160,10 +160,10 @@ void bitboard_init(void)
     /* 3) pawn, knight and king attacks
      */
     for (square_t sq = A1; sq <= H8; ++sq) {
-        if (sq >= A2)
-            bb_pawn_attacks[BLACK][sq] = pawn_attacks_bb(BIT(sq), BLACK);
-        if (sq <= H7)
-            bb_pawn_attacks[WHITE][sq] = pawn_attacks_bb(BIT(sq), WHITE);
+         if (sq <= H7)
+             bb_pawn_attacks[WHITE][sq] = bb_pawns_attacks(BIT(sq), sq_up(WHITE));
+         if (sq >= A2)
+             bb_pawn_attacks[BLACK][sq] = bb_pawns_attacks(BIT(sq), sq_up(BLACK));
 
         for (int vec = 0; vec < 8; ++vec) {
             int dst = sq + knight_vector[vec];

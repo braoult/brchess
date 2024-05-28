@@ -115,13 +115,16 @@ bitboard_t sq_attackers(const pos_t *pos, const bitboard_t occ, const square_t s
 
     /* pawn */
     to =  pos->bb[c][PAWN];
-    tmp = pawn_shift_upleft(sqbb, opp) & to;
+    tmp = bb_pawns_attacks(sqbb, sq_up(opp)) & to;
     attackers |= tmp;
+    //to =  pos->bb[c][PAWN];
+    //tmp = pawn_shift_upleft(sqbb, opp) & to;
+    //attackers |= tmp;
 #   ifdef DEBUG_ATTACK_ATTACKERS
     bb_print("att pawn upleft", tmp);
 #   endif
-    tmp = pawn_shift_upright(sqbb, opp) & to;
-    attackers |= tmp;
+    //tmp = pawn_shift_upright(sqbb, opp) & to;
+    //attackers |= tmp;
 #   ifdef DEBUG_ATTACK_ATTACKERS
     bb_print("att pawn upright", tmp);
 #   endif

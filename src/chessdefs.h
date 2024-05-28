@@ -139,8 +139,10 @@ typedef enum {
 
 /* define diff for relative squares */
 #define sq_up(c)          ((c) == WHITE ? NORTH: SOUTH)
-#define sq_upleft(c)      ((c) == WHITE ? NORTH_WEST: SOUTH_EAST)
-#define sq_upright(c)     ((c) == WHITE ? NORTH_EAST: SOUTH_WEST)
+/* Attention here: We mix "up" (color dependent) and W/E, color independant.
+ */
+#define sq_upwest(up)     ((up) - 1)
+#define sq_upeast(up)     ((up) + 1)
 
 #include <time.h>
 
