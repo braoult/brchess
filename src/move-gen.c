@@ -95,10 +95,10 @@ bool pseudo_is_legal(const pos_t *pos, const move_t move)
      * One case not handled anywhere else: when the two "disappearing" pawns
      * would discover a R/Q horizontal check.
      */
-    if (is_enpassant(move)) {
-        bitboard_t rank5 = bb_rel_rank(RANK_1, us);
+    if (unlikely(is_enpassant(move))) {
+        bitboard_t rank5 = bb_rel_rank(RANK_5, us);
 
-        if ((pos->bb[us][KING] & rank5)) {
+        if (unlikely((pos->bb[us][KING] & rank5))) {
             bitboard_t exclude = BIT(pos->en_passant - sq_up(us)) | BIT(from);
             bitboard_t rooks = (pos->bb[them][ROOK] | pos->bb[them][QUEEN]) & rank5;
 

@@ -226,13 +226,14 @@ static __unused void compare_moves(movelist_t *fish, movelist_t *me)
 
 static int usage(char *prg)
 {
-    fprintf(stderr, "Usage: %s [-d depth] [-p pertf-modules] -n\n", prg);
+    fprintf(stderr, "Usage: %s [-d depth] [-p pertf-modules] [-n][-v]\n", prg);
+    fprintf(stderr, "\t-d: depth, -p: 1-3, -n: no SF res check, -v: output moves\n");
     return 1;
 }
 
-int main(int __unused ac, __unused char**av)
+int main(int ac, char**av)
 {
-    int i = 0, test_line;
+    int test_line;
     u64 sf_count = 0, my_count;
     char *fen;
     pos_t *pos = NULL, *fenpos;
@@ -258,7 +259,7 @@ int main(int __unused ac, __unused char**av)
             case 'd':
                 depth = atoi(optarg);
                 break;
-            case 'p': /* 1 or 2 */
+            case 'p':                             /* 1 or 2 or 3 for both */
                 run = atoi(optarg);
                 break;
             case 'n':
@@ -369,10 +370,6 @@ int main(int __unused ac, __unused char**av)
             }
         }
         printf("\n");
-        // pos_del(savepos);
-        i++;
-        /* to run first test only */
-        // exit(0);
     }
     pos_del(pos);
     if (sf_run) {
