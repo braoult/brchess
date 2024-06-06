@@ -28,6 +28,13 @@
 #include "move.h"
 #include "board.h"
 
+#define REPEAT_SIZE 1024
+
+typedef struct {
+    hkey_t key[REPEAT_SIZE];
+    int moves;
+} repeat_t;
+
 typedef struct __pos_s {
     u64 node_count;                               /* evaluated nodes */
     int turn;                                     /* WHITE or BLACK */
@@ -43,7 +50,7 @@ typedef struct __pos_s {
      * This allows a memcpy on this data (to save/restore position state).
      */
     struct_group_tagged(state_s, state,
-                        key_t key;
+                        hkey_t key;
                         square_t en_passant;
                         castle_rights_t castle;
                         int clock_50;
@@ -57,6 +64,7 @@ typedef struct __pos_s {
     piece_t board[BOARDSIZE];
     bitboard_t bb[2][PIECE_TYPE_MAX];             /* bb[0][PAWN], bb[1][ALL_PIECES] */
     square_t king[2];                             /* dup with bb, faster retrieval */
+    repeat_t repeat;                              /* for repetition detection */
 } pos_t;
 
 typedef struct state_s state_t;

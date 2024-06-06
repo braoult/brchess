@@ -61,7 +61,7 @@ pos_t *move_do(pos_t *pos, const move_t move) //, state_t *state)
     piece_type_t ptype = PIECE(piece);
     piece_t new_piece = piece;
     int up = sq_up(us);
-    key_t key = pos->key;
+    hkey_t key = pos->key;
 
     /* update key: switch turn, reset castling and ep */
     key ^= zobrist_turn;
@@ -146,7 +146,7 @@ pos_t *move_do(pos_t *pos, const move_t move) //, state_t *state)
             pos->castle = clr_oo(pos->castle, them);
     }
 
-    /* update castle key */
+    /* update castling rights key */
     key ^= zobrist_castling[pos->castle];
 
     pos->key = key;
@@ -168,7 +168,7 @@ pos_t *move_do2(pos_t *pos, const move_t move, state_t *state)
     piece_type_t ptype = PIECE(piece);
     piece_t new_piece = piece;
     int up = sq_up(us);
-    key_t key = pos->key;
+    hkey_t key = pos->key;
 
     *state = pos->state;                          /* save irreversible changes */
 

@@ -66,9 +66,9 @@ void zobrist_init(void)
  *
  * @return: @pos Zobrist key
  */
-key_t zobrist_calc(pos_t *pos)
+hkey_t zobrist_calc(pos_t *pos)
 {
-    key_t key = 0;
+    hkey_t key = 0;
 
     if (pos->turn == BLACK)
         key ^= zobrist_turn;
