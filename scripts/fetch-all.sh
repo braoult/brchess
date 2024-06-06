@@ -1,53 +1,44 @@
 #!/usr/bin/env bash
+#
+# Fetch all branches from remotes, and track missing ones.
+#
+# The value of variable ORIGIN is used for repository origin. If
+# not set, the default is "origin".
 
-origin=origin
+default_origin=origin
 
-declare -a remotes local_b
-#declare -A aremotes
+origin=${ORIGIN:-$default_origin}
+
+declare -a local_b
 declare -A alocal_b
 
-# get remotes list
-readarray -t remotes < <(git remote)
-
 # fetch all remotes
-git fetch --all
+git fetch --all --tags
 
-# fill associative array with remote
-#for remote in "${remotes[@]}"; do
-#    aremotes["$remote"]=1
-#    echo doing git fetch -a "$remote"
-#done
-
-# get local branches
+# get local branches, and build reverse associative array
 readarray -t local_b < <(git for-each-ref --format='%(refname:short)' refs/heads/)
-
-# build local ref array
 for ref in "${local_b[@]}"; do
     alocal_b[$ref]=1
 done
 
-# get origin branches
+# get "origin" branches
 readarray -t orig_b  < <(git for-each-ref --format='%(refname:short)' \
                              refs/remotes/"$origin"/)
 
-declare -p remotes
-declare -p local_b orig_b
-
-# find-out missing local branches and track them
+# find-out missing local branches and track them.
+# bugs:
+#  - We only check local branch existence, not tracking information correctness.
+#  - What about sub-branches ? Like remote/a and remote/a/b not being tracked ?
 for remote_b in "${orig_b[@]}"; do
     short=${remote_b#"$origin"/};
-    #echo "$remote_b -> $short ${alocal_b[$short]}"
+    # OR (??): short=${remote_b##*/}
+
     if ! [[ -v alocal_b[$short] ]]; then
-        echo git branch --track "$short" "$remote_b"
-        # echo git branch:  "$remote_b"
+        printf "local branch %s set to track %s.\n" "$short" "$remote_b"
+        git branch --track "$short" "$remote_b"
+    else
+        printf "skipping %s.\n" "$remote_b"
     fi
 done
 
-echo git pull --all
-
-
-
-
-
-
-#git remote | xargs -n 1 git fetch -a
+git pull -a
