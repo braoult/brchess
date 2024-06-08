@@ -44,6 +44,9 @@ static FILE *open_stockfish()
     int rpipe[2], wpipe[2];
     FILE *out_desc;
     pid_t pid;
+    char *buf = NULL;
+    size_t alloc = 0;
+    ssize_t buflen;
 
     if ((pipe(rpipe) < 0) || (pipe(wpipe) < 0)) {
         perror("pipe");
@@ -84,11 +87,36 @@ static FILE *open_stockfish()
     out_desc = fdopen(wpipe[WR], "w");
     setvbuf(out_desc, NULL, _IOLBF, 0);
 
+    fprintf(out_desc, "uci\n");
+    while (true) {
+        if ((buflen = getline(&buf, &alloc, stdin)) < 0) {
+            perror("getline");
+            exit(1);
+        }
+        if (!strncmp(buf, "uciok", 5))
+            break;
+    }
+    free(buf);
     return out_desc;
 }
 
-static u64 send_stockfish_fen(FILE *desc, pos_t *pos, movelist_t *movelist,
-                               char *fen, int depth)
+static void stockfish_fen(FILE *desc, char *fen)
+{
+    char *buf = NULL;
+    size_t alloc = 0;
+    ssize_t buflen;
+
+    fprintf(desc, "ucinewgame\nisready\n");
+    while ((buflen = getline(&buf, &alloc, stdin)) > 0) {
+        if (!strncmp(buf, "readyok", 7))
+            break;
+    }
+    fprintf(desc, "position fen %s\n", fen);
+    free(buf);
+}
+
+static u64 stockfish_perft(FILE *desc, pos_t *pos, movelist_t *movelist,
+                               int depth)
 {
     char *buf = NULL;
     u64 count, mycount = 0, fishcount;
@@ -102,10 +130,11 @@ static u64 send_stockfish_fen(FILE *desc, pos_t *pos, movelist_t *movelist,
     *nmoves = 0;
     //char nodescount[] = "Nodes searched";
     //printf("nmoves = %d\n", nmoves);
-    fflush(stdout);
+    //fflush(stdout);
     //sprintf(str, "stockfish \"position fen %s\ngo perft depth\n\"", fen);
-    fprintf(desc, "position fen %s\ngo perft %d\n", fen, depth);
+    //fprintf(desc, "position fen %s\ngo perft %d\n", fen, depth);
     //fflush(desc);
+    fprintf(desc, "go perft %d\n", depth);
 
     while ((buflen = getline(&buf, &alloc, stdin)) > 0) {
         buf[--buflen] = 0;
@@ -293,8 +322,9 @@ int main(int ac, char**av)
         }
         pos = fenpos;
         if (sf_run) {
+            stockfish_fen(outfd, fen);
             clock_start(&clock);
-            sf_count = send_stockfish_fen(outfd, fishpos, &fishmoves, fen, depth);
+            sf_count = stockfish_perft(outfd, fishpos, &fishmoves, depth);
             ms = clock_elapsed_ms(&clock);
             if (!ms) {
                 res[2].skipped++;

@@ -11,9 +11,9 @@
 #
 
 SHELL     := /bin/bash
-CC        := gcc
+#CC        := gcc
+CC        := gcc-13
 #CC        := clang
-LD        := ld
 BEAR      := bear
 TOUCH     := touch
 RM        := rm
