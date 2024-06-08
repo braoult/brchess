@@ -18,9 +18,10 @@
 
 #define ONE                1ull
 #define U64(const_u64)     const_u64##ULL
-#define BIT(i)            ( (u64) (ONE << (i)) )
+#define BIT(i)             ( (u64) (ONE << (i)) )
 
 #define BOARDSIZE          (8*8)
+#define GAMESIZE           1024                   /* max game size (512 moves) */
 
 /**
  * sq_rel - get relative square

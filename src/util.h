@@ -43,6 +43,6 @@
 
 /* restore BUG_ON
  */
-#   pragma pop_macro("BUG_ON")
+#pragma pop_macro("BUG_ON")
 
 #endif  /* UTIL_H */

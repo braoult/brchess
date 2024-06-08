@@ -123,7 +123,8 @@ pos_t *pos_clear(pos_t *pos)
     pos->pinners = 0;
     pos->blockers = 0;
 
-    //pos->moves.nmoves = 0;
+    pos->repeat.moves = 0;
+
     return pos;
 }
 
@@ -131,9 +132,11 @@ pos_t *pos_clear(pos_t *pos)
  * pos_cmp() - compare two positions..
  * @pos1, @pos2: The two &position.
  *
+ * Used only for move_{do,undo} test/debug.
+ *
  * @return: true if equal, false otherwise.
  */
-bool pos_cmp(__unused const pos_t *pos1, __unused const pos_t *pos2)
+bool pos_cmp(const pos_t *pos1, const pos_t *pos2)
 {
 #define _cmpf(a) (pos1->a != pos2->a)
     bool ret = false;
@@ -142,8 +145,11 @@ bool pos_cmp(__unused const pos_t *pos1, __unused const pos_t *pos2)
         goto end;
 
     /* move_do/undo position state */
-    if (_cmpf(en_passant) || _cmpf(castle) ||
-        _cmpf(clock_50) || _cmpf(plycount))
+    if (_cmpf(key) || _cmpf(en_passant) || _cmpf(castle) ||
+        _cmpf(clock_50) || _cmpf(plycount) || _cmpf(captured))
+        goto end;
+
+    if (_cmpf(checkers) || _cmpf(pinners) || _cmpf(blockers))
         goto end;
 
     for (square_t sq = A1; sq <= H8; ++sq)
@@ -151,7 +157,7 @@ bool pos_cmp(__unused const pos_t *pos1, __unused const pos_t *pos2)
             goto end;
 
     for (color_t color = WHITE; color <= BLACK; ++color) {
-        for (piece_type_t piece = 0; piece <= KING; ++piece)
+        for (piece_type_t piece = ALL_PIECES; piece <= KING; ++piece)
             if (_cmpf(bb[color][piece]))
                 goto end;
         if (_cmpf(king[color]))
@@ -159,6 +165,11 @@ bool pos_cmp(__unused const pos_t *pos1, __unused const pos_t *pos2)
     }
 
     if (_cmpf(checkers) ||_cmpf(pinners) || _cmpf(blockers))
+        goto end;
+
+    if (_cmpf(repeat.moves) ||
+        memcmp(pos1->repeat.key, pos2->repeat.key,
+               pos1->repeat.moves * sizeof pos1->repeat.key))
         goto end;
 
     ret = true;
