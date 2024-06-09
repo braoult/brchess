@@ -29,8 +29,8 @@ int main(int __unused ac, __unused char**av)
     int i = 0, test_line;
     char *fen, movebuf[8];;
     pos_t *pos, *savepos;
-    movelist_t pseudo;
-    move_t move;
+    movelist_t movelist;
+    move_t *move, *last;
 
     init_all();
 
@@ -41,39 +41,39 @@ int main(int __unused ac, __unused char**av)
             continue;
         }
 
-        pos->checkers = pos_checkers(pos, pos->turn);
-        pos_set_pinners_blockers(pos);
-
-        pos_gen_pseudo(pos, &pseudo);
+        movelist.nmoves = 0;
+        pos_set_checkers_pinners_blockers(pos);
+        pos_legal(pos, pos_gen_pseudo(pos, &movelist));
+        last = movelist.move + movelist.nmoves;
         savepos = pos_dup(pos);
 
         state_t state = pos->state;
-        int tmp = 0, j = 0;
-        while ((move = pos_next_legal(pos, &pseudo, &tmp)) != MOVE_NONE) {
+        int j = 0;
+        for (move = movelist.move; move < last; ++move) {
             //pos_print(pos);
             //printf("i=%d j=%d  turn=%d move=[%s]\n", i, j, pos->turn,
             //       move_str(movebuf, move, 0));
             //move_p
-            move_do(pos, move);
+            move_do(pos, *move, &state);
             //pos_print(pos);
             //fflush(stdout);
             if (!pos_ok(pos, false)) {
-                printf("*** fen %d move %d [%s] invalid position after move_do\n",
-                       test_line, j, movebuf);
+                printf("*** fen %d [%s] move %d [%s] invalid position after move_do\n",
+                       test_line, fen, j, move_str(movebuf, *move, 0));
                 exit(0);
             }
 
             //printf("%d/%d move_do check ok\n", i, j);
-            move_undo(pos, move);
+            move_undo(pos, *move, &state);
             pos->state = state;
             if (!pos_ok(pos, false)) {
-                printf("*** fen %d move %d [%s] invalid position after move_undo\n",
-                       test_line, j, movebuf);
+                printf("*** fen %d [%s] move %d [%s] invalid position after move_undo\n",
+                       test_line, fen, j, movebuf);
                 exit(0);
             }
             if (pos_cmp(pos, savepos) != true) {
-                printf("*** fen %d move %d [%s] position differ after move_{do,undo}\n",
-                       test_line, j, movebuf);
+                printf("*** fen %d [%s] move %d [%s] position differ after move_{do,undo}\n",
+                       test_line, fen, j, movebuf);
                 exit(0);
             }
             //fflush(stdout);

@@ -51,7 +51,6 @@ u64 perft(pos_t *pos, int depth, int ply, bool output)
 
     movelist.nmoves = 0;
     pos_set_checkers_pinners_blockers(pos);
-    state = pos->state;
 
     pos_legal(pos, pos_gen_pseudo(pos, &movelist));
     last = movelist.move + movelist.nmoves;
@@ -59,7 +58,7 @@ u64 perft(pos_t *pos, int depth, int ply, bool output)
         if (depth == 1) {
             nodes++;
         } else {
-            move_do(pos, *move);
+            move_do(pos, *move, &state);
             if (depth == 2) {
                 movelist_t movelist2;
                 pos_set_checkers_pinners_blockers(pos);
@@ -72,8 +71,7 @@ u64 perft(pos_t *pos, int depth, int ply, bool output)
                 printf("%s: %d\n", move_str(movestr, *move, 0), subnodes);
             }
             nodes += subnodes;
-            move_undo(pos, *move);
-            pos->state = state;
+            move_undo(pos, *move, &state);
         }
     }
 
@@ -83,7 +81,7 @@ u64 perft(pos_t *pos, int depth, int ply, bool output)
 }
 
 /**
- * perft_test() - Perform perft on position, experiment version.
+ * perft_alt() - Perform perft on position, experimental version.
  * @pos:   &position to search
  * @depth: Wanted depth.
  * @ply:   perft depth level.
@@ -93,7 +91,7 @@ u64 perft(pos_t *pos, int depth, int ply, bool output)
  *
  * @return: total moves found at @depth level.
  */
-u64 perft_test(pos_t *pos, int depth, int ply, bool output)
+u64 perft_alt(pos_t *pos, int depth, int ply, bool output)
 {
     int subnodes;
     u64 nodes = 0;
@@ -103,6 +101,7 @@ u64 perft_test(pos_t *pos, int depth, int ply, bool output)
 
     movelist.nmoves = 0;
     pos_set_checkers_pinners_blockers(pos);
+    state = pos->state;
 
     pos_legal(pos, pos_gen_pseudo(pos, &movelist));
     last = movelist.move + movelist.nmoves;
@@ -110,20 +109,21 @@ u64 perft_test(pos_t *pos, int depth, int ply, bool output)
         if (depth == 1) {
             nodes++;
         } else {
-            move_do2(pos, *move, &state);
+            move_do_alt(pos, *move);
             if (depth == 2) {
                 movelist_t movelist2;
                 pos_set_checkers_pinners_blockers(pos);
                 subnodes = pos_legal(pos, pos_gen_pseudo(pos, &movelist2))->nmoves;
             } else {
-                subnodes = perft_test(pos, depth - 1, ply + 1, output);
+                subnodes = perft_alt(pos, depth - 1, ply + 1, output);
             }
             if (output && ply == 1) {
                 char movestr[8];
                 printf("%s: %d\n", move_str(movestr, *move, 0), subnodes);
             }
             nodes += subnodes;
-            move_undo2(pos, *move, &state);
+            move_undo_alt(pos, *move);
+            pos->state = state;
         }
     }
 

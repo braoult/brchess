@@ -374,7 +374,7 @@ int main(int ac, char**av)
 
         if (run & 2) {
             clock_start(&clock);
-            my_count = perft_test(pos, depth, 1, perft_output);
+            my_count = perft_alt(pos, depth, 1, perft_output);
             ms = clock_elapsed_ms(&clock);
             if (!ms) {
                 res[1].skipped++;
