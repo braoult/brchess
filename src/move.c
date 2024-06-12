@@ -89,7 +89,7 @@
  */
 
 /**
- * move_str() - get a move string
+ * move_to_str() - get a move string
  * @dst: destination memory
  * @move: move
  * @flags: moves selection and display options.
@@ -102,7 +102,7 @@
  * M_PR_NL:    print a newline after move
  * M_PR_EVAL:  print move eval
  */
-char *move_str(char *dst, const move_t move, __unused const int flags)
+char *move_to_str(char *dst, const move_t move, __unused const int flags)
 {
     square_t from = move_from(move);
     square_t to   = move_to(move);
@@ -115,7 +115,6 @@ char *move_str(char *dst, const move_t move, __unused const int flags)
     }
     return dst;
 }
-
 
 /**
  * moves_print() - print movelist moves.
@@ -135,7 +134,7 @@ void moves_print(movelist_t *moves, __unused int flags)
     char str[16];
     //printf("%2d:", moves->nmoves);
     for (int m = 0; m < moves->nmoves; ++m)
-        printf("%s ", move_str(str, moves->move[m], flags));
+        printf("%s ", move_to_str(str, moves->move[m], flags));
     printf("\n");
 }
 

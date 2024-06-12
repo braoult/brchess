@@ -460,7 +460,8 @@ movelist_t *pos_gen_pseudo(pos_t *pos, movelist_t *movelist)
     while(to_bb) {
         to = bb_next(&to_bb);
         from = to - shift - shift;
-        *moves++ = move_make_flags(from, to, M_DPUSH);
+        //*moves++ = move_make_flags(from, to, M_DPUSH);
+        *moves++ = move_make(from, to);
     }
 
     /* pawn: captures */

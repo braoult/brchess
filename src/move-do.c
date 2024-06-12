@@ -100,7 +100,7 @@ pos_t *move_do(pos_t *pos, const move_t move, state_t *state)
         pos->castle = clr_castle(pos->castle, us);
     } else if (ptype == PAWN) {                   /* pawn non capture or e.p. */
         pos->clock_50 = 0;
-        if (is_dpush(move)) {                     /* if pawn double push, set e.p. */
+        if (from + up + up == to) {               /* if pawn double push, set e.p. */
             square_t ep = from + up;;
             if (bb_pawn_attacks[us][ep] & pos->bb[them][PAWN]) {
                 pos->en_passant = ep;
@@ -265,7 +265,7 @@ pos_t *move_do_alt(pos_t *pos, const move_t move) //, state_t *state)
         pos->castle = clr_castle(pos->castle, us);
     } else if (ptype == PAWN) {                   /* pawn non capture or e.p. */
         pos->clock_50 = 0;
-        if (is_dpush(move)) {                     /* if pawn double push, set e.p. */
+        if (from + up + up == to) {               /* if pawn double push, set e.p. */
             square_t ep = from + up;;
             if (bb_pawn_attacks[us][ep] & pos->bb[them][PAWN]) {
                 pos->en_passant = ep;
