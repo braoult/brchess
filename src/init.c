@@ -37,6 +37,6 @@ void init_all(void)
 
     /* zobrist tables & default tt hashtable */
     zobrist_init();
-    hash_create(HASH_SIZE_DEFAULT);
+    tt_create(HASH_SIZE_DEFAULT);
 
 }

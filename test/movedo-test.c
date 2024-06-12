@@ -59,7 +59,7 @@ int main(int __unused ac, __unused char**av)
             //fflush(stdout);
             if (!pos_ok(pos, false)) {
                 printf("*** fen %d [%s] move %d [%s] invalid position after move_do\n",
-                       test_line, fen, j, move_str(movebuf, *move, 0));
+                       test_line, fen, j, move_to_str(movebuf, *move, 0));
                 exit(0);
             }
 

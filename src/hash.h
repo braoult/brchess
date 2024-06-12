@@ -14,7 +14,7 @@
 #ifndef HASH_H
 #define HASH_H
 
-#include <assert.h>
+#include <bug.h>
 
 #include "chessdefs.h"
 
@@ -23,6 +23,8 @@
 #define HASH_SIZE_DEFAULT   32                    /* default: 32Mb */
 #define HASH_SIZE_MIN        4
 #define HASH_SIZE_MAX    32768                    /* 32Gb */
+
+#define TT_MISS           NULL
 
 typedef u64 hkey_t;                               /* cannot use typedef for key_t */
 
@@ -46,8 +48,18 @@ typedef struct {
     };
 } hentry_t;
 
+/* hentry perft data:
+ * 0-47:  perft value
+ * 48-63: depth
+ */
+#define HASH_PERFT_MASK        U64(0xffffffffffff)
+#define HASH_PERFT(depth, val) ((((u64) depth) << 48) | ((val) & HASH_PERFT_MASK))
+#define HASH_PERFT_VAL(data)   ((data) & HASH_PERFT_MASK)
+#define HASH_PERFT_DEPTH(data) ((u16)((data) >> 48))
+
+
 typedef struct {
-    hentry_t buckets[NBUCKETS];
+    hentry_t entry[NBUCKETS];
 } bucket_t;
 
 typedef struct {
@@ -97,8 +109,24 @@ bool zobrist_verify(pos_t *pos);
 #define zobrist_verify(p) true
 #endif
 
-int hash_create(int Mb);
-void hash_clear(void);
-void hash_delete(void);
+/**
+ * tt_prefetch() - prefetch hash table entry
+ * @hash: u64 key
+ *
+ * Prefetch memory for @key.
+ */
+static inline void tt_prefetch(hkey_t key)
+{
+    bug_on(!hash_tt.keys);
+    __builtin_prefetch(hash_tt.keys + (key & hash_tt.mask));
+}
+
+int tt_create(int Mb);
+void tt_clear(void);
+void tt_delete(void);
+
+hentry_t *tt_probe(hkey_t key);
+hentry_t *tt_probe_perft(const hkey_t key, const u16 depth);
+hentry_t *tt_store_perft(const hkey_t key, const u16 depth, const u64 nodes);
 
 #endif  /* HASH_H */
