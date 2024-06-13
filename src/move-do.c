@@ -108,7 +108,8 @@ pos_t *move_do(pos_t *pos, const move_t move, state_t *state)
             }
         } else if (is_enpassant(move)) {          /* clear grabbed pawn */
             square_t grabbed = to - up;
-            key ^= zobrist_pieces[pos->board[grabbed]][grabbed];
+            piece_t pc = pos->board[grabbed];
+            key ^= zobrist_pieces[pc][grabbed];
             pos_clr_sq(pos, grabbed);
         }
     }

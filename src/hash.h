@@ -18,7 +18,7 @@
 
 #include "chessdefs.h"
 
-#define NBUCKETS             4                    /* buckets per hash table entry */
+#define ENTRIES_PER_BUCKET   4                    /* buckets per hash table entry */
 
 #define HASH_SIZE_DEFAULT   32                    /* default: 32Mb */
 #define HASH_SIZE_MIN        4
@@ -35,7 +35,7 @@ typedef u64 hkey_t;                               /* cannot use typedef for key_
  * 16 bytes in future, it should be updated to be exactly 32 bytes.
  */
 typedef struct {
-    hkey_t key;                                    /* zobrist */
+    hkey_t key;                                   /* zobrist */
     union {
         u64 data;
         struct {
@@ -59,7 +59,7 @@ typedef struct {
 
 
 typedef struct {
-    hentry_t entry[NBUCKETS];
+    hentry_t entry[ENTRIES_PER_BUCKET];
 } bucket_t;
 
 typedef struct {
@@ -78,9 +78,11 @@ typedef struct {
     u32  mask;                                    /* nbuckets - 1, key mask */
 
     /* stats - unsure about usage */
-    size_t used_buckets;
+    //size_t used_buckets;
     size_t used_keys;
     u64 collisions;
+    u64 hits;
+    u64 misses;
 } hasht_t;
 
 /* hack:
@@ -128,5 +130,6 @@ void tt_delete(void);
 hentry_t *tt_probe(hkey_t key);
 hentry_t *tt_probe_perft(const hkey_t key, const u16 depth);
 hentry_t *tt_store_perft(const hkey_t key, const u16 depth, const u64 nodes);
+void tt_stats(void);
 
 #endif  /* HASH_H */

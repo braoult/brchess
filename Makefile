@@ -70,7 +70,7 @@ CPPFLAGS  += -DBUG_ON                                       # brlib bug.h
 #CPPFLAGS  += -DDEBUG_FEN                                    # FEN decoding
 
 # hash.c
-#CPPFLAGS  += -HASH_VERIFY                                    # chk zobrist consistency
+CPPFLAGS  += -DZOBRIST_VERIFY                                # chk zobrist consistency
 
 # attack.c
 #CPPFLAGS  += -DDEBUG_ATTACK_ATTACKERS                       # sq_attackers
@@ -339,7 +339,7 @@ memcheck: targets
 .PHONY: testing test
 
 TEST          := piece-test fen-test bitboard-test movegen-test attack-test
-TEST          += movedo-test perft-test
+TEST          += movedo-test perft-test tt-test
 
 PIECE_OBJS    := piece.o
 FEN_OBJS      := $(PIECE_OBJS) fen.o position.o bitboard.o board.o \
@@ -349,6 +349,7 @@ MOVEGEN_OBJS  := $(BB_OBJS) move.o move-gen.o
 ATTACK_OBJS   := $(MOVEGEN_OBJS)
 MOVEDO_OBJS   := $(ATTACK_OBJS) move-do.o misc.o
 PERFT_OBJS    := $(MOVEDO_OBJS) search.o
+TT_OBJS       := $(MOVEDO_OBJS)
 
 TEST          := $(addprefix $(BINDIR)/,$(TEST))
 
@@ -359,6 +360,7 @@ MOVEGEN_OBJS  := $(addprefix $(OBJDIR)/,$(MOVEGEN_OBJS))
 ATTACK_OBJS   := $(addprefix $(OBJDIR)/,$(ATTACK_OBJS))
 MOVEDO_OBJS   := $(addprefix $(OBJDIR)/,$(MOVEDO_OBJS))
 PERFT_OBJS    := $(addprefix $(OBJDIR)/,$(PERFT_OBJS))
+TT_OBJS       := $(addprefix $(OBJDIR)/,$(TT_OBJS))
 
 test:
 	echo TEST=$(TEST)
@@ -393,6 +395,10 @@ bin/movedo-test: test/movedo-test.c test/common-test.h $(MOVEDO_OBJS)
 bin/perft-test: test/perft-test.c test/common-test.h $(PERFT_OBJS)
 	@echo compiling $@ test executable.
 	@$(CC) $(ALL_CFLAGS) $< $(PERFT_OBJS) $(ALL_LDFLAGS) -o $@
+
+bin/tt-test: test/tt-test.c test/common-test.h $(TT_OBJS)
+	@echo compiling $@ test executable.
+	@$(CC) $(ALL_CFLAGS) $< $(TT_OBJS) $(ALL_LDFLAGS) -o $@
 
 ##################################### Makefile debug
 .PHONY: showflags wft

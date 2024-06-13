@@ -28,14 +28,30 @@ struct fentest {
     char *comment;
     char *fen;
 } fentest[] = {
-    /*
-    { __LINE__, 1,
-      "",
-      ""
-    },
-    */
+    /******************* TEMP TESTS BELOW *******************/
 
-/* ***************** TEMP TESTS ABOVE ************************** */
+    /*
+     * { __LINE__, MOVEGEN | MOVEDO | PERFT,
+     *   "bug perft TT après 1.b4 f5",
+     *   "1nbqkbn1/ppp1p1pp/8/r1rpPpK1/1P6/8/P1PP1PPP/RNBQ1BNR w - f6 0 2"
+     * },
+     */
+
+    /*
+     * { __LINE__, MOVEGEN | MOVEDO | PERFT,
+     *   "bug perft TT après 1.b4",
+     *   "1nbqkbn1/ppp1pppp/8/r1rpP1K1/1P6/8/P1PP1PPP/RNBQ1BNR b - - 0 1",
+     * },
+     */
+
+    { __LINE__, MOVEGEN | MOVEDO | PERFT,
+      "bug perft TT",
+      "1nbqkbn1/ppp1pppp/8/r1rpP1K1/8/8/PPPP1PPP/RNBQ1BNR w - d6 0 1",
+    },
+
+    /* ***************** END of TEMP TESTS ******************/
+    /* below line ignored if first test */
+    { __LINE__, 0, NULL, NULL },
 
     { __LINE__, MOVEGEN | MOVEDO | PERFT,
       "illegal white e.p.",
@@ -138,7 +154,7 @@ struct fentest {
       "checker: h4",
       "4k3/8/8/8/7b/8/8/4K3 w - - 0 1"
     },
-// First game moves
+    // First game moves
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
       "startpos",
       "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -425,6 +441,10 @@ static int fentest_cur = -1;
 static char *next_fen(uint module)
 {
     fentest_cur++;
+
+    /* skip first entry if NULL - for special testing, see  */
+    if (fentest_cur == 0 && fentest[fentest_cur].fen == NULL)
+        fentest_cur++;
     while (fentest[fentest_cur].fen && !(fentest[fentest_cur].modules & module))
         fentest_cur++;
     return fentest[fentest_cur].fen;

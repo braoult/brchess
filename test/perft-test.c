@@ -255,8 +255,8 @@ static __unused void compare_moves(movelist_t *fish, movelist_t *me)
 
 static int usage(char *prg)
 {
-    fprintf(stderr, "Usage: %s [-d depth] [-p pertf-modules] [-n][-v]\n", prg);
-    fprintf(stderr, "\t-d: depth, -p: 1-3, -n: no SF res check, -v: output moves\n");
+    fprintf(stderr, "Usage: %s [-cmv][-d depth] [-p perft-version] \n", prg);
+    fprintf(stderr, "\t-c/m: print comments/moves, -n: no SF check, -d: depth, -p: 1-3, \n");
     return 1;
 }
 
@@ -264,6 +264,7 @@ int main(int ac, char**av)
 {
     int test_line;
     u64 sf_count = 0, my_count;
+    bool comment = false;
     char *fen;
     pos_t *pos = NULL, *fenpos;
     pos_t *fishpos = pos_new();
@@ -283,8 +284,11 @@ int main(int ac, char**av)
     int opt, depth = 6, run = 3;
     bool sf_run = true, perft_output = false;
 
-    while ((opt = getopt(ac, av, "vnd:p:")) != -1) {
+    while ((opt = getopt(ac, av, "cmnd:p:")) != -1) {
         switch (opt) {
+            case 'c':
+                comment = true;
+                break;
             case 'd':
                 depth = atoi(optarg);
                 break;
@@ -294,7 +298,7 @@ int main(int ac, char**av)
             case 'n':
                 sf_run = false;
                 break;
-            case 'v':
+            case 'm':
                 perft_output = true;
                 break;
             default:
@@ -315,7 +319,10 @@ int main(int ac, char**av)
 
     CLOCK_DEFINE(clock, CLOCK_MONOTONIC);
     while ((fen = next_fen(PERFT | MOVEDO))) {
+        if (comment)
+            printf("%s\n", *cur_comment()? cur_comment(): "<FIXME>");
         test_line = cur_line();
+        tt_clear();
         if (!(fenpos = fen2pos(pos, fen))) {
             printf("wrong fen line = %d: [%s]\n", test_line, fen);
             continue;
@@ -370,6 +377,7 @@ int main(int ac, char**av)
                 printf("pt1 ERR: line=%3d sf=%'lu me=%'lu \"%s\"\n",
                        test_line, sf_count, my_count, fen);
             }
+            tt_stats();
         }
 
         if (run & 2) {

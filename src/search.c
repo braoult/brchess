@@ -43,13 +43,16 @@
  */
 u64 perft(pos_t *pos, int depth, int ply, bool output)
 {
-    int subnodes;
-    u64 nodes = 0;
+    static movelist_t stack;
+    //int subnodes;
+    u64 subnodes, nodes = 0;
     movelist_t movelist;
     move_t *move, *last;
     state_t state;
 
-    movelist.nmoves = 0;
+    if (ply == 1)
+        stack.nmoves = 0;
+
     pos_set_checkers_pinners_blockers(pos);
 
     pos_legal(pos, pos_gen_pseudo(pos, &movelist));
@@ -59,19 +62,46 @@ u64 perft(pos_t *pos, int depth, int ply, bool output)
             nodes++;
         } else {
             move_do(pos, *move, &state);
+            stack.move[stack.nmoves++] = *move;
+            if (ply == 2 &&
+                //move_from(*move) == F7 &&
+                //move_to(*move) == F5 &&
+                move_from(stack.move[stack.nmoves-2]) == B2 &&
+                move_to(stack.move[stack.nmoves-2]) == B4 &&
+                move_from(stack.move[stack.nmoves-1]) == F7 &&
+                move_to(stack.move[stack.nmoves-1]) == F5
+                ) {
+                //&& pos->board[F5] == B_PAWN) {
+                moves_print(&stack, 0);
+                pos_print(pos);
+            }
             if (depth == 2) {
                 movelist_t movelist2;
                 pos_set_checkers_pinners_blockers(pos);
                 subnodes = pos_legal(pos, pos_gen_pseudo(pos, &movelist2))->nmoves;
             } else {
-                subnodes = perft(pos, depth - 1, ply + 1, output);
+                hentry_t *entry;
+                //if (ply >= 4 && ply <= 8) {
+                if (ply == 4) {
+                    if ((entry = tt_probe_perft(pos->key, depth))) {
+                        subnodes = HASH_PERFT_VAL(entry->data);
+                        printf("tt hit key=%lx ply=%d depth=%d nodes=%lu\n",
+                               pos->key, ply, depth, subnodes);
+                    } else {
+                        subnodes = perft(pos, depth - 1, ply + 1, output);
+                        tt_store_perft(pos->key, depth, subnodes);
+                    }
+                } else {
+                    subnodes = perft(pos, depth - 1, ply + 1, output);
+                }
             }
             if (output && ply == 1) {
                 char movestr[8];
-                printf("%s: %d\n", move_str(movestr, *move, 0), subnodes);
+                printf("%s: %lu\n", move_to_str(movestr, *move, 0), subnodes);
             }
             nodes += subnodes;
             move_undo(pos, *move, &state);
+            stack.nmoves--;
         }
     }
 
@@ -99,7 +129,7 @@ u64 perft_alt(pos_t *pos, int depth, int ply, bool output)
     move_t *move, *last;
     state_t state;
 
-    movelist.nmoves = 0;
+    //movelist.nmoves = 0;
     pos_set_checkers_pinners_blockers(pos);
     state = pos->state;
 
@@ -119,7 +149,7 @@ u64 perft_alt(pos_t *pos, int depth, int ply, bool output)
             }
             if (output && ply == 1) {
                 char movestr[8];
-                printf("%s: %d\n", move_str(movestr, *move, 0), subnodes);
+                printf("%s: %d\n", move_to_str(movestr, *move, 0), subnodes);
             }
             nodes += subnodes;
             move_undo_alt(pos, *move);
