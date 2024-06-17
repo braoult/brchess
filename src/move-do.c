@@ -101,7 +101,7 @@ pos_t *move_do(pos_t *pos, const move_t move, state_t *state)
     } else if (ptype == PAWN) {                   /* pawn non capture or e.p. */
         pos->clock_50 = 0;
         if (from + up + up == to) {               /* if pawn double push, set e.p. */
-            square_t ep = from + up;;
+            square_t ep = from + up;
             if (bb_pawn_attacks[us][ep] & pos->bb[them][PAWN]) {
                 pos->en_passant = ep;
                 key ^= zobrist_ep[EP_ZOBRIST_IDX(pos->en_passant)];
@@ -215,7 +215,7 @@ pos_t *move_undo(pos_t *pos, const move_t move, const state_t *state)
 /**
  * move_{do,undo}_alt - alternative move_do/move_undo (to experiment)
  */
-pos_t *move_do_alt(pos_t *pos, const move_t move) //, state_t *state)
+pos_t *move_do_alt(pos_t *pos, const move_t move, state_t *state)
 {
     color_t us = pos->turn, them = OPPONENT(us);
     square_t from = move_from(move), to = move_to(move);
@@ -225,6 +225,8 @@ pos_t *move_do_alt(pos_t *pos, const move_t move) //, state_t *state)
     piece_t new_piece = piece;
     int up = sq_up(us);
     hkey_t key = pos->key;
+
+    *state = pos->state;                          /* save irreversible changes */
 
     /* update key: switch turn, reset castling and ep */
     key ^= zobrist_turn;
@@ -267,14 +269,15 @@ pos_t *move_do_alt(pos_t *pos, const move_t move) //, state_t *state)
     } else if (ptype == PAWN) {                   /* pawn non capture or e.p. */
         pos->clock_50 = 0;
         if (from + up + up == to) {               /* if pawn double push, set e.p. */
-            square_t ep = from + up;;
+            square_t ep = from + up;
             if (bb_pawn_attacks[us][ep] & pos->bb[them][PAWN]) {
                 pos->en_passant = ep;
                 key ^= zobrist_ep[EP_ZOBRIST_IDX(pos->en_passant)];
             }
         } else if (is_enpassant(move)) {          /* clear grabbed pawn */
             square_t grabbed = to - up;
-            key ^= zobrist_pieces[pos->board[grabbed]][grabbed];
+            piece_t pc = pos->board[grabbed];
+            key ^= zobrist_pieces[pc][grabbed];
             pos_clr_sq(pos, grabbed);
         }
     }
@@ -321,7 +324,7 @@ pos_t *move_do_alt(pos_t *pos, const move_t move) //, state_t *state)
     return pos;
 }
 
-pos_t *move_undo_alt(pos_t *pos, const move_t move)
+pos_t *move_undo_alt(pos_t *pos, const move_t move, const state_t *state)
 {
     color_t them = pos->turn, us = OPPONENT(them);
     square_t from = move_from(move), to = move_to(move);
@@ -355,7 +358,7 @@ pos_t *move_undo_alt(pos_t *pos, const move_t move)
         pos_set_sq(pos, grabbed, MAKE_PIECE(PAWN, them));
     }
 
-    //pos->state = *state;                          /* restore irreversible changes */
+    pos->state = *state;                          /* restore irreversible changes */
     pos->turn = us;
     return pos;
 }
