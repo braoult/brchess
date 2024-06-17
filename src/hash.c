@@ -12,6 +12,7 @@
  */
 
 #include <string.h>
+#include <assert.h>
 
 #include <brlib.h>
 #include <bitops.h>
@@ -99,10 +100,17 @@ hkey_t zobrist_calc(pos_t *pos)
  * @return: True if Zobrist key is OK.
  */
 #ifdef ZOBRIST_VERIFY
+
+#pragma push_macro("BUG_ON")                      /* force BUG_ON and WARN_ON */
+#pragma push_macro("WARN_ON")
+#undef BUG_ON
+#define BUG_ON
+#undef WARN_ON
+#define WARN_ON
+
 bool zobrist_verify(pos_t *pos)
 {
-    key_t diff, key = zobrist_calc(pos);
-
+    hkey_t diff, key = zobrist_calc(pos);
     if (pos->key == key)
         return true;
 
@@ -120,17 +128,19 @@ bool zobrist_verify(pos_t *pos)
                     goto end;
                 }
     }
-    for (castle_rights_t c = CASTLE_NONE; c <= CASTLE_ALL; ++c)
+    for (castle_rights_t c = CASTLE_NONE; c <= CASTLE_ALL; ++c) {
         if (diff == zobrist_castling[c]) {
             warn(true, "zobrist difference is castling:[%d]\n", c);
             goto end;
         }
+    }
 
-    for (file_t f = FILE_A; f <= FILE_H; ++f)
+    for (file_t f = FILE_A; f <= FILE_H; ++f) {
         if (diff == zobrist_ep[f]) {
             warn(true, "zobrist difference is ep:[%d]\n", f);
             goto end;
         }
+    }
     if (diff == zobrist_turn) {
         warn(true, "zobrist difference is turn\n");
         goto end;
@@ -138,11 +148,16 @@ bool zobrist_verify(pos_t *pos)
     warn(true, "zobrist diff %lx is unknown\n", diff);
 end:
     bug_on(false);
+    /* not reached */
+    return true;
 }
+#pragma pop_macro("WARN_ON")
+#pragma pop_macro("BUG_ON")
+
 #endif
 
 /**
- * hash_create() - hashtable creation.
+ * tt_create() - create transposition table
  * @sizemb: s32 size of hash table in Mb
  *
  * Create a hash table of max @sizemb (or HASH_SIZE_MBif @sizemb <= 0) Mb size.
@@ -164,7 +179,7 @@ end:
  * @return: hash table size in Mb. If memory allocation fails, the function does
  * not return.
  */
-int hash_create(s32 sizemb)
+int tt_create(s32 sizemb)
 {
     size_t bytes, target_nbuckets;
     u32 nbits;
@@ -185,12 +200,12 @@ int hash_create(s32 sizemb)
 
     if (hash_tt.nbits != nbits) {
         if (hash_tt.nbits)
-            hash_delete();
+            tt_delete();
 
         hash_tt.nbits    = nbits;
 
         hash_tt.nbuckets = BIT(hash_tt.nbits);
-        hash_tt.nkeys    = hash_tt.nbuckets * NBUCKETS;
+        hash_tt.nkeys    = hash_tt.nbuckets * ENTRIES_PER_BUCKET;
 
         hash_tt.bytes    = hash_tt.nbuckets * sizeof(bucket_t);
         hash_tt.mb       = hash_tt.bytes / 1024 / 1024;
@@ -207,34 +222,202 @@ int hash_create(s32 sizemb)
     //    printf("unchanged (cleared)\n");
     //}
     /* attention - may fail ! */
-    hash_clear();
+    tt_clear();
 
     return hash_tt.nbits;
 }
 
 /**
- * hash_clear() - clear hashtable data.
+ * tt_clear() - clear transposition table
  *
  * Reset hashtable entries (if available) and statistic information.
  */
-void hash_clear()
+void tt_clear()
 {
     if (hash_tt.keys)
         memset(hash_tt.keys, 0, hash_tt.bytes);
 
-    hash_tt.used_buckets = 0;
     hash_tt.used_keys = 0;
     hash_tt.collisions = 0;
+    hash_tt.hits = 0;
+    hash_tt.misses = 0;
 }
 
 /**
- * hash_delete() - delete hashtable data.
+ * tt_delete() - delete transposition table
  *
  * free hashtable data.
  */
-void hash_delete()
+void tt_delete()
 {
-    if (hash_tt.keys)
+    if (hash_tt.keys) {
         safe_free(hash_tt.keys);
-    memset(&hash_tt, 0, sizeof(hash_tt));
+        hash_tt.keys = NULL;
+    }
+    tt_clear();
+}
+
+/**
+ * tt_probe() - probe tt for an entry
+ *
+ *
+ */
+hentry_t *tt_probe(hkey_t key)
+{
+    bucket_t *bucket;
+    hentry_t *entry;
+    int i;
+
+    bug_on(!hash_tt.keys);
+    bucket = hash_tt.keys + (key & hash_tt.mask);
+
+    /* find key in buckets */
+    for (i = 0; i < ENTRIES_PER_BUCKET; ++i) {
+        entry = bucket->entry + i;
+        if (key == entry->key)
+            break;
+    }
+    if (i < ENTRIES_PER_BUCKET)
+        return entry;
+    return NULL;
+}
+
+/**
+ * tt_probe_perft() - probe tt for an entry (perft version)
+ * @key:   Zobrist (hkey_t) key
+ * @depth: depth from search root
+ *
+ * Search transposition for @key entry with @depth depth.
+ *
+ * @return: @hentry_t address is found, TT_MISS otherwise.
+ */
+hentry_t *tt_probe_perft(const hkey_t key, const u16 depth)
+{
+    bucket_t *bucket;
+    hentry_t *entry;
+    int i;
+
+    bug_on(!hash_tt.keys);
+    bucket = hash_tt.keys + (key & hash_tt.mask);
+
+    /* find key in buckets */
+    for (i = 0; i < ENTRIES_PER_BUCKET; ++i) {
+        entry = bucket->entry + i;
+        if (key == entry->key && HASH_PERFT_DEPTH(entry->data) == depth) {
+            hash_tt.hits++;
+            /*
+             * printf("tt hit: key=%lx depth=%d bucket=%lu entry=%d!\n",
+             *        key, depth, bucket - hash_tt.keys, i);
+             */
+            return entry;
+        }
+    }
+    /*
+     * printf("tt miss: key=%lx depth=%d ucket=%lu\n",
+     *        key, depth, bucket - hash_tt.keys);
+     */
+    hash_tt.misses++;
+    return TT_MISS;
+}
+
+/**
+ * tt_store_perft() - store a transposition table entry (perft version)
+ * @key:   Zobrist (hkey_t) key
+ * @depth: depth from search root
+ * @nodes: value to store
+ *
+ */
+hentry_t *tt_store_perft(const hkey_t key, const u16 depth, const u64 nodes)
+{
+    bucket_t *bucket;
+    hentry_t *entry;
+    int replace = -1;
+    uint mindepth = 1024;
+    u64 data = HASH_PERFT(depth, nodes);
+
+    //printf("tt_store: key=%lx data=%lx depth=%d=%d nodes=%lu=%lu\n",
+    //       key, data, depth, HASH_PERFT_DEPTH(data), nodes, HASH_PERFT_VAL(data));
+    /*
+     * printf("tt_store: key=%lx depth=%d nodes=%lu ",
+     *        key, depth, nodes);
+     */
+    bug_on(!hash_tt.keys);
+    bucket = hash_tt.keys + (key & hash_tt.mask);
+
+    /* find key in buckets */
+    for (int i = 0; i < ENTRIES_PER_BUCKET; ++i) {
+        entry = bucket->entry + i;
+        //if (!entry->key) {
+        //    replace = i;
+            //hash_tt.used_keys++;
+        //    break;
+        //}
+        if (key == entry->key) {
+            if (depth == HASH_PERFT_DEPTH(entry->data)) {
+                printf("tt_store: dup key=%lx depth=%d, this should not happen!\n",
+                       key, depth);
+                return NULL;
+            }
+        }
+        /* always keep higher nodes */
+        if (HASH_PERFT_DEPTH(entry->data) < mindepth) {
+            mindepth = HASH_PERFT_DEPTH(entry->data);
+            replace = i;
+        }
+    }
+
+    if (replace >= 0) {
+        entry = bucket->entry + replace;
+
+        hash_tt.used_keys  += entry->key == 0;
+        hash_tt.collisions += entry->key && (key != entry->key);
+        /*
+         * if (HASH_PERFT_VAL(entry->data)) {
+         *     printf("REPL entry=%lu[%d] key=%lx->%lx val=%lu->%lu\n",
+         *            bucket - hash_tt.keys, replace,
+         *            entry->key, key,
+         *            HASH_PERFT_VAL(entry->data), nodes);
+         * } else {
+         *     printf("NEW entry=%lu[%d] key=%lx val=%lu\n",
+         *            bucket - hash_tt.keys, replace,
+         *            entry->key, nodes);
+         * }
+         */
+        entry->key = key;
+        entry->data = data;
+        return entry;
+    } else {
+        //printf("TT full, skip\n");
+    }
+    return NULL;
+}
+
+/**
+ * tt_info() - print hash-table information.
+ */
+void tt_info()
+{
+    if (hash_tt.keys) {
+        printf("TT: Mb:%d buckets:%'lu (bits:%u mask:%#x) entries:%'lu\n",
+               hash_tt.mb, hash_tt.nbuckets, hash_tt.nbits,
+               hash_tt.mask, hash_tt.nkeys);
+    } else {
+        printf("TT: not set.\n");
+    }
+}
+
+/**
+ * tt_stats() - print hash-table usage.
+ */
+void tt_stats()
+{
+    if (hash_tt.keys) {
+        float percent = 100.0 * hash_tt.used_keys / hash_tt.nkeys;
+        printf("hash: used:%'lu/%'lu (%.2f%%) hit:%'lu miss:%'lu coll:%'lu\n",
+               hash_tt.used_keys, hash_tt.nkeys, percent,
+               hash_tt.hits, hash_tt.misses,
+               hash_tt.collisions);
+    } else {
+        printf("hash: not set.\n");
+    }
 }

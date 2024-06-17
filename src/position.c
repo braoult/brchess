@@ -429,9 +429,10 @@ void pos_print(const pos_t *pos)
     char str[128];
 
     board_print(pos->board);
-    printf("fen %s\n", pos2fen(pos, str));
-    printf("checkers: %s\n", pos_checkers2str(pos, str, sizeof(str)));
-    printf("pinners : %s\n", pos_pinners2str(pos, str, sizeof(str)));
+    printf("key:%lx ", pos->key);
+    printf("fen: %s\n", pos2fen(pos, str));
+    printf("checkers:%s ", pos_checkers2str(pos, str, sizeof(str)));
+    printf("pinners: %s ", pos_pinners2str(pos, str, sizeof(str)));
     printf("blockers: %s\n", pos_blockers2str(pos, str, sizeof(str)));
 }
 

@@ -353,19 +353,12 @@ movelist_t *pos_gen_pseudo(pos_t *pos, movelist_t *movelist)
     bitboard_t from_bb, to_bb;
     bitboard_t tmp_bb;
     move_t *moves            = movelist->move;
-    //int *nmoves              = &movelist->nmoves;
     square_t from, to;
     square_t king = pos->king[us];
-
-    //*nmoves = 0;
 
     /* king - MUST BE FIRST */
     to_bb = bb_king_moves(dest_squares, king);
     moves = moves_gen(moves, king, to_bb);
-    //while(to_bb) {
-    //    to = bb_next(&to_bb);
-    //    *moves++ = move_make(king, to);
-    //}
 
     if (bb_multiple(pos->checkers))               /* double check, we stop here */
         goto finish;
@@ -382,8 +375,6 @@ movelist_t *pos_gen_pseudo(pos_t *pos, movelist_t *movelist)
          * Attention ! Castling flags are assumed correct
          */
         bitboard_t rel_rank1 = bb_rel_rank(RANK_1, us);
-        //square_t from_square[2] = { E1, E8 };     /* verify king is on E1/E8 */
-        //bug_on(can_castle(pos->castle, us) && from != from_square[us]);
         /* For castle, we check the opponent attacks on squares between from and to.
          * To square attack check will be done in gen_is_legal.
          */
@@ -400,26 +391,19 @@ movelist_t *pos_gen_pseudo(pos_t *pos, movelist_t *movelist)
             }
         }
     }
+
     /* sliding pieces */
     from_bb = pos->bb[us][BISHOP] | pos->bb[us][QUEEN];
     while (from_bb) {
         from = bb_next(&from_bb);
         to_bb = hyperbola_bishop_moves(occ, from) & dest_squares;
         moves = moves_gen(moves, from, to_bb);
-        //while(to_bb) {
-        //    to = bb_next(&to_bb);
-        //    *moves++ = move_make(from, to);
-        //}
     }
     from_bb = pos->bb[us][ROOK] | pos->bb[us][QUEEN];
     while (from_bb) {
         from = bb_next(&from_bb);
         to_bb = hyperbola_rook_moves(occ, from) & dest_squares;
         moves = moves_gen(moves, from, to_bb);
-        //while(to_bb) {
-        //    to = bb_next(&to_bb);
-        //    *moves++ = move_make(from, to);
-        //}
     }
 
     /* knight */
@@ -428,10 +412,6 @@ movelist_t *pos_gen_pseudo(pos_t *pos, movelist_t *movelist)
         from = bb_next(&from_bb);
         to_bb = bb_knight_moves(dest_squares, from);
         moves = moves_gen(moves, from, to_bb);
-        //while(to_bb) {
-        //    to = bb_next(&to_bb);
-        //    *moves++ = move_make(from, to);
-        //}
     }
 
     /* pawn: relative rank and files */
@@ -460,12 +440,11 @@ movelist_t *pos_gen_pseudo(pos_t *pos, movelist_t *movelist)
     while(to_bb) {
         to = bb_next(&to_bb);
         from = to - shift - shift;
-        *moves++ = move_make_flags(from, to, M_DPUSH);
+        *moves++ = move_make(from, to);
     }
 
     /* pawn: captures */
     tmp_bb = bb_pawns_attacks(pos->bb[us][PAWN], shift) & enemy_pieces;
-    //bb_print("FAIL", tmp_bb);
     to_bb = tmp_bb & ~rel_rank8;
     while (to_bb) {
         to = bb_next(&to_bb);

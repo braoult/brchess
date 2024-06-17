@@ -78,8 +78,12 @@ char *piece_to_name(piece_t p)
 
 piece_type_t piece_t_from_char(char c)
 {
-    char *p = strchr(pieces_str, c);
-    return p? (p - pieces_str) % 6 + 1: NO_PIECE_TYPE;
+    char *p;
+    piece_type_t pt = NO_PIECE_TYPE;
+    if (c && (p = strchr(pieces_str, c))) {
+        pt = (p - pieces_str) % 6 + 1;
+    }
+    return pt;
 }
 
 //piece_type_t piece_from_promotion(char c, color_t color)

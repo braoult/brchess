@@ -14,7 +14,8 @@
 #include <stdio.h>
 #include <ctype.h>
 
-#include "brlib.h"
+#include <brlib.h>
+
 #include "board.h"
 #include "bitboard.h"
 

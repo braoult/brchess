@@ -42,30 +42,30 @@ enum {
     M_OFF_FROM     = 0,
     M_OFF_TO       = 6,
     M_OFF_PROMOTED = 12,
-    M_OFF_CAPTURED = 15,
-    M_OFF_FLAGS    = 18
+//    M_OFF_CAPTURED = 15,
+    M_OFF_FLAGS    = 15
 };
 
 typedef enum {
-    M_CAPTURE   = BIT(M_OFF_FLAGS + 0),
-    M_ENPASSANT = BIT(M_OFF_FLAGS + 1),
-    M_PROMOTION = BIT(M_OFF_FLAGS + 2),
-    M_CASTLE_K  = BIT(M_OFF_FLAGS + 3),           /* maybe only one ? */
-    M_CASTLE_Q  = BIT(M_OFF_FLAGS + 5),           /* maybe only one ? */
-    M_CHECK     = BIT(M_OFF_FLAGS + 6),           /* maybe unknown/useless ? */
-    M_DPUSH     = BIT(M_OFF_FLAGS + 7)            /* pawn double push */
+    M_PROMOTION = 070000,
+//    M_CAPTURE   = BIT(M_OFF_FLAGS + 0),
+    M_ENPASSANT = BIT(M_OFF_FLAGS + 0),
+    M_CASTLE_K  = BIT(M_OFF_FLAGS + 1),           /* maybe only one ? */
+    M_CASTLE_Q  = BIT(M_OFF_FLAGS + 2),           /* maybe only one ? */
+    M_CHECK     = BIT(M_OFF_FLAGS + 3),           /* maybe unknown/useless ? */
+//    M_DPUSH     = BIT(M_OFF_FLAGS + 7)            /* pawn double push */
 } move_flags_t;
 
 #define move_set_flags(move, flags) ((move) | (flags))
 
-#define is_capture(m)   ((m) & M_CAPTURE)
+//#define is_capture(m)   ((m) & M_CAPTURE)
 #define is_enpassant(m) ((m) & M_ENPASSANT)
 #define is_promotion(m) ((m) & M_PROMOTION)
 #define is_castle(m)    ((m) & (M_CASTLE_K | M_CASTLE_Q))
 #define is_castle_K(m)  ((m) & M_CASTLE_K)
 #define is_castle_Q(m)  ((m) & M_CASTLE_Q)
 #define is_check(m)     ((m) & M_CHECK)
-#define is_dpush(m)     ((m) & M_DPUSH)
+//#define is_dpush(m)     ((m) & M_DPUSH)
 
 #define MOVES_MAX   256
 
@@ -89,10 +89,12 @@ static inline piece_type_t move_promoted(move_t move)
     return (move >> M_OFF_PROMOTED) & 07;
 }
 
-static inline piece_type_t move_captured(move_t move)
-{
-    return (move >> M_OFF_CAPTURED) & 07;
-}
+/*
+ * static inline piece_type_t move_captured(move_t move)
+ * {
+ *     return (move >> M_OFF_CAPTURED) & 07;
+ * }
+ */
 
 static inline move_t move_make(square_t from, square_t to)
 {
@@ -105,10 +107,12 @@ static inline move_t move_make_flags(square_t from, square_t to, move_flags_t fl
     //move_set_flags(move_make(from, to), flags);
 }
 
-static inline move_t move_make_capture(square_t from, square_t to)
-{
-    return move_make_flags(from, to, M_CAPTURE);
-}
+/*
+ * static inline move_t move_make_capture(square_t from, square_t to)
+ * {
+ *     return move_make_flags(from, to, M_CAPTURE);
+ * }
+ */
 
 static inline move_t move_make_enpassant(square_t from, square_t to)
 {
@@ -118,19 +122,23 @@ static inline move_t move_make_enpassant(square_t from, square_t to)
 static inline move_t move_make_promote(square_t from, square_t to,
                                        piece_type_t promoted)
 {
-    return move_make_flags(from, to, M_PROMOTION) | (promoted << M_OFF_PROMOTED);
+    return move_make(from, to) | (promoted << M_OFF_PROMOTED);
 }
 
-static inline move_t move_make_promote_capture(square_t from, square_t to,
-                                               piece_type_t promoted)
-{
-    return move_make_promote(from, to, promoted) | M_CAPTURE;
-}
+/*
+ * static inline move_t move_make_promote_capture(square_t from, square_t to,
+ *                                                piece_type_t promoted)
+ * {
+ *     return move_make_promote(from, to, promoted) | M_CAPTURE;
+ * }
+ */
 
-static inline move_t move_set_captured(move_t move, piece_type_t captured)
-{
-    return move | (captured << M_OFF_CAPTURED);
-}
+/*
+ * static inline move_t move_set_captured(move_t move, piece_type_t captured)
+ * {
+ *     return move | (captured << M_OFF_CAPTURED);
+ * }
+ */
 
 /* moves_print flags
  */
@@ -144,7 +152,7 @@ static inline move_t move_set_captured(move_t move, piece_type_t captured)
 #define M_PR_LONG      0x80
 
 //int move_print(int movenum, move_t *move, move_flags_t flags);
-char *move_str(char *dst, const move_t move, __unused const int flags);
+char *move_to_str(char *dst, const move_t move, __unused const int flags);
 void moves_print(movelist_t *moves, int flags);
 void move_sort_by_sq(movelist_t *moves);
 

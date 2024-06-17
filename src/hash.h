@@ -14,15 +14,19 @@
 #ifndef HASH_H
 #define HASH_H
 
-#include <assert.h>
+#include <bug.h>
 
 #include "chessdefs.h"
 
-#define NBUCKETS             4                    /* buckets per hash table entry */
+#define ENTRIES_PER_BUCKET   4                    /* buckets per hash table entry */
 
 #define HASH_SIZE_DEFAULT   32                    /* default: 32Mb */
 #define HASH_SIZE_MIN        4
 #define HASH_SIZE_MAX    32768                    /* 32Gb */
+
+#define TT_MISS   NULL
+#define TT_DUP    (void *) U64(0x01)
+#define TT_OK(p)  ((p) > (void *)U64(0xF))
 
 typedef u64 hkey_t;                               /* cannot use typedef for key_t */
 
@@ -33,7 +37,7 @@ typedef u64 hkey_t;                               /* cannot use typedef for key_
  * 16 bytes in future, it should be updated to be exactly 32 bytes.
  */
 typedef struct {
-    hkey_t key;                                    /* zobrist */
+    hkey_t key;                                   /* zobrist */
     union {
         u64 data;
         struct {
@@ -46,8 +50,18 @@ typedef struct {
     };
 } hentry_t;
 
+/* hentry perft data:
+ * 0-47:  perft value
+ * 48-63: depth
+ */
+#define HASH_PERFT_MASK        U64(0xffffffffffff)
+#define HASH_PERFT(depth, val) ((((u64) depth) << 48) | ((val) & HASH_PERFT_MASK))
+#define HASH_PERFT_VAL(data)   ((data) & HASH_PERFT_MASK)
+#define HASH_PERFT_DEPTH(data) ((u16)((data) >> 48))
+
+
 typedef struct {
-    hentry_t buckets[NBUCKETS];
+    hentry_t entry[ENTRIES_PER_BUCKET];
 } bucket_t;
 
 typedef struct {
@@ -66,9 +80,11 @@ typedef struct {
     u32  mask;                                    /* nbuckets - 1, key mask */
 
     /* stats - unsure about usage */
-    size_t used_buckets;
+    //size_t used_buckets;
     size_t used_keys;
     u64 collisions;
+    u64 hits;
+    u64 misses;
 } hasht_t;
 
 /* hack:
@@ -79,7 +95,7 @@ typedef struct {
  * we use the formula:
  * idx = ( ( ep & SQUARE_NONE ) >> 3 ) | sq_file(ep);
  */
-#define EP_ZOBRIST_IDX(ep) ( ( (ep) >> 3 ) | sq_file(ep) )
+#define EP_ZOBRIST_IDX(ep) ( ( ( ep & SQUARE_NONE ) >> 3 ) | sq_file(ep) )
 
 extern hkey_t zobrist_pieces[16][64];
 extern hkey_t zobrist_castling[4 * 4 + 1];
@@ -97,8 +113,26 @@ bool zobrist_verify(pos_t *pos);
 #define zobrist_verify(p) true
 #endif
 
-int hash_create(int Mb);
-void hash_clear(void);
-void hash_delete(void);
+/**
+ * tt_prefetch() - prefetch hash table entry
+ * @hash: u64 key
+ *
+ * Prefetch memory for @key.
+ */
+static inline void tt_prefetch(hkey_t key)
+{
+    bug_on(!hash_tt.keys);
+    __builtin_prefetch(hash_tt.keys + (key & hash_tt.mask));
+}
+
+int tt_create(int Mb);
+void tt_clear(void);
+void tt_delete(void);
+
+hentry_t *tt_probe(hkey_t key);
+hentry_t *tt_probe_perft(const hkey_t key, const u16 depth);
+hentry_t *tt_store_perft(const hkey_t key, const u16 depth, const u64 nodes);
+void tt_info(void);
+void tt_stats(void);
 
 #endif  /* HASH_H */

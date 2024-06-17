@@ -28,14 +28,26 @@ struct fentest {
     char *comment;
     char *fen;
 } fentest[] = {
-    /*
-    { __LINE__, 1,
-      "",
-      ""
-    },
-    */
+    /************************************************************
+     * TEMP TESTS BELOW - only run them (till sentinel below)   *
+     ************************************************************/
 
-/* ***************** TEMP TESTS ABOVE ************************** */
+    /*
+     * { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
+     *   "startpos + 1.e4 e5 2.Nf3 Nc6 3.Bb5 a6 4.Ba4",
+     *   "r1bqkbnr/1ppp1ppp/p1n5/4p3/B3P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 1 4"
+     * },
+     * { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
+     *   "",
+     *   "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"
+     * },
+     */
+
+    /******************************************************************
+     * DO NOT DELETE NEXT LINE - sentinel entry for temp tests above. *
+     *                           ignored if first array entry.        *
+     ******************************************************************/
+    { __LINE__, 0, NULL, NULL },
 
     { __LINE__, MOVEGEN | MOVEDO | PERFT,
       "illegal white e.p.",
@@ -138,40 +150,45 @@ struct fentest {
       "checker: h4",
       "4k3/8/8/8/7b/8/8/4K3 w - - 0 1"
     },
-// First game moves
+    /*
+     * { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
+     *   "1.e3 - perft bug",
+     *   "rnbqkbnr/pppppppp/8/8/8/4P3/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
+     * },
+     * { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT | PERFT,
+     *   "1.e3 Nc6 - perft bug",
+     *   "r1bqkbnr/pppppppp/2n5/8/8/4P3/PPPP1PPP/RNBQKBNR w KQkq - 1 2"
+     * },
+     * { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT | PERFT,
+     *   "1.e3 Nc6 2.Ke2 - perft bug",
+     *   "r1bqkbnr/pppppppp/2n5/8/8/4P3/PPPPKPPP/RNBQ1BNR b kq - 2 2"
+     * },
+     * { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
+     *   "1.e3 Nc6 2.Ke2 Nd4+ - perft bug",
+     *   "r1bqkbnr/pppppppp/8/8/3n4/4P3/PPPPKPPP/RNBQ1BNR w kq - 3 3"
+     * },
+     */
+    // First game moves
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
       "startpos",
       "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     },
-    //{ __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-    //  "1.e3 - perft bug",
-    //  "rnbqkbnr/pppppppp/8/8/8/4P3/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
-    //},
-    //{ __LINE__, FEN | MOVEGEN | MOVEDO | PERFT | PERFT,
-    //  "1.e3 Nc6 - perft bug",
-    //  "r1bqkbnr/pppppppp/2n5/8/8/4P3/PPPP1PPP/RNBQKBNR w KQkq - 1 2"
-    //},
-    //{ __LINE__, FEN | MOVEGEN | MOVEDO | PERFT | PERFT,
-    //  "1.e3 Nc6 2.Ke2 - perft bug",
-    //  "r1bqkbnr/pppppppp/2n5/8/8/4P3/PPPPKPPP/RNBQ1BNR b kq - 2 2"
-    //},
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-      "1.e3 Nc6 2.Ke2 Nd4+ - perft bug",
-      "r1bqkbnr/pppppppp/8/8/3n4/4P3/PPPPKPPP/RNBQ1BNR w kq - 3 3"
-    },
-    { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-      "1.e4",
+      "startpos + 1.e4",
       "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
     },
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-      "1.Nh3",
-      "rnbqkbnr/pppppppp/8/8/8/7N/PPPPPPPP/RNBQKB1R b KQkq - 1 1"
+      "startpos + 1.e4 e5 2.Nf3",
+      "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2"
     },
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-      "1.e4 e5 2.Nf3 Nc6",
-      "r1bqkbnr/pp1ppppp/2n5/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 1"
+      "startpos + 1.e4 e5 2.Nf3 Nc6",
+      "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3"
     },
-
+    { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
+      "startpos + 1.e4 e5 2.Nf3 Nc6 3.Bb5 a6 4.Ba4",
+      "r1bqkbnr/1ppp1ppp/p1n5/4p3/B3P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 1 4"
+    },
     // castling test
     // both can castle queen only
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
@@ -425,6 +442,10 @@ static int fentest_cur = -1;
 static char *next_fen(uint module)
 {
     fentest_cur++;
+
+    /* skip first entry if NULL - for special testing, see  */
+    if (fentest_cur == 0 && fentest[fentest_cur].fen == NULL)
+        fentest_cur++;
     while (fentest[fentest_cur].fen && !(fentest[fentest_cur].modules & module))
         fentest_cur++;
     return fentest[fentest_cur].fen;

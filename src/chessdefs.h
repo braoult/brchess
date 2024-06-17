@@ -16,8 +16,8 @@
 
 #include "brlib.h"                                /* brlib types */
 
-#define ONE                1ull
-#define U64(const_u64)     const_u64##ULL
+#define ONE                1ul
+#define U64(const_u64)     const_u64##UL
 #define BIT(i)             ( (u64) (ONE << (i)) )
 
 #define BOARDSIZE          (8*8)
@@ -176,7 +176,7 @@ s64 clock_elapsed_μs(mclock_t *clock);
 s64 clock_elapsed_ms(mclock_t *clock);
 double clock_elapsed_sec(mclock_t *clock);
 
-#define RAND_SEED_DEFAULT U64(1)
+#define RAND_SEED_DEFAULT U64(0xb0d1ccea)
 
 void rand_init(u64 seed);
 u64 rand64(void);
