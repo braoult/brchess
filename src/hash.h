@@ -24,7 +24,9 @@
 #define HASH_SIZE_MIN        4
 #define HASH_SIZE_MAX    32768                    /* 32Gb */
 
-#define TT_MISS           NULL
+#define TT_MISS   NULL
+#define TT_DUP    (void *) U64(0x01)
+#define TT_OK(p)  ((p) > (void *)U64(0xF))
 
 typedef u64 hkey_t;                               /* cannot use typedef for key_t */
 
@@ -130,6 +132,7 @@ void tt_delete(void);
 hentry_t *tt_probe(hkey_t key);
 hentry_t *tt_probe_perft(const hkey_t key, const u16 depth);
 hentry_t *tt_store_perft(const hkey_t key, const u16 depth, const u64 nodes);
+void tt_info(void);
 void tt_stats(void);
 
 #endif  /* HASH_H */

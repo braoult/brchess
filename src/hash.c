@@ -111,7 +111,6 @@ hkey_t zobrist_calc(pos_t *pos)
 bool zobrist_verify(pos_t *pos)
 {
     hkey_t diff, key = zobrist_calc(pos);
-
     if (pos->key == key)
         return true;
 
@@ -251,9 +250,11 @@ void tt_clear()
  */
 void tt_delete()
 {
-    if (hash_tt.keys)
+    if (hash_tt.keys) {
         safe_free(hash_tt.keys);
-    memset(&hash_tt, 0, sizeof(hash_tt));
+        hash_tt.keys = NULL;
+    }
+    tt_clear();
 }
 
 /**
@@ -304,13 +305,17 @@ hentry_t *tt_probe_perft(const hkey_t key, const u16 depth)
         entry = bucket->entry + i;
         if (key == entry->key && HASH_PERFT_DEPTH(entry->data) == depth) {
             hash_tt.hits++;
-            //printf("tt hit: key=%lx bucket=%lu entry=%d!\n",
-            //       key, bucket - hash_tt.keys, i);
+            /*
+             * printf("tt hit: key=%lx depth=%d bucket=%lu entry=%d!\n",
+             *        key, depth, bucket - hash_tt.keys, i);
+             */
             return entry;
         }
     }
-    //printf("tt miss: key=%lx bucket=%lu\n",
-    //       key, bucket - hash_tt.keys);
+    /*
+     * printf("tt miss: key=%lx depth=%d ucket=%lu\n",
+     *        key, depth, bucket - hash_tt.keys);
+     */
     hash_tt.misses++;
     return TT_MISS;
 }
@@ -326,70 +331,93 @@ hentry_t *tt_store_perft(const hkey_t key, const u16 depth, const u64 nodes)
 {
     bucket_t *bucket;
     hentry_t *entry;
-    int replace = -1, newkey = 0;
+    int replace = -1;
     uint mindepth = 1024;
     u64 data = HASH_PERFT(depth, nodes);
 
     //printf("tt_store: key=%lx data=%lx depth=%d=%d nodes=%lu=%lu\n",
     //       key, data, depth, HASH_PERFT_DEPTH(data), nodes, HASH_PERFT_VAL(data));
-    printf("tt_store: key=%lx depth=%d nodes=%lu ",
-           key, depth, nodes);
+    /*
+     * printf("tt_store: key=%lx depth=%d nodes=%lu ",
+     *        key, depth, nodes);
+     */
     bug_on(!hash_tt.keys);
     bucket = hash_tt.keys + (key & hash_tt.mask);
 
     /* find key in buckets */
     for (int i = 0; i < ENTRIES_PER_BUCKET; ++i) {
         entry = bucket->entry + i;
-        if (key == entry->key && HASH_PERFT_DEPTH(entry->data)) {
-            printf("tt_store: sup key/depth, this should not happen!\n");
-            return NULL;
+        //if (!entry->key) {
+        //    replace = i;
+            //hash_tt.used_keys++;
+        //    break;
+        //}
+        if (key == entry->key) {
+            if (depth == HASH_PERFT_DEPTH(entry->data)) {
+                printf("tt_store: dup key=%lx depth=%d, this should not happen!\n",
+                       key, depth);
+                return NULL;
+            }
         }
-        if (!entry->key) {
-            replace = i;
-            break;
-        }
-        /* we replace hash if we are higher in tree */
+        /* always keep higher nodes */
         if (HASH_PERFT_DEPTH(entry->data) < mindepth) {
             mindepth = HASH_PERFT_DEPTH(entry->data);
             replace = i;
         }
-        /*
-         * else {
-         *
-         *     if (key == entry->key && HASH_PERFT_DEPTH(entry->data) > mindepth) {
-         *         mindepth = HASH_PERFT_DEPTH(entry->data);
-         *         replace = i;
-         *     }
-         * }
-         */
     }
+
     if (replace >= 0) {
         entry = bucket->entry + replace;
-        if (HASH_PERFT_VAL(entry->data)) {
-            printf("REPL entry=%lu[%d] key=%lx->%lx val=%lu->%lu\n",
-                   bucket - hash_tt.keys, replace,
-                   entry->key, key,
-                   HASH_PERFT_VAL(entry->data), nodes);
-        } else {
-            printf("NEW entry=%lu[%d] key=%lx val=%lu\n",
-                   bucket - hash_tt.keys, replace,
-                   entry->key, nodes);
-        }
+
+        hash_tt.used_keys  += entry->key == 0;
+        hash_tt.collisions += entry->key && (key != entry->key);
+        /*
+         * if (HASH_PERFT_VAL(entry->data)) {
+         *     printf("REPL entry=%lu[%d] key=%lx->%lx val=%lu->%lu\n",
+         *            bucket - hash_tt.keys, replace,
+         *            entry->key, key,
+         *            HASH_PERFT_VAL(entry->data), nodes);
+         * } else {
+         *     printf("NEW entry=%lu[%d] key=%lx val=%lu\n",
+         *            bucket - hash_tt.keys, replace,
+         *            entry->key, nodes);
+         * }
+         */
         entry->key = key;
         entry->data = data;
         return entry;
     } else {
-        printf("TT full, skip\n");
+        //printf("TT full, skip\n");
     }
     return NULL;
 }
 
+/**
+ * tt_info() - print hash-table information.
+ */
+void tt_info()
+{
+    if (hash_tt.keys) {
+        printf("TT: Mb:%d buckets:%'lu (bits:%u mask:%#x) entries:%'lu\n",
+               hash_tt.mb, hash_tt.nbuckets, hash_tt.nbits,
+               hash_tt.mask, hash_tt.nkeys);
+    } else {
+        printf("TT: not set.\n");
+    }
+}
+
+/**
+ * tt_stats() - print hash-table usage.
+ */
 void tt_stats()
 {
-    printf("TT: sz=%u bits=%u bcks=%'lu entries=%'lu mask=%10x"
-           "used=%lu hits/miss=%'lu/%'lu\n",
-           hash_tt.mb, hash_tt.nbits, hash_tt.nbuckets, hash_tt.nkeys, hash_tt.mask,
-           hash_tt.used_keys, hash_tt.hits, hash_tt.misses);
-    //printf("\tused=%lu hits/miss=%lu/%lu\n",
-    //       hash_tt.used_keys, hash_tt.hits, hash_tt.misses);
+    if (hash_tt.keys) {
+        float percent = 100.0 * hash_tt.used_keys / hash_tt.nkeys;
+        printf("hash: used:%'lu/%'lu (%.2f%%) hit:%'lu miss:%'lu coll:%'lu\n",
+               hash_tt.used_keys, hash_tt.nkeys, percent,
+               hash_tt.hits, hash_tt.misses,
+               hash_tt.collisions);
+    } else {
+        printf("hash: not set.\n");
+    }
 }
