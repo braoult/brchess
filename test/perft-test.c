@@ -255,21 +255,29 @@ static __unused void compare_moves(movelist_t *fish, movelist_t *me)
 
 static int usage(char *prg)
 {
-    fprintf(stderr, "Usage: %s [-cmv][-d depth] [-p perft-version] \n", prg);
-    fprintf(stderr, "\t-c/m: print comments/moves, -n: no SF check, -d: depth, -p: 1-3, \n");
+    fprintf(stderr, "Usage: %s [-cms][-d depth] [-p version] [-t size:\n", prg);
+    fprintf(stderr, "\t-c:         do *not* print FEN comments\n");
+    fprintf(stderr, "\t-d depth:   perft depth (default: 6)");
+    fprintf(stderr, "\t-m:         print moves details\n");
+    fprintf(stderr, "\t-s:         use Stockfish to validate perft result\n");
+    fprintf(stderr, "\t-t size:    Transposition Table size (Mb). Default: 32\n");
+    fprintf(stderr,
+            "\t-p flavor:  perft flavor, 1:perft, 2:perft_alt 3:both, default:1\n");
     return 1;
 }
 
 int main(int ac, char**av)
 {
-    int test_line;
+    int curtest = 0;
     u64 sf_count = 0, my_count;
-    bool comment = false;
+    bool comment = true, sf_run = false, moves_output = false;
     char *fen;
     pos_t *pos = NULL, *fenpos;
     pos_t *fishpos = pos_new();
     movelist_t fishmoves;
     FILE *outfd = NULL;
+    s64 ms, lps;
+    int opt, depth = 6, run = 3, tt = 32, newtt = 32;
     struct {
         s64 count, ms;
         s64 minlps, maxlps;
@@ -279,54 +287,73 @@ int main(int ac, char**av)
         { .minlps=LONG_MAX },
         { .minlps=LONG_MAX },
     };
-    s64 ms, lps;
 
-    int opt, depth = 6, run = 3;
-    bool sf_run = true, perft_output = false;
-
-    while ((opt = getopt(ac, av, "cmnd:p:")) != -1) {
+    while ((opt = getopt(ac, av, "cd:mp:st:")) != -1) {
         switch (opt) {
             case 'c':
-                comment = true;
+                comment = false;
                 break;
             case 'd':
                 depth = atoi(optarg);
-                break;
-            case 'p':                             /* 1 or 2 or 3 for both */
-                run = atoi(optarg);
-                break;
-            case 'n':
-                sf_run = false;
+                if (depth <= 0)
+                    depth = 6;
                 break;
             case 'm':
-                perft_output = true;
+                moves_output = false;
+                break;
+            case 'p':
+                run = atoi(optarg);
+                break;
+            case 's':
+                sf_run = true;
+                break;
+            case 't':
+                newtt = atoi(optarg);
                 break;
             default:
                     return usage(*av);
         }
     }
 
-    printf("perft: depth = %d run = %x stockfish = %s\n",
-           depth, run, sf_run? "true": "false");
+    if (!run) {
+        printf("Nothing to do, exiting\n");
+        exit(0);
+    }
 
     init_all();
+    if (newtt != 32 && newtt > 1) {
+        printf("changing TT size from %d to %d\n", tt, newtt);
+        tt_create(newtt);
+        tt = newtt;
+    }
+    printf("%s: depth:%d tt_size:%d run:%x SF:%s\n",
+           *av,
+           depth, newtt, run,
+           sf_run? "yes": "no");
 
-    if (!run)
-        exit(0);
+    tt_info();
+    printf("\n");
+
+    printf("move_t size:%lu\n", sizeof(move_t));
 
     if (sf_run)
         outfd = open_stockfish();
 
     CLOCK_DEFINE(clock, CLOCK_MONOTONIC);
     while ((fen = next_fen(PERFT | MOVEDO))) {
-        if (comment)
-            printf("%s\n", *cur_comment()? cur_comment(): "<FIXME>");
-        test_line = cur_line();
-        tt_clear();
         if (!(fenpos = fen2pos(pos, fen))) {
-            printf("wrong fen line = %d: [%s]\n", test_line, fen);
+            printf("wrong fen line:%d fen:%s\n\n", cur_line(), fen);
             continue;
         }
+        curtest++;
+        printf("test:%d line:%d", curtest, cur_line());
+        if (comment)
+            printf(" comment:%s\n",
+                   *cur_comment()? cur_comment(): "no test desc");
+        printf("\t%s\n", fen);
+
+        tt_clear();
+
         pos = fenpos;
         if (sf_run) {
             stockfish_fen(outfd, fen);
@@ -345,15 +372,13 @@ int main(int ac, char**av)
                 if (lps < res[2].minlps)
                     res[2].minlps = lps;
             }
-            printf("SF     : line=%3d perft=%'lu %'ldms lps=%'lu \"%s\"\n",
-                   test_line, sf_count, ms,
-                   lps,
-                   fen);
+            printf("Stockfish : perft:%'lu ms:%'ld lps:%'lu\n",
+                   sf_count, ms, lps);
         }
 
         if (run & 1) {
             clock_start(&clock);
-            my_count = perft(pos, depth, 1, perft_output);
+            my_count = perft(pos, depth, 1, moves_output);
             ms = clock_elapsed_ms(&clock);
             if (!ms) {
                 res[0].skipped++;
@@ -369,20 +394,17 @@ int main(int ac, char**av)
             }
 
             if (!sf_run || sf_count == my_count) {
-                printf("pt1 OK : line=%3d perft=%'lu %'ldms lps=%'lu \"%s\"\n",
-                       test_line, my_count, ms,
-                       lps,
-                       fen);
+                printf("perft     : perft:%'lu ms:%'ld lps:%'lu ",
+                       my_count, ms, lps);
+                tt_stats();
             } else  {
-                printf("pt1 ERR: line=%3d sf=%'lu me=%'lu \"%s\"\n",
-                       test_line, sf_count, my_count, fen);
+                printf("perft     : perft:%'lu ***ERROR***\n", my_count);
             }
-            tt_stats();
         }
 
         if (run & 2) {
             clock_start(&clock);
-            my_count = perft_alt(pos, depth, 1, perft_output);
+            my_count = perft_alt(pos, depth, 1, moves_output);
             ms = clock_elapsed_ms(&clock);
             if (!ms) {
                 res[1].skipped++;
@@ -398,13 +420,10 @@ int main(int ac, char**av)
             }
 
             if (!sf_run || sf_count == my_count) {
-                printf("pt2 OK : line=%3d perft=%'lu %'ldms lps=%'lu \"%s\"\n",
-                       test_line, my_count, ms,
-                       lps,
-                       fen);
+                printf("perft_alt : perft:%'lu ms:%'ld lps:%'lu\n",
+                       my_count, ms, lps);
             } else  {
-                printf("pt2 ERR: line=%3d sf=%'lu me=%'lu \"%s\"\n",
-                       test_line, sf_count, my_count, fen);
+                printf("perft_alt : perft:%'lu ***ERROR***\n", my_count);
             }
         }
         printf("\n");
@@ -413,29 +432,32 @@ int main(int ac, char**av)
     if (sf_run) {
         if (!res[2].ms)
             res[2].ms = 1;
-        printf("total SF     %'lums %'lums lps=%'lu min=%'lu max=%'lu (skipped %d)\n",
+        printf("total Stockfish : perft:%'lums ms:%'lums lps:%'lu min:%'lu max:%'lu "
+               "(skipped %d/%d)\n",
                res[2].count, res[2].ms,
                res[2].count * 1000l / res[2].ms,
                res[2].minlps, res[2].maxlps,
-               res[2].skipped);
+               res[0].skipped, curtest);
     }
     if (run & 1) {
         if (!res[0].ms)
             res[0].ms = 1;
-        printf("total perft  %'lums %'lums lps=%'lu min=%'lu max=%'lu (skipped %d)\n",
+        printf("total perft     : perft:%'lums ms:%'lums lps:%'lu min:%'lu max:%'lu "
+               "(skipped %d/%d)\n",
                res[0].count, res[0].ms,
                res[0].count * 1000l / res[0].ms,
                res[0].minlps, res[0].maxlps,
-               res[0].skipped);
+               res[0].skipped, curtest);
     }
     if (run & 2) {
         if (!res[1].ms)
             res[1].ms = 1;
-        printf("total perft2 %'lums %'lums lps=%'lu min=%'lu max=%'lu (skipped %d)\n",
+        printf("total perft_alt : perft:%'lums ms:%'lums lps:%'lu min:%'lu max:%'lu "
+               "(skipped %d/%d)\n",
                res[1].count, res[1].ms,
                res[1].count * 1000l / res[1].ms,
                res[1].minlps, res[1].maxlps,
-               res[1].skipped);
+               res[0].skipped, curtest);
     }
     return 0;
 }
