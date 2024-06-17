@@ -93,7 +93,7 @@ typedef struct {
  * we use the formula:
  * idx = ( ( ep & SQUARE_NONE ) >> 3 ) | sq_file(ep);
  */
-#define EP_ZOBRIST_IDX(ep) ( ( (ep) >> 3 ) | sq_file(ep) )
+#define EP_ZOBRIST_IDX(ep) ( ( ( ep & SQUARE_NONE ) >> 3 ) | sq_file(ep) )
 
 extern hkey_t zobrist_pieces[16][64];
 extern hkey_t zobrist_castling[4 * 4 + 1];

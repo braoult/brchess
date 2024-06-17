@@ -11,8 +11,8 @@
 #
 
 SHELL     := /bin/bash
-#CC        := gcc
-CC        := gcc-13
+CC        := gcc
+#CC        := gcc-13
 #CC        := clang
 BEAR      := bear
 TOUCH     := touch
@@ -69,8 +69,9 @@ CPPFLAGS  += -DBUG_ON                                       # brlib bug.h
 # fen.c
 #CPPFLAGS  += -DDEBUG_FEN                                    # FEN decoding
 
-# hash.c
-CPPFLAGS  += -DZOBRIST_VERIFY                                # chk zobrist consistency
+# hash / TT
+#CPPFLAGS  += -DZOBRIST_VERIFY                                # double chk zobrist
+#CPPFLAGS  += -DPERFT_MOVE_HISTORY			      # perft, keep prev moves
 
 # attack.c
 #CPPFLAGS  += -DDEBUG_ATTACK_ATTACKERS                       # sq_attackers
