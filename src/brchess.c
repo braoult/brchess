@@ -19,17 +19,19 @@
 #include <readline/history.h>
 
 #include <brlib.h>
-#include <list.h>
-#include <debug.h>
+//#include <list.h>
+//#include <debug.h>
 
-#include "brchess.h"
 #include "chessdefs.h"
-#include "board.h"
-#include "piece.h"
-#include "move.h"
+#include "position.h"
+#include "brchess.h"
+#include "hash.h"
+//#include "board.h"
+//#include "piece.h"
+//#include "move.h"
 #include "fen.h"
-#include "eval.h"
-#include "eval-simple.h"
+//#include "eval.h"
+//#include "eval-simple.h"
 #include "search.h"
 
 struct command {
@@ -51,48 +53,49 @@ struct command *find_command (char *);
 char *stripwhite (char *string);
 
 /* The names of functions that actually do the manipulation. */
+int do_ucinewgame(pos_t *, char*);
+int do_uci(pos_t *, char*);
+int do_isready(pos_t *, char*);
+
+int do_position(pos_t *, char*);
+int do_prpos(pos_t *, char*);
+int do_perft(pos_t *, char*);
+
 int do_help(pos_t *, char*);
-int do_fen(pos_t *, char*);
-int do_init(pos_t *, char*);
-int do_pos(pos_t *, char*);
-int do_genmoves(pos_t *, char*);
-int do_prmoves(pos_t *, char*);
-//int do_prmovepos(pos_t *pos, char *arg);
-int do_prpieces(pos_t *pos, char *arg);
-int do_memstats(pos_t *, char*);
-int do_eval(pos_t *, char*);
-int do_simple_eval(pos_t *, char*);
-int do_move(pos_t *, char*);
 int do_quit(pos_t *, char*);
-int do_debug(pos_t *, char*);
-int do_depth(pos_t *, char*);
-int do_search(pos_t *, char*);
-int do_pvs(pos_t *, char*);
 
 struct command commands[] = {
+    { "ucinewgame", do_ucinewgame, "new game" },
+    { "uci", do_uci, "start uci" },
+    { "isready", do_isready, "start uci" },
+
+    { "position", do_position, "position startpos|fen [moves ...]" },
+    { "prpos", do_prpos, "Print current position" },
+    { "perft", do_perft, "perft depth [yes]" },
+
     { "help", do_help, "Display this text" },
-    { "?", do_help, "Synonym for 'help'" },
-    { "fen", do_fen, "Set position to FEN" },
-    { "init", do_init, "Set position to normal start position" },
-    { "pos", do_pos, "Print current position" },
     { "quit", do_quit, "Quit" },
-    { "genmove", do_genmoves, "Generate move list for " },
-    { "prmoves", do_prmoves, "Print position move list" },
-//    { "prmovepos", do_prmovepos, "Print Nth move resulting position" },
-    { "prpieces", do_prpieces, "Print Pieces (from pieces lists)" },
-    { "memstats", do_memstats, "Generate next move list" },
-    { "eval", do_eval, "Eval current position" },
-    { "simple-eval", do_simple_eval, "Simple eval current position" },
-    { "do_move", do_move, "execute nth move on current position" },
-    { "debug", do_debug, "Set log level to LEVEL" },
-    { "depth", do_depth, "Set search depth to N" },
-    { "search", do_search, "Search best move (negamax)" },
-    { "pvs", do_pvs, "Search best move (Principal Variation Search)" },
+ /*
+ *     { "init", do_init, "Set position to normal start position" },
+
+ *     { "genmove", do_genmoves, "Generate move list for " },
+ *     { "prmoves", do_prmoves, "Print position move list" },
+ * //    { "prmovepos", do_prmovepos, "Print Nth move resulting position" },
+ *     { "prpieces", do_prpieces, "Print Pieces (from pieces lists)" },
+ *     { "memstats", do_memstats, "Generate next move list" },
+ *     { "eval", do_eval, "Eval current position" },
+ *     { "simple-eval", do_simple_eval, "Simple eval current position" },
+ *     { "do_move", do_move, "execute nth move on current position" },
+ *     { "debug", do_debug, "Set log level to LEVEL" },
+ *     { "depth", do_depth, "Set search depth to N" },
+ *     { "search", do_search, "Search best move (negamax)" },
+ *     { "pvs", do_pvs, "Search best move (Principal Variation Search)" },
+ */
     { NULL, (int(*)()) NULL, NULL }
 };
 
 static int done=0;
-static int depth=1;
+//static int depth=1;
 
 int brchess(pos_t *pos)
 {
@@ -104,7 +107,7 @@ int brchess(pos_t *pos)
     rl_char_is_quoted_p = &quote_detector;
 
     while (!done) {
-        buffer = readline("chess> ");
+        buffer = readline(NULL);
         if (!buffer)
             break;
         /* Remove leading and trailing whitespace from the line.
@@ -123,7 +126,6 @@ int brchess(pos_t *pos)
     return 0;
 }
 
-//char **commands_completion(const char *text, int start, int end)
 char **commands_completion(const char *text, __unused int start, __unused int end)
 {
     rl_attempted_completion_over = 1;
@@ -193,8 +195,8 @@ char *escape(const char *original)
 int quote_detector(char *line, int index)
 {
     return index > 0
-            && line[index - 1] == '\\'
-            &&!quote_detector(line, index - 1);
+        && line[index - 1] == '\\'
+        &&!quote_detector(line, index - 1);
 }
 
 /* Execute a command line. */
@@ -204,6 +206,7 @@ int execute_line(pos_t *pos, char *line)
     struct command *command;
     char *word;
 
+    /* strip multiple blank characters */
     /* Isolate the command word. */
     i = 0;
     while (line[i] && whitespace(line[i]))
@@ -219,7 +222,7 @@ int execute_line(pos_t *pos, char *line)
     command = find_command(word);
 
     if (!command) {
-        fprintf(stderr, "%s: Unknown command.\n", word);
+        fprintf(stderr, "%s: Unknown command. Try 'help'.\n", word);
         return -1;
     }
 
@@ -250,7 +253,7 @@ struct command *find_command(char *name)
    into STRING. */
 char *stripwhite(char *string)
 {
-    register char *s, *t;
+    char *s, *t;
 
     for (s = string; whitespace(*s); s++)
         ;
@@ -266,61 +269,55 @@ char *stripwhite(char *string)
     return s;
 }
 
-int do_eval(__unused pos_t *pos, __unused char *arg)
-{
-    eval_t material[2], control[2], mobility[2];
-    for (int color = WHITE; color <= BLACK; ++color) {
-        material[color] = eval_material(pos, color);
-        control[color] = eval_square_control(pos, color);
-        mobility[color] = eval_mobility(pos, color);
-        printf("%s: material=%d mobility=%d controlled=%d\n",
-               color? "Black": "White", material[color],
-               mobility[color], control[color]);
-    }
-    eval_t res = eval(pos);
-    printf("eval = %d centipawns\n", res);
-    return 1;
-}
+/*
+ * int do_eval(__unused pos_t *pos, __unused char *arg)
+ * {
+ *     eval_t material[2], control[2], mobility[2];
+ *     for (int color = WHITE; color <= BLACK; ++color) {
+ *         material[color] = eval_material(pos, color);
+ *         control[color] = eval_square_control(pos, color);
+ *         mobility[color] = eval_mobility(pos, color);
+ *         printf("%s: material=%d mobility=%d controlled=%d\n",
+ *                color? "Black": "White", material[color],
+ *                mobility[color], control[color]);
+ *     }
+ *     eval_t res = eval(pos);
+ *     printf("eval = %d centipawns\n", res);
+ *     return 1;
+ * }
+ *
+ * int do_simple_eval(__unused pos_t *pos, __unused char *arg)
+ * {
+ *     eval_t eval = eval_simple(pos);
+ *     printf("eval = %d centipawns\n", eval);
+ *     return 1;
+ * }
+ */
 
-int do_simple_eval(__unused pos_t *pos, __unused char *arg)
-{
-    eval_t eval = eval_simple(pos);
-    printf("eval = %d centipawns\n", eval);
-    return 1;
-}
+/*
+ * int do_init(pos_t *pos, __unused char *arg)
+ * {
+ *     startpos(pos);
+ *     return 1;
+ * }
+ */
 
-int do_fen(pos_t *pos, char *arg)
-{
-    fen2pos(pos, arg);
-    return 1;
-}
-
-int do_init(pos_t *pos, __unused char *arg)
-{
-    pos_startpos(pos);
-    return 1;
-}
-
-int do_pos(pos_t *pos, __unused char *arg)
-{
-    pos_print(pos);
-    return 1;
-}
-
-int do_genmoves(pos_t *pos, __unused char *arg)
-{
-    moves_gen_all(pos);
-    return 1;
-}
-
-int do_prmoves(pos_t *pos, __unused char *arg)
-{
-    uint debug_level = debug_level_get();
-    debug_level_set(1);
-    moves_print(pos, M_PR_SEPARATE | M_PR_NUM | M_PR_LONG);
-    debug_level_set(debug_level);
-    return 1;
-}
+/*
+ * int do_genmoves(pos_t *pos, __unused char *arg)
+ * {
+ *     moves_gen_all(pos);
+ *     return 1;
+ * }
+ *
+ * int do_prmoves(pos_t *pos, __unused char *arg)
+ * {
+ *     uint debug_level = debug_level_get();
+ *     debug_level_set(1);
+ *     moves_print(pos, M_PR_SEPARATE | M_PR_NUM | M_PR_LONG);
+ *     debug_level_set(debug_level);
+ *     return 1;
+ * }
+ */
 
 /*
  * int do_prmovepos(pos_t *pos, char *arg)
@@ -342,58 +339,98 @@ int do_prmoves(pos_t *pos, __unused char *arg)
  * }
  */
 
-int do_prpieces(pos_t *pos, __unused char *arg)
+/*
+ * int do_prpieces(pos_t *pos, __unused char *arg)
+ * {
+ *     log_f(1, "%s\n", arg);
+ *     pos_pieces_print(pos);
+ *     return 1;
+ * }
+ *
+ * int do_memstats(__unused pos_t *pos,__unused char *arg)
+ * {
+ *     moves_pool_stats();
+ *     piece_pool_stats();
+ *     pos_pool_stats();
+ *     return 1;
+ * }
+ */
+
+/*
+ * int do_move(__unused pos_t *pos, __unused char *arg)
+ * {
+ *     int i = 1, nmove = atoi(arg);
+ *     move_t *move;
+ *     pos_t *newpos;
+ *
+ *     if (list_empty(&pos->moves[pos->turn])) {
+ *         log_f(1, "No moves list.\n");
+ *         return 0;
+ *     }
+ *     list_for_each_entry(move, &pos->moves[pos->turn], list) {
+ *         if (i == nmove)
+ *             goto doit;
+ *         i++;
+ *     }
+ *     log_f(1, "Invalid <%d> move, should be <1-%d>.\n", nmove, i);
+ *     return 0;
+ * doit:
+ *     newpos = move_do(pos, move);
+ *     pos_print(newpos);
+ *
+ *     return 1;
+ * }
+ */
+
+int do_ucinewgame(__unused pos_t *pos, __unused char *arg)
 {
-    log_f(1, "%s\n", arg);
-    pos_pieces_print(pos);
+    tt_clear();
     return 1;
 }
 
-int do_memstats(__unused pos_t *pos,__unused char *arg)
+int do_uci(__unused pos_t *pos, __unused char *arg)
 {
-    moves_pool_stats();
-    piece_pool_stats();
-    pos_pool_stats();
+    printf("id name brchess " VERSION "\n");
+    printf("id author Bruno Raoult\n");
+    printf("option option name Hash type spin default %d min %d max %d\n",
+           hash_tt.mb, HASH_SIZE_MIN, HASH_SIZE_MAX);
+    printf("uciok\n");
     return 1;
 }
 
-int do_move(__unused pos_t *pos, __unused char *arg)
+int do_isready(__unused pos_t *pos, __unused char *arg)
 {
-    int i = 1, nmove = atoi(arg);
-    move_t *move;
-    pos_t *newpos;
-
-    if (list_empty(&pos->moves[pos->turn])) {
-        log_f(1, "No moves list.\n");
-        return 0;
-    }
-    list_for_each_entry(move, &pos->moves[pos->turn], list) {
-        if (i == nmove)
-            goto doit;
-        i++;
-    }
-    log_f(1, "Invalid <%d> move, should be <1-%d>.\n", nmove, i);
-    return 0;
-doit:
-    newpos = move_do(pos, move);
-    pos_print(newpos);
-
+    printf("readyok\n");
     return 1;
 }
 
-int do_quit(__unused pos_t *pos, __unused char *arg)
+int do_position(pos_t *pos, char *arg)
 {
-    return done = 1;
-}
-
-int do_debug(__unused pos_t *pos, __unused char *arg)
-{
-    debug_level_set(atoi(arg));
+    printf("position:[%s]\n", arg);
+    fen2pos(pos, arg);
     return 1;
 }
 
-/* Print out help for ARG, or for all of the commands if ARG is
-   not present. */
+int do_prpos(pos_t *pos, __unused char *arg)
+{
+    pos_print(pos);
+    return 1;
+}
+
+int do_perft(pos_t *pos, __unused char *arg)
+{
+    pos_print(pos);
+    return 1;
+}
+
+/*
+ * int do_debug(__unused pos_t *pos, __unused char *arg)
+ * {
+ *     debug_level_set(atoi(arg));
+ *     return 1;
+ * }
+ */
+
 int do_help(__unused pos_t *pos, __unused char *arg)
 {
     int i;
@@ -426,57 +463,68 @@ int do_help(__unused pos_t *pos, __unused char *arg)
     return 0;
 }
 
-int do_depth(__unused pos_t *pos, char *arg)
+int do_quit(__unused pos_t *pos, __unused char *arg)
 {
-    depth = atoi(arg);
-    printf("depth = %d\n", depth);
-    return 1;
-
+    return done = 1;
 }
 
-int do_search(pos_t *pos, __unused char *arg)
-{
-    int debug_level = debug_level_get();
-    float timer1, timer2, nodes_sec;
+/* Print out help for ARG, or for all of the commands if ARG is
+   not present. */
+/*
+ * int do_depth(__unused pos_t *pos, char *arg)
+ * {
+ *     depth = atoi(arg);
+ *     printf("depth = %d\n", depth);
+ *     return 1;
+ *
+ * }
+ *
+ * int do_search(pos_t *pos, __unused char *arg)
+ * {
+ *     int debug_level = debug_level_get();
+ *     float timer1, timer2, nodes_sec;
+ *
+ *     timer1 = debug_timer_elapsed();
+ *     negamax(pos, depth, pos->turn == WHITE ? 1 : -1);
+ *     timer2 = debug_timer_elapsed();
+ *     nodes_sec = (float) pos->node_count / ((float) (timer2 - timer1) / (float)NANOSEC);
+ *     log(1, "best=");
+ *     debug_level_set(1);
+ *     move_print(0, pos->bestmove, 0);
+ *     debug_level_set(debug_level);
+ *     log(1, " negamax=%d\n", pos->bestmove->negamax);
+ *     printf("Depth:%d Nodes:%luK time:%.02fs (%.0f kn/s)\n", depth,
+ *            pos->node_count / 1000, (timer2 - timer1)/NANOSEC, nodes_sec/1000);
+ *     return 1;
+ * }
+ */
 
-    timer1 = debug_timer_elapsed();
-    negamax(pos, depth, pos->turn == WHITE ? 1 : -1);
-    timer2 = debug_timer_elapsed();
-    nodes_sec = (float) pos->node_count / ((float) (timer2 - timer1) / (float)NANOSEC);
-    log(1, "best=");
-    debug_level_set(1);
-    move_print(0, pos->bestmove, 0);
-    debug_level_set(debug_level);
-    log(1, " negamax=%d\n", pos->bestmove->negamax);
-    printf("Depth:%d Nodes:%luK time:%.02fs (%.0f kn/s)\n", depth,
-           pos->node_count / 1000, (timer2 - timer1)/NANOSEC, nodes_sec/1000);
-    return 1;
-}
-
-int do_pvs(pos_t *pos, __unused char *arg)
-{
-    int debug_level = debug_level_get();
-    float timer1, timer2, nodes_sec;
-    eval_t _pvs;
-
-    timer1 = debug_timer_elapsed();
-    moves_gen_eval_sort(pos);
-    _pvs = pvs(pos, depth, EVAL_MIN, EVAL_MAX, pos->turn == WHITE ? 1 : -1);
-    timer2 = debug_timer_elapsed();
-    nodes_sec = (float) pos->node_count / ((float) (timer2 - timer1) / (float)NANOSEC);
-    log(1, "best=");
-    if (pos->bestmove) {
-        debug_level_set(1);
-        move_print(0, pos->bestmove, 0);
-        debug_level_set(debug_level);
-        log(1, " pvs=%d stored=%d\n", _pvs, pos->bestmove->negamax);
-    } else {
-        log(1, "<no-best-move>");
-    }
-    printf("Depth:%d Nodes:%luK time:%.02fs (%.0f kn/s)\n", depth,
-           pos->node_count / 1000, (timer2 - timer1)/NANOSEC, nodes_sec/1000);
-    return 1;
-}
+/*
+ * int do_pvs(pos_t *pos, __unused char *arg)
+ * {
+ *     int debug_level = debug_level_get();
+ *     float timer1, timer2, nodes_sec;
+ *     eval_t _pvs;
+ *
+ *     timer1 = debug_timer_elapsed();
+ *     moves_gen_eval_sort(pos);
+ *     _pvs = pvs(pos, depth, EVAL_MIN, EVAL_MAX, pos->turn == WHITE ? 1 : -1);
+ *     timer2 = debug_timer_elapsed();
+ *     nodes_sec = (float) pos->node_count / ((float) (timer2 - timer1) / (float)NANOSEC);
+ *     log(1, "best=");
+ *     if (pos->bestmove) {
+ *         debug_level_set(1);
+ *         move_print(0, pos->bestmove, 0);
+ *         debug_level_set(debug_level);
+ *         log(1, " pvs=%d stored=%d\n", _pvs, pos->bestmove->negamax);
+ *     } else {
+ *         log(1, "<no-best-move>");
+ *     }
+ *     printf("Depth:%d Nodes:%luK time:%.02fs (%.0f kn/s)\n", depth,
+ *            pos->node_count / 1000, (timer2 - timer1)/NANOSEC, nodes_sec/1000);
+ *     return 1;
+ * }
+ */
 
 /** main()
  * options:
@@ -493,20 +541,16 @@ static int usage(char *prg)
 
 int main(int ac, char **av)
 {
-    pos_t *pos;
+    pos_t *pos = pos_new();
     int opt;
 
-    piece_pool_init();
-    moves_pool_init();
-    pos_pool_init();
-    pos = pos_get();
-    debug_init(1, stderr, true);
-    eval_simple_init();
+    init_all();
+    printf("brchess " VERSION "\n");
 
     while ((opt = getopt(ac, av, "d:f:")) != -1) {
         switch (opt) {
             case 'd':
-                debug_level_set(atoi(optarg));
+                //debug_level_set(atoi(optarg));
                 break;
             case 'f':
                 fen2pos(pos, optarg);

@@ -1,38 +1,35 @@
 #!/usr/bin/env bash
 #
-# Copy a git file, keeping history.
-# Source: https://stackoverflow.com/a/53849613/3079831
+# Duplicate file, with history (well, sort of)
 #
-# Buggy, "to" file has no history...
-# Maybe try:
+# Copy a git file, keeping history.
+# Sources:
+#   https://stackoverflow.com/a/53849613/3079831
 #   https://stackoverflow.com/a/75942970/3079831
 
+CMDNAME=${0##*/}                                  # script name
 
-# if (( $# != 2 )) ; then
-#   echo "Usage: git-split.sh original copy"
-#   exit 1
-# fi
+if (( $# != 2 )); then
+   printf "Usage: %s original copy\n" "$CMDNAME"
+   exit 1
+fi
 
-# from="$1"
-# to="$2"
-# branch="split-file"
-# tmp="$from-temp-copy"
+from="$1"
+to="$2"
+branch="split-file"
 
-# git switch -c "$branch"
-# git mv "$from" "$to"
-# git commit -n -m "Split $from to $to - step 1"
+printf "Dup from=[%s] to=[%s] branch=[%s]\n" "$from" "$to" "$branch"
 
-# #REV=$(git rev-parse HEAD)
-# git switch -
+git checkout -b "$branch"                         # create and switch to branch
 
-# git mv "$from" "$tmp"
-# git commit -n -m "Split $from to $to - step 2"
-# git merge "$branch"
+git mv "$from" "$to"                              # make the duplicate
+git commit -m "Duplicate $from to $to"
 
-# git commit -a -n -m "Split $from to $to - step 3"
-# git mv "$tmp" "$from"
-# git commit -n -m "Split file $from to $to - step 4"
+git checkout HEAD~ "$from"                        # bring back the original
+git commit -m "Restore duplicated $from"
 
-# git branch -d "$branch"
+git checkout -                                    # switch back to source branch
+git merge --no-ff "$branch" -m "Merge $branch"    # merge dup into source branch
+
 
 exit 0
