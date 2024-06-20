@@ -11,9 +11,17 @@
 #
 
 SHELL     := /bin/bash
-CC        := gcc
-#CC        := gcc-13
-#CC        := clang
+
+ifeq ($(CC),)
+        CC = gcc
+endif
+ifeq ($(CC),cc)
+        CC = gcc
+endif
+ifeq ($(BUILD),)
+        BUILD = release
+endif
+
 BEAR      := bear
 TOUCH     := touch
 RM        := rm
@@ -56,9 +64,6 @@ CPPFILES  := $(SRC:.c=.i) $(TSTSRC:.c=.i)
 # inspired from:
 #  https://eugene-babichenko.github.io/blog/2019/09/28/nightly-versions-makefiles/
 
-# default empty version
-#VERSION    :=
-
 # last commit and date
 COMMIT    := $(shell git rev-parse --short HEAD)
 DATE      := $(shell git log -1 --format=%cd --date=format:"%Y%m%d")
@@ -85,31 +90,30 @@ endif
 ##################################### pre-processor flags
 CPPFLAGS  := -I$(BRINCDIR) -I$(INCDIR) -DVERSION=\"$(VERSION)\"
 
-CPPFLAGS  += -DNDEBUG                                       # assert (unused)
-CPPFLAGS  += -DWARN_ON                                      # brlib bug.h
-CPPFLAGS  += -DBUG_ON                                       # brlib bug.h
+ifeq ($(BUILD),release)
+        CPPFLAGS  += -DNDEBUG                               # assert (unused)
+else ifeq ($(BUILD),dev)
+        CPPFLAGS  += -DWARN_ON                              # brlib bug.h
+        CPPFLAGS  += -DBUG_ON                               # brlib bug.h
 
-#CPPFLAGS  += -DDEBUG                                        # global - unused
-#CPPFLAGS  += -DDEBUG_DEBUG                                  # enable log() functions
-#CPPFLAGS  += -DDEBUG_DEBUG_C                                # enable log() settings
-#CPPFLAGS  += -DDEBUG_POOL                                   # memory pools management
-#CPPFLAGS  += -DDEBUG_POS                                    # position.c
-#CPPFLAGS  += -DDEBUG_MOVE                                   # move generation
-
-# fen.c
-#CPPFLAGS  += -DDEBUG_FEN                                    # FEN decoding
-
-# hash / TT
-#CPPFLAGS  += -DZOBRIST_VERIFY                                # double chk zobrist
-#CPPFLAGS  += -DPERFT_MOVE_HISTORY			      # perft, keep prev moves
-
-# attack.c
-#CPPFLAGS  += -DDEBUG_ATTACK_ATTACKERS                       # sq_attackers
-#CPPFLAGS  += -DDEBUG_ATTACK_PINNERS                         # sq_pinners details
-
-#CPPFLAGS  += -DDEBUG_EVAL                                   # eval functions
-#CPPFLAGS  += -DDEBUG_PIECE                                  # piece list management
-#CPPFLAGS  += -DDEBUG_SEARCH                                 # move search
+        #CPPFLAGS  += -DDEBUG                               # global - unused
+        #CPPFLAGS  += -DDEBUG_DEBUG                         # enable log() functions
+        #CPPFLAGS  += -DDEBUG_DEBUG_C                       # enable log() settings
+        #CPPFLAGS  += -DDEBUG_POOL                          # memory pools management
+        #CPPFLAGS  += -DDEBUG_POS                           # position.c
+        #CPPFLAGS  += -DDEBUG_MOVE                          # move generation
+        #        fen.c
+        #CPPFLAGS  += -DDEBUG_FEN                           # FEN decoding
+        #        hash / TT
+        #CPPFLAGS  += -DZOBRIST_VERIFY                      # double chk zobrist
+        #CPPFLAGS  += -DPERFT_MOVE_HISTORY                  # perft, keep prev moves
+        #        attack.c
+        #CPPFLAGS  += -DDEBUG_ATTACK_ATTACKERS              # sq_attackers
+        #CPPFLAGS  += -DDEBUG_ATTACK_PINNERS                # sq_pinners details
+        #       CPPFLAGS  += -DDEBUG_EVAL                   # eval functions
+        #CPPFLAGS  += -DDEBUG_PIECE                         # piece list management
+        #CPPFLAGS  += -DDEBUG_SEARCH                        # move search
+endif
 
 CPPFLAGS  += -DDIAGRAM_SYM                                  # UTF8 symbols in diagrams
 
@@ -119,41 +123,37 @@ CPPFLAGS  := $(strip $(CPPFLAGS))
 ##################################### compiler flags
 CFLAGS    := -std=gnu11
 
-### dev OR release
-
-# dev
-CFLAGS    += -g                                             # symbols (gdb, perf, etc.)
-CFLAGS    += -ginline-points                                # inlined funcs debug info
-#CFLAGS    += -Og
-# for gprof
-#CFLAGS += -pg
-# Next one may be useful for valgrind (when invalid instructions)
-#CFLAGS += -mno-tbm
-
-# release
-CFLAGS    += -O3
-
-CFLAGS    += -march=native
-CFLAGS    += -flto
-CFLAGS    += -funroll-loops
 CFLAGS    += -Wall
 CFLAGS    += -Wextra
 CFLAGS    += -Wshadow
 CFLAGS    += -Wmissing-declarations
 
+### dev OR release
+ifeq ($(BUILD),release)
+        CFLAGS    += -O3
+
+        CFLAGS    += -march=native
+        CFLAGS    += -flto
+        CFLAGS    += -funroll-loops
+else ifeq ($(BUILD),dev)
+        CFLAGS    += -Og
+        CFLAGS    += -g                                # symbols (gdb, perf, etc.)
+        CFLAGS    += -ginline-points                   # inlined funcs debug info
+        # for gprof
+        #CFLAGS += -pg
+        # Next one may be useful for valgrind (when invalid instructions)
+        #CFLAGS += -mno-tbm
+endif
+
 CFLAGS    := $(strip $(CFLAGS))
-
-# development CFLAGS - unused - TODO
-#DEV_CFLAGS := -Og
-#DEV_CFLAGS += -g
-
-# release CFLAGS - unused - TODO
-#REL_CFLAGS := -Ofast
 
 ##################################### linker flags
 LDFLAGS   := --static
 LDFLAGS   += -L$(BRLIBDIR)
-LDFLAGS   += -flto
+
+ifeq ($(BUILD),release)
+        LDFLAGS   += -flto
+endif
 
 LDFLAGS   := $(strip $(LDFLAGS))
 
@@ -198,9 +198,15 @@ $(sort all $(MAKECMDGOALS)):
 else
 
 ##################################### General targets
-.PHONY: all compile clean cleanall
+.PHONY: all release dev compile clean cleanall
 
-all: $(TARGET)
+all: testing $(TARGET)
+
+release:
+	$(MAKE) BUILD=release clean all
+
+dev:
+	$(MAKE) BUILD=dev clean all
 
 compile: brlib objs
 
@@ -316,7 +322,7 @@ cleanbindir:
 	$(call rmdir,$(BINDIR),binaries)
 
 $(TARGET): libs $(OBJ) | $(BINDIR)
-	@echo generating $@.
+	@echo linking $@.
 	$(CC) $(LDFLAGS) $(OBJ) $(LIBS) -o $@
 
 ##################################### pre-processed (.i) and assembler (.s) output
@@ -400,35 +406,35 @@ test:
 testing: $(TEST)
 
 bin/piece-test: test/piece-test.c $(FEN_OBJS)
-	@echo compiling $@ test executable.
+	@echo linking $@ test executable.
 	@$(CC) $(ALL_CFLAGS) $< $(FEN_OBJS) $(ALL_LDFLAGS) -o $@
 
 bin/fen-test: test/fen-test.c test/common-test.h $(FEN_OBJS)
-	@echo compiling $@ test executable.
+	@echo linking $@ test executable.
 	@$(CC) $(ALL_CFLAGS) $< $(FEN_OBJS) $(ALL_LDFLAGS) -o $@
 
 bin/bitboard-test: test/bitboard-test.c test/common-test.h $(BB_OBJS)
-	@echo compiling $@ test executable.
+	@echo linking $@ test executable.
 	@$(CC) $(ALL_CFLAGS) $< $(BB_OBJS) $(ALL_LDFLAGS) -o $@
 
 bin/movegen-test: test/movegen-test.c test/common-test.h $(MOVEGEN_OBJS)
-	@echo compiling $@ test executable.
+	@echo linking $@ test executable.
 	@$(CC) $(ALL_CFLAGS) $< $(MOVEGEN_OBJS) $(ALL_LDFLAGS) -o $@
 
 bin/attack-test: test/attack-test.c test/common-test.h $(ATTACK_OBJS)
-	@echo compiling $@ test executable.
+	@echo linking $@ test executable.
 	@$(CC) $(ALL_CFLAGS) $< $(ATTACK_OBJS) $(ALL_LDFLAGS) -o $@
 
 bin/movedo-test: test/movedo-test.c test/common-test.h $(MOVEDO_OBJS)
-	@echo compiling $@ test executable.
+	@echo linking $@ test executable.
 	@$(CC) $(ALL_CFLAGS) $< $(MOVEDO_OBJS) $(ALL_LDFLAGS) -o $@
 
 bin/perft-test: test/perft-test.c test/common-test.h $(PERFT_OBJS)
-	@echo compiling $@ test executable.
+	@echo linking $@ test executable.
 	@$(CC) $(ALL_CFLAGS) $< $(PERFT_OBJS) $(ALL_LDFLAGS) -o $@
 
 bin/tt-test: test/tt-test.c test/common-test.h $(TT_OBJS)
-	@echo compiling $@ test executable.
+	@echo linking $@ test executable.
 	@$(CC) $(ALL_CFLAGS) $< $(TT_OBJS) $(ALL_LDFLAGS) -o $@
 
 ##################################### Makefile debug
