@@ -191,7 +191,6 @@ int tt_create(s32 sizemb)
     if (sizemb <= 0)
         sizemb = HASH_SIZE_DEFAULT;
     sizemb = clamp(sizemb, HASH_SIZE_MIN, HASH_SIZE_MAX);
-    //printf("-> %'6d ", sizemb);
 
     bytes = sizemb * 1024ull * 1024ull;           /* bytes wanted */
     target_nbuckets = bytes / sizeof(bucket_t);   /* target buckets */
@@ -199,7 +198,7 @@ int tt_create(s32 sizemb)
     nbits = msb64(target_nbuckets);               /* adjust to power of 2 */
 
     if (hash_tt.nbits != nbits) {
-        if (hash_tt.nbits)
+        if (hash_tt.keys)
             tt_delete();
 
         hash_tt.nbits    = nbits;

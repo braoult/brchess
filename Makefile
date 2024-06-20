@@ -41,7 +41,7 @@ OBJ       := $(addprefix $(OBJDIR)/,$(SRC_FN:.c=.o))
 TSTSRC    := $(wildcard $(TSTDIR)/*.c)
 
 LIB       := br_$(shell uname -m)                           # library name
-LIBS      := $(strip -l$(LIB) -lreadline)
+LIBS      := $(strip -l$(LIB) -lreadline -lncurses -ltinfo)
 
 DEP_FN    := $(SRC_FN)
 DEP       := $(addprefix $(DEPDIR)/,$(DEP_FN:.c=.d))
@@ -52,8 +52,38 @@ TARGET    := $(addprefix $(BINDIR)/,$(TARGET_FN))
 ASMFILES  := $(SRC:.c=.s) $(TSTSRC:.c=.s)
 CPPFILES  := $(SRC:.c=.i) $(TSTSRC:.c=.i)
 
+##################################### set a version string
+# inspired from:
+#  https://eugene-babichenko.github.io/blog/2019/09/28/nightly-versions-makefiles/
+
+# default empty version
+#VERSION    :=
+
+# last commit and date
+COMMIT    := $(shell git rev-parse --short HEAD)
+DATE      := $(shell git log -1 --format=%cd --date=format:"%Y%m%d")
+
+# get last commit w/ tag & associated tag, if any
+TAG_COMM  := $(shell git rev-list --abbrev-commit --tags --max-count=1)
+ifneq ($(TAG_COMMIT),)
+TAG       := $(shell git describe --abbrev=0 --tags ${TG_COMM} 2>/dev/null || true)
+VERSION   := $(TAG:v%=%)
+endif
+
+# if no version, use last commit and date.
+# else, if last commit != last tag commit, add commit and date to version number
+ifeq ($(VERSION),)
+  VERSION := build-$(COMMIT)-$(DATE)
+else ifneq ($(COMMIT), $(TAG_COMMIT))
+  VERSION := $(VERSION)-next-$(COMMIT)-$(DATE)
+endif
+# if uncommited changes, add "dirty" indicator
+ifneq ($(shell git status --porcelain),)
+  VERSION := $(VERSION)-dirty
+endif
+
 ##################################### pre-processor flags
-CPPFLAGS  := -I$(BRINCDIR) -I$(INCDIR)
+CPPFLAGS  := -I$(BRINCDIR) -I$(INCDIR) -DVERSION=\"$(VERSION)\"
 
 CPPFLAGS  += -DNDEBUG                                       # assert (unused)
 CPPFLAGS  += -DWARN_ON                                      # brlib bug.h
@@ -319,7 +349,7 @@ $(CCLSROOT):
 # maybe run cleanobj cleanlibobj in commands ?
 $(CCLSFILE): cleanobj cleanbrlib libs | $(CCLSROOT)
 	@echo "Generating ccls compile commands file ($@)."
-	@$(BEAR) -- $(MAKE) testing
+	@$(BEAR) -- $(MAKE)
 
 ##################################### valgrind (mem check)
 .PHONY: memcheck
@@ -404,12 +434,13 @@ bin/tt-test: test/tt-test.c test/common-test.h $(TT_OBJS)
 ##################################### Makefile debug
 .PHONY: showflags wft
 
-showflags:
-	@echo CFLAGS: "$(CFLAGS)"
-	@echo CPPFLAGS: $(CPPFLAGS)
-	@echo DEPFLAGS: $(DEPFLAGS)
-	@echo LDFLAGS: $(LDFLAGS)
-	@echo DEPFLAGS: $(DEPFLAGS)
+info:
+	@printf "CFLAGS:   +%s+\n" "$(CFLAGS)"
+	@printf "CPPFLAGS: +%s+\n" "$(CPPFLAGS)"
+	@printf "DEPFLAGS: +%s+\n" "$(DEPFLAGS)"
+	@printf "LDFLAGS:  +%s+\n" "$(LDFLAGS)"
+	@printf "DEPFLAGS: +%s+\n" "$(DEPFLAGS)"
+	@printf "VERSION:  +%s+\n" "$(VERSION)"
 
 wtf:
 	@printf "BRLIBDIR=%s\n" "$(BRLIBDIR)"
@@ -422,7 +453,7 @@ wtf:
 	@#echo LIBSRC=$(LIBSRC)
 
 zob:
-	$(CC) $(LDFLAGS) $(CPPFLAGS) $(CFLAGS) $< $(LIBS) src/util.c -o util
+	@#$(CC) $(LDFLAGS) $(CPPFLAGS) $(CFLAGS) $< $(LIBS) src/util.c -o util
 
 ##################################### End of multi-targets
 endif

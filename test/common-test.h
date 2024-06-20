@@ -43,6 +43,31 @@ struct fentest {
      * },
      */
 
+    /*
+     * { __LINE__, MOVEGEN | MOVEDO | PERFT,
+     *   "from https://talkchess.com/viewtopic.php?t=74153",
+     *   "8/p7/8/1P6/K1k3p1/6P1/7P/8 w - - 0 1", // Perft(8) == 8,103,790
+     * },
+     * 8/5p2/8/2k3P1/p3K3/8/1P6/8 b - - // Perft(8) == 64,451,405
+
+     */
+    /*
+     * { __LINE__, MOVEGEN | MOVEDO | PERFT,
+     *   "from https://talkchess.com/viewtopic.php?t=74153",
+     *   "n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1" // Perft(6) == 71,179,139
+     * },
+     * { __LINE__, MOVEGEN | MOVEDO | PERFT,
+     *   "from https://talkchess.com/viewtopic.php?t=74153",
+     *   "r3k2r/p6p/8/B7/1pp1p3/3b4/P6P/R3K2R w KQkq - 0 1" // Perft(6) == 77,054,993
+     * },
+     */
+    { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
+      "from https://www.talkchess.com/forum/viewtopic.php?t=42463",
+      "rnbqkb1r/pp1p1ppp/2p5/4P3/2B5/8/PPP1NnPP/RNBQK2R w KQkq - 0 6"
+    },
+    /*
+      r3k2r/pb3p2/5npp/n2p4/1p1PPB2/6P1/P2N1PBP/R3K2R w KQkq - // Perft(5) == 29,179,893
+    */
     /******************************************************************
      * DO NOT DELETE NEXT LINE - sentinel entry for temp tests above. *
      *                           ignored if first array entry.        *
@@ -249,12 +274,16 @@ struct fentest {
       "",
       "6k1/6pp/R2p4/p1p5/8/1P1r3P/6P1/6K1 b - - 3 3"
     },
+    { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
+      "from https://www.talkchess.com/forum/viewtopic.php?t=42463",
+      "rnbqkb1r/pp1p1ppp/2p5/4P3/2B5/8/PPP1NnPP/RNBQK2R w KQkq - 0 6"
+    },
 
     // some of tests below are from:
     // - Rodent IV
     // - https://www.chessprogramming.net/perfect-perft/
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-      "",
+      "\"kiwipete\"",
       "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"
     },
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,

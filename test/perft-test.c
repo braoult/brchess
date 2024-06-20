@@ -277,7 +277,7 @@ int main(int ac, char**av)
     movelist_t fishmoves;
     FILE *outfd = NULL;
     s64 ms, lps;
-    int opt, depth = 6, run = 3, tt = 32, newtt = 32;
+    int opt, depth = 6, run = 3, tt, newtt = HASH_SIZE_DEFAULT;
     struct {
         s64 count, ms;
         s64 minlps, maxlps;
@@ -321,9 +321,12 @@ int main(int ac, char**av)
     }
 
     init_all();
-    if (newtt != 32 && newtt > 1) {
-        printf("changing TT size from %d to %d\n", tt, newtt);
+    tt = hash_tt.mb;
+
+    if (run & 1 && newtt != tt) {
         tt_create(newtt);
+
+        printf("changing TT size from %d to %d\n", tt, newtt);
         tt = newtt;
     }
     printf("%s: depth:%d tt_size:%d run:%x SF:%s\n",
@@ -333,8 +336,6 @@ int main(int ac, char**av)
 
     tt_info();
     printf("\n");
-
-    printf("move_t size:%lu\n", sizeof(move_t));
 
     if (sf_run)
         outfd = open_stockfish();
@@ -346,11 +347,10 @@ int main(int ac, char**av)
             continue;
         }
         curtest++;
-        printf("test:%d line:%d", curtest, cur_line());
+        printf("test:%d line:%d fen:%s\n", curtest, cur_line(), fen);
         if (comment)
-            printf(" comment:%s\n",
+            printf("\t\"%s\"\n",
                    *cur_comment()? cur_comment(): "no test desc");
-        printf("\t%s\n", fen);
 
         tt_clear();
 
@@ -432,7 +432,7 @@ int main(int ac, char**av)
     if (sf_run) {
         if (!res[2].ms)
             res[2].ms = 1;
-        printf("total Stockfish : perft:%'lums ms:%'lums lps:%'lu min:%'lu max:%'lu "
+        printf("total Stockfish : perft:%'lu ms:%'lu lps:%'lu min:%'lu max:%'lu "
                "(skipped %d/%d)\n",
                res[2].count, res[2].ms,
                res[2].count * 1000l / res[2].ms,
@@ -442,7 +442,7 @@ int main(int ac, char**av)
     if (run & 1) {
         if (!res[0].ms)
             res[0].ms = 1;
-        printf("total perft     : perft:%'lums ms:%'lums lps:%'lu min:%'lu max:%'lu "
+        printf("total perft     : perft:%'lu ms:%'lu lps:%'lu min:%'lu max:%'lu "
                "(skipped %d/%d)\n",
                res[0].count, res[0].ms,
                res[0].count * 1000l / res[0].ms,
@@ -452,7 +452,7 @@ int main(int ac, char**av)
     if (run & 2) {
         if (!res[1].ms)
             res[1].ms = 1;
-        printf("total perft_alt : perft:%'lums ms:%'lums lps:%'lu min:%'lu max:%'lu "
+        printf("total perft_alt : perft:%'lu ms:%'lu lps:%'lu min:%'lu max:%'lu "
                "(skipped %d/%d)\n",
                res[1].count, res[1].ms,
                res[1].count * 1000l / res[1].ms,

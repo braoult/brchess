@@ -70,7 +70,7 @@ u64 perft(pos_t *pos, int depth, int ply, bool output)
                 movelist_t movelist2;
                 pos_set_checkers_pinners_blockers(pos);
                 subnodes = pos_legal(pos, pos_gen_pseudo(pos, &movelist2))->nmoves;
-            } else if (ply >= 4) {
+            } else if (ply >= 3) {
                 hentry_t *entry = tt_probe_perft(pos->key, depth);
                 if (entry != TT_MISS) {
                     subnodes = HASH_PERFT_VAL(entry->data);

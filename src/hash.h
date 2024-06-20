@@ -21,7 +21,7 @@
 #define ENTRIES_PER_BUCKET   4                    /* buckets per hash table entry */
 
 #define HASH_SIZE_DEFAULT   32                    /* default: 32Mb */
-#define HASH_SIZE_MIN        4
+#define HASH_SIZE_MIN        1
 #define HASH_SIZE_MAX    32768                    /* 32Gb */
 
 #define TT_MISS   NULL
