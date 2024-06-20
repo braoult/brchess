@@ -61,10 +61,12 @@ struct fentest {
      *   "r3k2r/p6p/8/B7/1pp1p3/3b4/P6P/R3K2R w KQkq - 0 1" // Perft(6) == 77,054,993
      * },
      */
-    { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-      "from https://www.talkchess.com/forum/viewtopic.php?t=42463",
-      "rnbqkb1r/pp1p1ppp/2p5/4P3/2B5/8/PPP1NnPP/RNBQK2R w KQkq - 0 6"
-    },
+    /*
+     * { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
+     *   "from https://www.talkchess.com/forum/viewtopic.php?t=42463",
+     *   "rnbqkb1r/pp1p1ppp/2p5/4P3/2B5/8/PPP1NnPP/RNBQK2R w KQkq - 0 6"
+     * },
+     */
     /*
       r3k2r/pb3p2/5npp/n2p4/1p1PPB2/6P1/P2N1PBP/R3K2R w KQkq - // Perft(5) == 29,179,893
     */

@@ -360,7 +360,7 @@ bitboard_t pos_king_blockers(const pos_t *pos, const color_t color, const bitboa
 bool pos_ok(pos_t *pos, const bool strict)
 {
     int n, count = 0, bbcount = 0, error = 0;
-    color_t us = pos->turn, them = OPPONENT(us);
+    color_t __unused us = pos->turn, __unused them = OPPONENT(us);
 
     /* force BUG_ON and WARN_ON */
 #   pragma push_macro("BUG_ON")
@@ -391,7 +391,7 @@ bool pos_ok(pos_t *pos, const bool strict)
     }
     for (square_t sq = 0; sq < 64; ++sq) {
         piece_t piece = pos->board[sq];
-        bitboard_t match;
+        __unused bitboard_t match;
         if (piece == EMPTY)
             continue;
         color_t c = COLOR(piece);
