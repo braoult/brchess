@@ -17,8 +17,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <bug.h>
-
 #include "chessdefs.h"
 
 #undef safe_malloc
@@ -29,6 +27,7 @@
 #pragma push_macro("BUG_ON")
 #undef BUG_ON
 #define BUG_ON
+#include <bug.h>
 
 #define safe_malloc(size) ({                   \
             void *_ret = malloc(size);         \

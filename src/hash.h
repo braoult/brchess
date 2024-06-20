@@ -14,7 +14,7 @@
 #ifndef HASH_H
 #define HASH_H
 
-#include <bug.h>
+//#include <bug.h>
 
 #include "chessdefs.h"
 
@@ -121,7 +121,7 @@ bool zobrist_verify(pos_t *pos);
  */
 static inline void tt_prefetch(hkey_t key)
 {
-    bug_on(!hash_tt.keys);
+//    bug_on(!hash_tt.keys);
     __builtin_prefetch(hash_tt.keys + (key & hash_tt.mask));
 }
 
