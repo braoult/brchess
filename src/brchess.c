@@ -1,6 +1,6 @@
 /* brchess.c - main loop.
  *
- * Copyright (C) 2021-2023 Bruno Raoult ("br")
+ * Copyright (C) 2021-2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
  * Some rights reserved. See COPYING.
  *
@@ -12,26 +12,19 @@
  */
 
 
-#include <err.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <readline/readline.h>
-#include <readline/history.h>
+#include <ctype.h>
+#include <unistd.h>
 
 #include <brlib.h>
-//#include <list.h>
-//#include <debug.h>
 
 #include "chessdefs.h"
 #include "position.h"
 #include "brchess.h"
 #include "hash.h"
-//#include "board.h"
-//#include "piece.h"
-//#include "move.h"
 #include "fen.h"
-//#include "eval.h"
-//#include "eval-simple.h"
 #include "search.h"
 
 struct command {
@@ -40,41 +33,38 @@ struct command {
     char *doc;                                    /* function doc */
 };
 
-/* readline example inspired by :
- * - https://thoughtbot.com/blog/tab-completion-in-gnu-readline
- * - http://web.mit.edu/gnu/doc/html/rlman_2.html
- */
-char **commands_completion(const char *, int, int);
-char *commands_generator(const char *, int);
-char *escape(const char *);
-int quote_detector(char *, int);
-int execute_line (pos_t *, char *line);
+int execute_line (pos_t *, struct command *, char *);
 struct command *find_command (char *);
-char *stripwhite (char *string);
+int string_trim (char *str);
 
 /* The names of functions that actually do the manipulation. */
-int do_ucinewgame(pos_t *, char*);
-int do_uci(pos_t *, char*);
-int do_isready(pos_t *, char*);
+int do_ucinewgame(pos_t *, char *);
+int do_uci(pos_t *, char *);
+int do_isready(pos_t *, char *);
 
-int do_position(pos_t *, char*);
-int do_prpos(pos_t *, char*);
-int do_perft(pos_t *, char*);
+int do_position(pos_t *, char *);
+int do_moves(pos_t *, char *);
+int do_diagram(pos_t *, char *);
+int do_perft(pos_t *, char *);
 
-int do_help(pos_t *, char*);
-int do_quit(pos_t *, char*);
+int do_help(pos_t *, char *);
+int do_quit(pos_t *, char *);
 
 struct command commands[] = {
-    { "ucinewgame", do_ucinewgame, "new game" },
-    { "uci", do_uci, "start uci" },
-    { "isready", do_isready, "start uci" },
+    { "help",       do_help, "(not UCI) This help" },
+    { "?",          do_help, "(not UCI) This help" },
+    { "quit",       do_quit, "Quit" },
 
-    { "position", do_position, "position startpos|fen [moves ...]" },
-    { "prpos", do_prpos, "Print current position" },
-    { "perft", do_perft, "perft depth [yes]" },
+    { "uci",        do_uci, "" },
+    { "ucinewgame", do_ucinewgame, "" },
+    { "isready",    do_isready, "" },
 
-    { "help", do_help, "Display this text" },
-    { "quit", do_quit, "Quit" },
+    { "position",   do_position, "position startpos|fen [moves ...]" },
+
+    { "perft",      do_perft, "(not UCI) perft [divide] depth" },
+    { "moves",      do_moves, "(not UCI) moves ..." },
+    { "diagram",    do_diagram, "(not UCI) print current position diagram" },
+
  /*
  *     { "init", do_init, "Set position to normal start position" },
 
@@ -94,179 +84,55 @@ struct command commands[] = {
     { NULL, (int(*)()) NULL, NULL }
 };
 
-static int done=0;
-//static int depth=1;
+static int done = 0;
 
 int brchess(pos_t *pos)
 {
-    char *buffer, *s;
+    char *str = NULL, *saveptr, *token, *args;
+    int len;
+    size_t lenstr = 0;
+    struct command *command;
 
-    rl_attempted_completion_function = commands_completion;
-    rl_completer_quote_characters = "'\"";
-    rl_completer_word_break_characters = " ";
-    rl_char_is_quoted_p = &quote_detector;
-
-    while (!done) {
-        buffer = readline(NULL);
-        if (!buffer)
-            break;
-        /* Remove leading and trailing whitespace from the line.
-         * Then, if there is anything left, add it to the history list
-         * and execute it.
-         */
-        s = stripwhite(buffer);
-
-        if (*s) {
-            add_history(s);
-            execute_line(pos, s);
+    while (!done && getline(&str, &lenstr, stdin) >= 0) {
+        if (!(len = string_trim(str)))
+            continue;
+        token = strtok_r(str, " ", &saveptr);
+        if (! (command= find_command(token))) {
+            fprintf(stderr, "Unknown [%s] command. Try 'help'.\n", token);
+            continue;
         }
-        free(buffer);
+        args = strtok_r(NULL, "", &saveptr);
+        execute_line(pos, command, args);
     }
+
+    if (str)
+        free(str);
 
     return 0;
 }
 
-char **commands_completion(const char *text, __unused int start, __unused int end)
-{
-    rl_attempted_completion_over = 1;
-    return rl_completion_matches(text, commands_generator);
-}
-
-char *commands_generator(const char *text, int state)
-{
-    static int list_index, len;
-    char *name;
-
-    if (!state) {
-        list_index = 0;
-        len = strlen(text);
-    }
-
-    while ((name = commands[list_index++].name)) {
-        if (rl_completion_quote_character) {
-            name = strdup(name);
-        } else {
-            name = escape(name);
-        }
-
-        if (strncmp(name, text, len) == 0) {
-            return name;
-        } else {
-            free(name);
-        }
-    }
-
-    return NULL;
-}
-
-char *escape(const char *original)
-{
-    size_t original_len;
-    size_t i, j;
-    char *escaped, *resized_escaped;
-
-    original_len = strlen(original);
-
-    if (original_len > SIZE_MAX / 2) {
-        errx(1, "string too long to escape");
-    }
-
-    if ((escaped = malloc(2 * original_len + 1)) == NULL) {
-        err(1, NULL);
-    }
-
-    for (i = 0, j = 0; i < original_len; ++i, ++j) {
-        if (original[i] == ' ') {
-            escaped[j++] = '\\';
-        }
-        escaped[j] = original[i];
-    }
-    escaped[j] = '\0';
-
-    if ((resized_escaped = realloc(escaped, j)) == NULL) {
-        free(escaped);
-        resized_escaped = NULL;
-        err(1, NULL);
-    }
-
-    return resized_escaped;
-}
-
-int quote_detector(char *line, int index)
-{
-    return index > 0
-        && line[index - 1] == '\\'
-        &&!quote_detector(line, index - 1);
-}
-
 /* Execute a command line. */
-int execute_line(pos_t *pos, char *line)
+int execute_line(pos_t *pos, struct command *command, char *args)
 {
-    register int i;
-    struct command *command;
-    char *word;
-
-    /* strip multiple blank characters */
-    /* Isolate the command word. */
-    i = 0;
-    while (line[i] && whitespace(line[i]))
-        i++;
-    word = line + i;
-
-    while (line[i] && !whitespace(line[i]))
-        i++;
-
-    if (line[i])
-        line[i++] = '\0';
-
-    command = find_command(word);
-
-    if (!command) {
-        fprintf(stderr, "%s: Unknown command. Try 'help'.\n", word);
-        return -1;
-    }
-
-    /* Get argument to command, if any. */
-    while (whitespace(line[i]))
-        i++;
-
-    word = line + i;
-
-    /* return command number */
-    return (*command->func)(pos, word);
+    return (*command->func)(pos, args);
 }
 
-/* Look up NAME as the name of a command, and return a pointer to that
-   command.  Return a NULL pointer if NAME isn't a command name. */
+/**
+ * find_command - lookup UCI command.
+ * @name: &command string
+ *
+ * Look up NAME as the name of a command, and return a pointer to that
+ *   command.  Return a NULL pointer if NAME isn't a command name.
+ */
 struct command *find_command(char *name)
 {
     register int i;
 
     for (i = 0; commands[i].name; i++)
-        if (strcmp(name, commands[i].name) == 0)
-            return &commands[i];
+        if (!strcmp(name, commands[i].name))
+            return commands + i;
 
-    return (struct command *)NULL;
-}
-
-/* Strip whitespace from the start and end of STRING.  Return a pointer
-   into STRING. */
-char *stripwhite(char *string)
-{
-    char *s, *t;
-
-    for (s = string; whitespace(*s); s++)
-        ;
-
-    if (*s == 0)
-        return s;
-
-    t = s + strlen(s) - 1;
-    while (t > s && whitespace(*t))
-        t--;
-    *++t = '\0';
-
-    return s;
+    return NULL;
 }
 
 /*
@@ -384,6 +250,7 @@ char *stripwhite(char *string)
 
 int do_ucinewgame(__unused pos_t *pos, __unused char *arg)
 {
+    pos_clear(pos);
     tt_clear();
     return 1;
 }
@@ -406,20 +273,62 @@ int do_isready(__unused pos_t *pos, __unused char *arg)
 
 int do_position(pos_t *pos, char *arg)
 {
-    printf("position:[%s]\n", arg);
-    fen2pos(pos, arg);
+    char *saveptr, *token, *fen, *moves;
+
+    /* separate "moves" section */
+    saveptr = NULL;
+    if ((moves = strstr(arg, "moves"))) {
+        *(moves - 1) = 0;
+        token = strtok_r(moves, " ", &saveptr);
+        moves = strtok_r(NULL, "", &saveptr);
+        printf("moves = %s\n", moves);
+        do_moves(pos, moves);
+    }
+
+    saveptr = NULL;
+    token = strtok_r(arg, " ", &saveptr);
+    if (!strcmp(token, "startpos")) {
+        startpos(pos);
+    } else if (!strcmp(token, "fen")) {
+        fen = strtok_r(NULL, "", &saveptr);
+        fen2pos(pos, fen);
+    }
     return 1;
 }
 
-int do_prpos(pos_t *pos, __unused char *arg)
+int do_moves(__unused pos_t *pos, char *arg)
+{
+    char *saveptr = NULL, *move;
+
+    saveptr = NULL;
+    move = strtok_r(arg, " ", &saveptr);
+    while (move) {
+        printf("move: [%s]\n", move);
+        move = strtok_r(NULL, " ", &saveptr);
+    }
+    return 1;
+}
+
+int do_diagram(pos_t *pos, __unused char *arg)
 {
     pos_print(pos);
     return 1;
 }
 
-int do_perft(pos_t *pos, __unused char *arg)
+int do_perft(__unused pos_t *pos, __unused char *arg)
 {
-    pos_print(pos);
+    char *saveptr, *token;
+    int divide = 0, depth = 6;
+
+    token = strtok_r(arg, " ", &saveptr);
+    if (!strcmp(token, "divide")) {
+        divide = 1;
+        token = strtok_r(NULL, " ", &saveptr);
+    }
+    depth = atoi(token);
+    printf("perft: divide=%d depth=%d\n", divide, depth);
+    if (depth > 0)
+        perft(pos, depth, 1, divide);
     return 1;
 }
 
@@ -433,33 +342,11 @@ int do_perft(pos_t *pos, __unused char *arg)
 
 int do_help(__unused pos_t *pos, __unused char *arg)
 {
-    int i;
-    int printed = 0;
-
-    for (i = 0; commands[i].name; i++) {
-        if (!*arg || (strcmp(arg, commands[i].name) == 0)) {
-            printf("%-11.11s%s.\n", commands[i].name, commands[i].doc);
-            printed++;
-        }
+    for (struct command *cmd = commands; cmd->name; ++cmd) {
+        printf("%12s:\t%s\n", cmd->name, cmd->doc);
+        /* Print in six columns. */
     }
 
-    if (!printed) {
-        printf("No commands match `%s'.  Possibilties are:\n", arg);
-
-        for (i = 0; commands[i].name; i++) {
-            /* Print in six columns. */
-            if (printed == 6) {
-                printed = 0;
-                printf("\n");
-            }
-
-            printf("%s\t", commands[i].name);
-            printed++;
-        }
-
-        if (printed)
-            printf("\n");
-    }
     return 0;
 }
 
@@ -468,8 +355,6 @@ int do_quit(__unused pos_t *pos, __unused char *arg)
     return done = 1;
 }
 
-/* Print out help for ARG, or for all of the commands if ARG is
-   not present. */
 /*
  * int do_depth(__unused pos_t *pos, char *arg)
  * {
@@ -526,9 +411,52 @@ int do_quit(__unused pos_t *pos, __unused char *arg)
  * }
  */
 
-/** main()
- * options:
- int brchess(pos_t *pos)
+/**
+ * string_trim - cleanup (trim) blank characters in string.
+ * @str: &string to clean
+ *
+ * str is cleaned and packed with the following rules:
+ * - Leading and trailing blank characters are removed.
+ * - consecutive blank characters are replaced by one space.
+ * - non printable characters are removed.
+ *
+ * "blank" means characters as understood by isspace(3): space, form-feed ('\f'),
+ * newline ('\n'), carriage return ('\r'), horizontal tab  ('\t'), and vertical
+ * tab ('\v').
+ *
+ * @return: new @str len.
+ */
+int string_trim(char *str)
+{
+    char *to = str, *from = str;
+    int state = 1;
+
+    while (*from) {
+        switch (state) {
+            case 1:                               /* blanks */
+                while (*from && isspace(*from))
+                    from++;
+                state = 0;
+                break;
+            case 0:                               /* token */
+                while (*from && !isspace(*from)) {
+                    if (isprint(*from))
+                        *to++ = *from;
+                    from++;
+                }
+                *to++ = ' ';
+                state = 1;
+        }
+    }
+    if (to > str)
+        to--;
+    *to = 0;
+    return to - str;
+}
+
+
+/**
+ * usage - brchess usage function.
  *
  */
 static int usage(char *prg)
@@ -537,16 +465,22 @@ static int usage(char *prg)
     return 1;
 }
 
-#include <unistd.h>
-
 int main(int ac, char **av)
 {
     pos_t *pos = pos_new();
     int opt;
 
-    init_all();
     printf("brchess " VERSION "\n");
+    init_all();
 
+    // size_t len = 0;
+    // char *str = NULL;
+    //while (getline(&str, &len, stdin) >= 0) {
+    //    printf("[%s] -> ", str);
+    //    int newlen = string_trim(str);
+    //    printf("%d [%s]\n", newlen, str);
+    //}
+    //exit(0);
     while ((opt = getopt(ac, av, "d:f:")) != -1) {
         switch (opt) {
             case 'd':
