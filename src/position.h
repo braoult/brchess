@@ -19,7 +19,7 @@
 #include <brlib.h>
 #include <bitops.h>
 #include <struct-group.h>
-// #include <bug.h>
+#include <bug.h>
 
 #include "chessdefs.h"
 #include "hash.h"
