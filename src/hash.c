@@ -18,7 +18,7 @@
 #include <bitops.h>
 
 #include "chessdefs.h"
-#include "util.h"
+#include "misc.h"
 #include "position.h"
 #include "piece.h"
 #include "hash.h"

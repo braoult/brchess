@@ -27,7 +27,7 @@
 #include "hyperbola-quintessence.h"
 #include "fen.h"
 #include "piece.h"
-#include "util.h"
+#include "misc.h"
 #include "board.h"
 #include "attack.h"
 

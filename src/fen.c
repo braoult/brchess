@@ -21,9 +21,7 @@
 #include <bug.h>
 
 #include "chessdefs.h"
-#include "util.h"
-//#include "piece.h"
-//#include "bitboard.h"
+#include "misc.h"
 #include "position.h"
 #include "fen.h"
 
