@@ -19,7 +19,7 @@ ifeq ($(CC),cc)
         CC = gcc
 endif
 ifeq ($(BUILD),)
-        BUILD = release
+        BUILD = perf
 endif
 
 BEAR      := bear
@@ -49,7 +49,7 @@ OBJ       := $(addprefix $(OBJDIR)/,$(SRC_FN:.c=.o))
 TSTSRC    := $(wildcard $(TSTDIR)/*.c)
 
 LIB       := br_$(shell uname -m)                           # library name
-LIBS      := $(strip -l$(LIB) -lreadline -lncurses -ltinfo)
+LIBS      := $(strip -l$(LIB))
 
 DEP_FN    := $(SRC_FN)
 DEP       := $(addprefix $(DEPDIR)/,$(DEP_FN:.c=.d))
@@ -92,7 +92,7 @@ CPPFLAGS  := -I$(BRINCDIR) -I$(INCDIR) -DVERSION=\"$(VERSION)\"
 
 ifeq ($(BUILD),release)
         CPPFLAGS  += -DNDEBUG                               # assert (unused)
-else ifeq ($(BUILD),dev)
+else # ifeq ($(BUILD),dev)
         CPPFLAGS  += -DWARN_ON                              # brlib bug.h
         CPPFLAGS  += -DBUG_ON                               # brlib bug.h
 
@@ -127,18 +127,27 @@ CFLAGS    += -Wall
 CFLAGS    += -Wextra
 CFLAGS    += -Wshadow
 CFLAGS    += -Wmissing-declarations
+CFLAGS    += -march=native
 
 ### dev OR release
 ifeq ($(BUILD),release)
         CFLAGS    += -O3
-
-        CFLAGS    += -march=native
-        CFLAGS    += -flto
+        CFLAGS    += -g
+        CFLAGS    += -ginline-points                   # inlined funcs debug info
         CFLAGS    += -funroll-loops
+        CFLAGS    += -flto
 else ifeq ($(BUILD),dev)
         CFLAGS    += -Og
         CFLAGS    += -g                                # symbols (gdb, perf, etc.)
         CFLAGS    += -ginline-points                   # inlined funcs debug info
+        #CFLAGS += -pg                                 # gprof
+        # Next one may be useful for valgrind (when invalid instructions)
+        #CFLAGS += -mno-tbm
+else ifeq ($(BUILD),perf)
+        CFLAGS    += -O3
+        CFLAGS    += -g                                # symbols (gdb, perf, etc.)
+        CFLAGS    += -ginline-points                   # inlined funcs debug info
+        CFLAGS    += -funroll-loops
         # for gprof
         #CFLAGS += -pg
         # Next one may be useful for valgrind (when invalid instructions)
@@ -198,7 +207,7 @@ $(sort all $(MAKECMDGOALS)):
 else
 
 ##################################### General targets
-.PHONY: all release dev compile clean cleanall
+.PHONY: all release dev perf compile clean cleanall
 
 all: testing $(TARGET)
 
@@ -207,6 +216,9 @@ release:
 
 dev:
 	$(MAKE) BUILD=dev clean all
+
+perf:
+	$(MAKE) BUILD=perf clean all
 
 compile: brlib objs
 
@@ -337,7 +349,7 @@ cleanasmcpp:
 
 %.s: %.c
 	@echo "generating $@ (asm)."
-	@$(CC) -S -fverbose-asm $(CPPFLAGS) $(CFLAGS) $< -o $@
+	$(CC) -S -fverbose-asm $(CPPFLAGS) $(CFLAGS) $< -o $@
 
 ##################################### LSP (ccls)
 .PHONY: ccls
@@ -380,11 +392,11 @@ TEST          += movedo-test perft-test tt-test
 
 PIECE_OBJS    := piece.o
 FEN_OBJS      := $(PIECE_OBJS) fen.o position.o bitboard.o board.o \
-	hyperbola-quintessence.o attack.o hash.o init.o
+	hyperbola-quintessence.o attack.o hash.o init.o misc.o
 BB_OBJS       := $(FEN_OBJS)
 MOVEGEN_OBJS  := $(BB_OBJS) move.o move-gen.o
 ATTACK_OBJS   := $(MOVEGEN_OBJS)
-MOVEDO_OBJS   := $(ATTACK_OBJS) move-do.o misc.o
+MOVEDO_OBJS   := $(ATTACK_OBJS) move-do.o
 PERFT_OBJS    := $(MOVEDO_OBJS) search.o
 TT_OBJS       := $(MOVEDO_OBJS)
 
