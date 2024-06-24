@@ -61,7 +61,7 @@ struct command commands[] = {
 
     { "position",   do_position, "position startpos|fen [moves ...]" },
 
-    { "perft",      do_perft, "(not UCI) perft [divide] depth" },
+    { "perft",      do_perft, "(not UCI) perft [divide] [alt] depth" },
     { "moves",      do_moves, "(not UCI) moves ..." },
     { "diagram",    do_diagram, "(not UCI) print current position diagram" },
 
@@ -318,17 +318,25 @@ int do_diagram(pos_t *pos, __unused char *arg)
 int do_perft(__unused pos_t *pos, __unused char *arg)
 {
     char *saveptr, *token;
-    int divide = 0, depth = 6;
+    int divide = 0, depth = 6, alt = 0;
 
     token = strtok_r(arg, " ", &saveptr);
     if (!strcmp(token, "divide")) {
         divide = 1;
         token = strtok_r(NULL, " ", &saveptr);
     }
+    if (!strcmp(token, "alt")) {
+        alt = 1;
+        token = strtok_r(NULL, " ", &saveptr);
+    }
     depth = atoi(token);
-    printf("perft: divide=%d depth=%d\n", divide, depth);
-    if (depth > 0)
-        perft(pos, depth, 1, divide);
+    printf("perft: divide=%d alt=%d depth=%d\n", divide, alt, depth);
+    if (depth > 0) {
+        if (!alt)
+            perft(pos, depth, 1, divide);
+        else
+            perft_alt(pos, depth, 1, divide);
+    }
     return 1;
 }
 
