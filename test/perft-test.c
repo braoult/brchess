@@ -279,13 +279,14 @@ int main(int ac, char**av)
     s64 ms, lps;
     int opt, depth = 6, run = 3, tt, newtt = HASH_SIZE_DEFAULT;
     struct {
-        s64 count, ms;
+        s64 count, countskipped, ms;
         s64 minlps, maxlps;
         int skipped;
+        int err;
     } res[3] = {
-        { .minlps=LONG_MAX },
-        { .minlps=LONG_MAX },
-        { .minlps=LONG_MAX },
+        { .minlps = LONG_MAX },
+        { .minlps = LONG_MAX },
+        { .minlps = LONG_MAX },
     };
 
     while ((opt = getopt(ac, av, "cd:mp:st:")) != -1) {
@@ -362,6 +363,7 @@ int main(int ac, char**av)
             ms = clock_elapsed_ms(&clock);
             if (!ms) {
                 res[2].skipped++;
+                res[2].countskipped += sf_count;
                 lps = 0;
             } else {
                 lps = sf_count * 1000l / ms;
@@ -382,6 +384,7 @@ int main(int ac, char**av)
             ms = clock_elapsed_ms(&clock);
             if (!ms) {
                 res[0].skipped++;
+                res[0].countskipped += my_count;
                 lps = 0;
             } else {
                 lps = my_count * 1000l / ms;
@@ -399,6 +402,7 @@ int main(int ac, char**av)
                 tt_stats();
             } else  {
                 printf("perft     : perft:%'lu ***ERROR***\n", my_count);
+                res[0].err++;
             }
         }
 
@@ -408,6 +412,7 @@ int main(int ac, char**av)
             ms = clock_elapsed_ms(&clock);
             if (!ms) {
                 res[1].skipped++;
+                res[1].countskipped += my_count;
                 lps = 0;
             } else {
                 lps = my_count * 1000l / ms;
@@ -424,6 +429,7 @@ int main(int ac, char**av)
                        my_count, ms, lps);
             } else  {
                 printf("perft_alt : perft:%'lu ***ERROR***\n", my_count);
+                res[1].err++;
             }
         }
         printf("\n");
@@ -434,30 +440,30 @@ int main(int ac, char**av)
             res[2].ms = 1;
         printf("total Stockfish : perft:%'lu ms:%'lu lps:%'lu min:%'lu max:%'lu "
                "(skipped %d/%d)\n",
-               res[2].count, res[2].ms,
+               res[2].count + res[2].countskipped, res[2].ms,
                res[2].count * 1000l / res[2].ms,
                res[2].minlps, res[2].maxlps,
-               res[0].skipped, curtest);
+               res[2].skipped, curtest);
     }
     if (run & 1) {
         if (!res[0].ms)
             res[0].ms = 1;
         printf("total perft     : perft:%'lu ms:%'lu lps:%'lu min:%'lu max:%'lu "
-               "(skipped %d/%d)\n",
-               res[0].count, res[0].ms,
+               "(pos:%d skipped:%d err:%d)\n",
+               res[0].count + res[0].countskipped, res[0].ms,
                res[0].count * 1000l / res[0].ms,
                res[0].minlps, res[0].maxlps,
-               res[0].skipped, curtest);
+               curtest, res[0].skipped, res[0].err);
     }
     if (run & 2) {
         if (!res[1].ms)
             res[1].ms = 1;
         printf("total perft_alt : perft:%'lu ms:%'lu lps:%'lu min:%'lu max:%'lu "
-               "(skipped %d/%d)\n",
-               res[1].count, res[1].ms,
+               "(pos:%d skipped:%d err:%d)\n",
+               res[1].count + res[1].countskipped, res[1].ms,
                res[1].count * 1000l / res[1].ms,
                res[1].minlps, res[1].maxlps,
-               res[0].skipped, curtest);
+               curtest, res[1].skipped, res[1].err);
     }
     return 0;
 }
