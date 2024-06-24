@@ -26,7 +26,6 @@
 #include "attack.h"
 #include "move-gen.h"
 
-
 /**
  * pseudo_is_legal() - check if a move is legal.
  * @pos:  position
@@ -36,13 +35,18 @@
  */
 bool pseudo_is_legal(const pos_t *pos, const move_t move)
 {
-    color_t  us = pos->turn, them = OPPONENT(us);
-    square_t from = move_from(move), to = move_to(move);
-    square_t king = pos->king[us];
+    color_t  us       = pos->turn;
+    color_t them      = OPPONENT(us);
+    square_t from     = move_from(move);
+    square_t to       = move_to(move);
+    square_t kingsq   = pos->king[us];
+    square_t ep       = pos->en_passant;
     bitboard_t kingbb = pos->bb[us][KING];
-    bitboard_t occ = pos_occ(pos);
-    u64 pinned = BIT(from) & pos->blockers;
-    u64 checkers = pos->checkers;
+    bitboard_t occ    = pos_occ(pos);
+    u64 pinned        = BIT(from) & pos->blockers;
+    u64 checkers      = pos->checkers;
+
+    bug_on(pos->board[from] == NO_PIECE || COLOR(pos->board[from]) != us);
 
     /* (1) - Castling & King
      * For castling, we need to check intermediate squares attacks only.
@@ -50,60 +54,52 @@ bool pseudo_is_legal(const pos_t *pos, const move_t move)
      * king from occupation bitboard (to catch king moving away from checker
      * on same line) !
      */
-    if (unlikely(from == king)) {
-        if (unlikely(is_castle(move))) {
-            square_t dir = to > from? 1: -1;
-            if (sq_is_attacked(pos, occ, from + dir, them))
-                return false;
-        }
+    if (is_castle(move)) {
+        int dir = to > from? 1: -1;
+        if (sq_is_attacked(pos, occ, from + dir, them))
+            return false;
+    }
+    if (from == kingsq) {
         return !sq_is_attacked(pos, occ ^ kingbb, to, them);
     }
 
     /* (2) - King is in check
      * Double-check is already handled in (1), as only K moves were generated
      * by pseudo legal move generator.
-     * Here, allowed dest squares are only on King-checker line, or on checker
-     * square.
-     * attacker.
-     * Special cases:
-     *   e.p., legal if the grabbed pawn is giving check
-     *   pinned piece: always illegal
+     * Special cases (illegal):
+     *   - e.p., if the grabbed pawn is *not* giving check
+     *   - piece is pinned
      */
     if (checkers) {
         if (pinned)
             return false;
-        if (bb_multiple(checkers))
-            return false;
-        square_t checker = ctz64(checkers);
         if (is_enpassant(move)) {
-            return pos->en_passant + sq_up(them) == checker;
+            return ep + sq_up(them) == ctz64(checkers);
         }
         return true;
-        //bitboard_t between = bb_between[king][checker] | pos->checkers;
-        //return mask(to) & between;
     }
 
     /* (3) - pinned pieces
-     * We verify here that pinned piece P stays on line King-P.
+     * We verify here that pinned piece P stays on line between K & dest square.
      */
-    if (BIT(from) & pos->blockers) {
-        return bb_line[from][king] & BIT(to);    /* is to on pinner line ? */
+    if (pinned) {
+        return bb_line[from][kingsq] & BIT(to);   /* is to on pinner line ? */
     }
 
     /* (4) - En-passant
-     * pinned pieces are handled in pinned section.
+     * pinned piece is already handled in (3).
      * One case not handled anywhere else: when the two "disappearing" pawns
      * would discover a R/Q horizontal check.
+     * Note: grabbed pawn *cannot* discover a check (impossible position).
      */
-    if (unlikely(is_enpassant(move))) {
+    if (is_enpassant(move)) {
         bitboard_t rank5 = bb_rel_rank(RANK_5, us);
 
-        if (unlikely((pos->bb[us][KING] & rank5))) {
-            bitboard_t exclude = BIT(pos->en_passant - sq_up(us)) | BIT(from);
+        if (kingbb & rank5) {
+            bitboard_t exclude = BIT(ep + sq_up(them)) | BIT(from);
             bitboard_t rooks = (pos->bb[them][ROOK] | pos->bb[them][QUEEN]) & rank5;
 
-            if (hyperbola_rank_moves(occ ^ exclude, king) & rooks)
-                return false;
+            return !(hyperbola_rank_moves(occ ^ exclude, kingsq) & rooks);
         }
     }
     return true;
@@ -349,12 +345,12 @@ movelist_t *pos_gen_pseudo(pos_t *pos, movelist_t *movelist)
     bitboard_t dest_squares  = ~my_pieces;
     bitboard_t occ           = my_pieces | enemy_pieces;
     bitboard_t empty         = ~occ;
+    move_t *moves            = movelist->move;
+    square_t king = pos->king[us];
 
     bitboard_t from_bb, to_bb;
     bitboard_t tmp_bb;
-    move_t *moves            = movelist->move;
     square_t from, to;
-    square_t king = pos->king[us];
 
     /* king - MUST BE FIRST */
     to_bb = bb_king_moves(dest_squares, king);
@@ -379,6 +375,8 @@ movelist_t *pos_gen_pseudo(pos_t *pos, movelist_t *movelist)
          * To square attack check will be done in gen_is_legal.
          */
         if (can_oo(pos->castle, us)) {
+
+            /* CHANGE HERE, either with bitmask >> or direct sq check */
             bitboard_t occmask = rel_rank1 & (FILE_Fbb | FILE_Gbb);
             if (!(occ & occmask)) {
                 *moves++ = move_make_flags(king, king + 2, M_CASTLE_K);
