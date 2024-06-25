@@ -379,13 +379,13 @@ movelist_t *pos_gen_pseudo(pos_t *pos, movelist_t *movelist)
             /* CHANGE HERE, either with bitmask >> or direct sq check */
             bitboard_t occmask = rel_rank1 & (FILE_Fbb | FILE_Gbb);
             if (!(occ & occmask)) {
-                *moves++ = move_make_flags(king, king + 2, M_CASTLE_K);
+                *moves++ = move_make_flags(king, king + 2, M_CASTLE);
             }
         }
         if (can_ooo(pos->castle, us)) {
             bitboard_t occmask = rel_rank1 & (FILE_Bbb | FILE_Cbb | FILE_Dbb);
             if (!(occ & occmask)) { // &&
-                *moves++ = move_make_flags(king, king - 2, M_CASTLE_Q);
+                *moves++ = move_make_flags(king, king - 2, M_CASTLE);
             }
         }
     }

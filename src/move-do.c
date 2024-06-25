@@ -86,7 +86,7 @@ pos_t *move_do(pos_t *pos, const move_t move, state_t *state)
         pos_clr_sq(pos, to);                      /* clear square */
     } else if (is_castle(move)) {                 /* handle rook move */
         square_t rookfrom, rookto;
-        if (is_castle_K(move)) {
+        if (to > from) {
             rookfrom = sq_rel(H1, us);
             rookto = sq_rel(F1, us);
         } else {
@@ -193,7 +193,7 @@ pos_t *move_undo(pos_t *pos, const move_t move, const state_t *state)
         pos_set_sq(pos, to, pos->captured);       /* restore captured piece */
     } else if (is_castle(move)) {                 /* make reverse rook move */
         square_t rookfrom, rookto;
-        if (is_castle_K(move)) {
+        if (to > from) {
             rookfrom = sq_rel(F1, us);
             rookto = sq_rel(H1, us);
         } else {
@@ -254,7 +254,7 @@ pos_t *move_do_alt(pos_t *pos, const move_t move, state_t *state)
         pos_clr_sq(pos, to);                      /* clear square */
     } else if (is_castle(move)) {                 /* handle rook move */
         square_t rookfrom, rookto;
-        if (is_castle_K(move)) {
+        if (to > from) {
             rookfrom = sq_rel(H1, us);
             rookto = sq_rel(F1, us);
         } else {
@@ -344,7 +344,7 @@ pos_t *move_undo_alt(pos_t *pos, const move_t move, const state_t *state)
         pos_set_sq(pos, to, pos->captured);       /* restore captured piece */
     } else if (is_castle(move)) {                 /* make reverse rook move */
         square_t rookfrom, rookto;
-        if (is_castle_K(move)) {
+        if (to > from) {
             rookfrom = sq_rel(F1, us);
             rookto = sq_rel(H1, us);
         } else {

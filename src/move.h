@@ -19,18 +19,15 @@
 #include "board.h"
 
 /* move structure:
- * 3 3     2 2    1 1 1 1 1 1
- * 1 0     4 3    8 7 5 4 2 1    6 5    0
- * S UUUUUUU FFFFFF ccc ppp tttttt ffffff
+ * 1  1 1 1 1
+ * 8  5 4 2 1    6 5    0
+ * FFFF ppp tttttt ffffff
  *
- * bits    len off range         type         mask        get  desc
- * ffffff    6   0   0-5     square_t          077        &077 from
- * tttttt    6   6  6-11     square_t        07700 (>>6)  &077 to
- * ppp       3  12 12-14 piece_type_t       070000 (>>12) &07  promoted
- * ccc       3  15 15-17 piece_type_t      0700000 (>>15) &07  captured
- * FFFFFF    6  18 18-23 move_flags_t    077000000 (>>18) &077 N/A  flags
- * UUUUUUU   7  24 24-30       unused 017700000000             future usage
- * S         1  31 31-31            - 020000000000             sign
+ * bits    len off range         type      mask        get  desc
+ * ffffff    6   0   0-5     square_t       077        &077 from
+ * tttttt    6   6  6-11     square_t     07700 (>>6)  &077 to
+ * ppp       3  12 12-14 piece_type_t    070000 (>>12) &07  promoted
+ * FFF       3  15 15-17 move_flags_t   0700000 (>>15) &07  flags
  */
 typedef s32 move_t;
 
@@ -42,30 +39,24 @@ enum {
     M_OFF_FROM     = 0,
     M_OFF_TO       = 6,
     M_OFF_PROMOTED = 12,
-//    M_OFF_CAPTURED = 15,
     M_OFF_FLAGS    = 15
 };
 
 typedef enum {
-    M_PROMOTION = 070000,
-//    M_CAPTURE   = BIT(M_OFF_FLAGS + 0),
-    M_ENPASSANT = BIT(M_OFF_FLAGS + 0),
-    M_CASTLE_K  = BIT(M_OFF_FLAGS + 1),           /* maybe only one ? */
-    M_CASTLE_Q  = BIT(M_OFF_FLAGS + 2),           /* maybe only one ? */
-    M_CHECK     = BIT(M_OFF_FLAGS + 3),           /* maybe unknown/useless ? */
-//    M_DPUSH     = BIT(M_OFF_FLAGS + 7)            /* pawn double push */
+    M_PROMOTION  =  070000,
+    M_FLAGS_MASK = 0700000,
+    M_ENPASSANT  = (1 << M_OFF_FLAGS),
+    M_CASTLE     = (2 << M_OFF_FLAGS),            /* maybe only one ? */
+//  M_CHECK      = (3 << M_OFF_FLAGS)             /* maybe unknown/useless ? */
 } move_flags_t;
 
 #define move_set_flags(move, flags) ((move) | (flags))
+#define move_flags(move)            ((move) & M_FLAGS_MASK)
 
-//#define is_capture(m)   ((m) & M_CAPTURE)
-#define is_enpassant(m) ((m) & M_ENPASSANT)
-#define is_promotion(m) ((m) & M_PROMOTION)
-#define is_castle(m)    ((m) & (M_CASTLE_K | M_CASTLE_Q))
-#define is_castle_K(m)  ((m) & M_CASTLE_K)
-#define is_castle_Q(m)  ((m) & M_CASTLE_Q)
-#define is_check(m)     ((m) & M_CHECK)
-//#define is_dpush(m)     ((m) & M_DPUSH)
+#define is_promotion(m)             ((m) &  M_PROMOTION)
+#define is_enpassant(m)             (move_flags(m) == M_ENPASSANT)
+#define is_castle(m)                (move_flags(m) == M_CASTLE)
+#define is_check(m)                 (move_flags(m) == M_CHECK)
 
 #define MOVES_MAX   256
 
