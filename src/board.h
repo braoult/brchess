@@ -14,7 +14,7 @@
 #ifndef _BOARD_H
 #define _BOARD_H
 
-#include "brlib.h"
+#include <brlib.h>
 
 #include "chessdefs.h"
 #include "piece.h"

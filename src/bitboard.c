@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include "brlib.h"
+#include <brlib.h>
 
 #include "chessdefs.h"
 #include "piece.h"

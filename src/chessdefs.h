@@ -14,7 +14,7 @@
 #ifndef _CHESSDEFS_H
 #define _CHESSDEFS_H
 
-#include "brlib.h"                                /* brlib types */
+#include <brlib.h>                                /* brlib types */
 
 #define ONE                1ul
 #define U64(const_u64)     const_u64##UL

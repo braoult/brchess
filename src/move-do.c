@@ -15,9 +15,9 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-#include "brlib.h"
-#include "likely.h"
-#include "bug.h"
+#include <brlib.h>
+#include <likely.h>
+#include <bug.h>
 
 #include "chessdefs.h"
 #include "move.h"
