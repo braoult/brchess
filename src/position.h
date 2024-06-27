@@ -28,13 +28,6 @@
 #include "move.h"
 #include "board.h"
 
-#define REPEAT_SIZE 1024
-
-typedef struct {
-    hkey_t key[REPEAT_SIZE];
-    int moves;
-} repeat_t;
-
 typedef struct __pos_s {
     u64 node_count;                               /* evaluated nodes */
     int turn;                                     /* WHITE or BLACK */
@@ -56,6 +49,8 @@ typedef struct __pos_s {
                         int clock_50;
                         int plycount;             /* plies so far, start from 1 */
                         piece_t captured;         /* only used in move_undo */
+                        move_t move;
+                        struct state_s *prev;
         );
     bitboard_t checkers;                          /* opponent checkers */
     bitboard_t pinners;                           /* opponent pinners */
@@ -64,7 +59,6 @@ typedef struct __pos_s {
     piece_t board[BOARDSIZE];
     bitboard_t bb[2][PIECE_TYPE_MAX];             /* bb[0][PAWN], bb[1][ALL_PIECES] */
     square_t king[2];                             /* dup with bb, faster retrieval */
-    repeat_t repeat;                              /* for repetition detection */
 } pos_t;
 
 typedef struct state_s state_t;

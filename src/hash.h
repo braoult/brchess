@@ -31,6 +31,11 @@
 typedef u64 hkey_t;                               /* cannot use typedef for key_t */
 
 /**
+ * hash_short: return the value of a hash first 7 MSB.
+ */
+#define hash_short(hash)  ((hash) >> (64 - 8))
+
+/**
  * hentry_t: hashtable bucket.
  *
  * Size should be exactly 16 bytes. If impossible to fit necessary data in

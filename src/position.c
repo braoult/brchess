@@ -30,6 +30,7 @@
 #include "misc.h"
 #include "board.h"
 #include "attack.h"
+#include "hist.h"
 
 /**
  * pos_new() - allocate a new position
@@ -123,8 +124,6 @@ pos_t *pos_clear(pos_t *pos)
     pos->pinners = 0;
     pos->blockers = 0;
 
-    pos->repeat.moves = 0;
-
     return pos;
 }
 
@@ -167,10 +166,12 @@ bool pos_cmp(const pos_t *pos1, const pos_t *pos2)
     if (_cmpf(checkers) ||_cmpf(pinners) || _cmpf(blockers))
         goto end;
 
-    if (_cmpf(repeat.moves) ||
-        memcmp(pos1->repeat.key, pos2->repeat.key,
-               pos1->repeat.moves * sizeof pos1->repeat.key))
-        goto end;
+    /*
+     * if (_cmpf(repeat.moves) ||
+     *     memcmp(pos1->repeat.key, pos2->repeat.key,
+     *            pos1->repeat.moves * sizeof pos1->repeat.key))
+     *     goto end;
+     */
 
     ret = true;
 end:
@@ -429,7 +430,7 @@ void pos_print(const pos_t *pos)
     char str[128];
 
     board_print(pos->board);
-    printf("key:%lx ", pos->key);
+    printf("key:%lx (#%lx)", pos->key, hash_short(pos->key));
     printf("fen: %s\n", pos2fen(pos, str));
     printf("checkers:%s ", pos_checkers2str(pos, str, sizeof(str)));
     printf("pinners: %s ", pos_pinners2str(pos, str, sizeof(str)));
