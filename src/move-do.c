@@ -80,7 +80,6 @@ pos_t *move_do(pos_t *pos, const move_t move, state_t *state)
 
     if (captured != EMPTY) {
         pos->clock_50 = 0;
-        //pos->captured = pos->board[to];           /* save capture info */
         bug_on(pos->board[to] == EMPTY || COLOR(pos->captured) != them);
         key ^= zobrist_pieces[captured][to];
         pos_clr_sq(pos, to);                      /* clear square */

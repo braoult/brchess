@@ -29,11 +29,7 @@
  * ppp       3  12 12-14 piece_type_t    070000 (>>12) &07  promoted
  * FFF       3  15 15-17 move_flags_t   0700000 (>>15) &07  flags
  */
-typedef s32 move_t;
-
-/* special move_t values */
-#define MOVE_NONE ((move_t) -1)
-#define MOVE_NULL ((move_t) 0)                    /* hack: from = to = A1 */
+typedef u32 move_t;
 
 enum {
     M_OFF_FROM     = 0,
@@ -49,6 +45,11 @@ typedef enum {
     M_CASTLE     = (2 << M_OFF_FLAGS),            /* maybe only one ? */
 //  M_CHECK      = (3 << M_OFF_FLAGS)             /* maybe unknown/useless ? */
 } move_flags_t;
+
+/* special move_t values */
+#define MOVE_NULL    0                            /* hack: from = to = A1 */
+#define MOVE_NONE    07777                        /* hack: from = to = H8 */
+#define MOVE_NO_MOVE 01010                        /* hack: from = to = A2 */
 
 #define move_set_flags(move, flags) ((move) | (flags))
 #define move_flags(move)            ((move) & M_FLAGS_MASK)
@@ -144,6 +145,7 @@ static inline move_t move_make_promote(square_t from, square_t to,
 
 //int move_print(int movenum, move_t *move, move_flags_t flags);
 char *move_to_str(char *dst, const move_t move, __unused const int flags);
+move_t move_from_str(const pos_t *pos, const char *str);
 void moves_print(movelist_t *moves, int flags);
 void move_sort_by_sq(movelist_t *moves);
 

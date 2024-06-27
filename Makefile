@@ -148,6 +148,9 @@ else ifeq ($(BUILD),perf)
         CFLAGS    += -g                                # symbols (gdb, perf, etc.)
         CFLAGS    += -ginline-points                   # inlined funcs debug info
         CFLAGS    += -funroll-loops
+else ifeq ($(BUILD),debug)
+        CFLAGS    += -O0
+        CFLAGS    += -g                                # symbols (gdb, perf, etc.)
         # for gprof
         #CFLAGS += -pg
         # Next one may be useful for valgrind (when invalid instructions)
@@ -207,7 +210,7 @@ $(sort all $(MAKECMDGOALS)):
 else
 
 ##################################### General targets
-.PHONY: all release dev perf compile clean cleanall
+.PHONY: all release dev perf debug compile clean cleanall
 
 all: testing $(TARGET)
 
@@ -219,6 +222,9 @@ dev:
 
 perf:
 	$(MAKE) BUILD=perf clean all
+
+debug:
+	$(MAKE) BUILD=debug clean all
 
 compile: brlib objs
 

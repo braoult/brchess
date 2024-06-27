@@ -26,6 +26,9 @@
 #include "hash.h"
 #include "fen.h"
 #include "search.h"
+#include "hist.h"
+#include "move-gen.h"
+#include "move-do.h"
 
 struct command {
     char *name;                                   /* User printable name */
@@ -252,6 +255,7 @@ int do_ucinewgame(__unused pos_t *pos, __unused char *arg)
 {
     pos_clear(pos);
     tt_clear();
+    hist_init();
     return 1;
 }
 
@@ -275,37 +279,74 @@ int do_position(pos_t *pos, char *arg)
 {
     char *saveptr, *token, *fen, *moves;
 
+    hist_init();
+
     /* separate "moves" section */
-    saveptr = NULL;
     if ((moves = strstr(arg, "moves"))) {
         *(moves - 1) = 0;
-        token = strtok_r(moves, " ", &saveptr);
+    }
+    saveptr = NULL;
+    token = strtok_r(arg, " ", &saveptr);
+    if (!strcmp(token, "startpos")) {
+        startpos(pos);
+        do_diagram(pos, "");
+    } else if (!strcmp(token, "fen")) {
+        fen = strtok_r(NULL, " ", &saveptr);
+        fen2pos(pos, fen);
+    } else {
+        puts("fuck");
+    }
+
+    if (moves) {
+        saveptr = NULL;
+        moves = strtok_r(moves, " ", &saveptr);
         moves = strtok_r(NULL, "", &saveptr);
         printf("moves = %s\n", moves);
         do_moves(pos, moves);
     }
 
-    saveptr = NULL;
-    token = strtok_r(arg, " ", &saveptr);
-    if (!strcmp(token, "startpos")) {
-        startpos(pos);
-    } else if (!strcmp(token, "fen")) {
-        fen = strtok_r(NULL, "", &saveptr);
-        fen2pos(pos, fen);
-    }
     return 1;
+}
+
+static move_t *move_find_move(move_t target, movelist_t *list)
+{
+    move_t *move = list->move, *last = move + list->nmoves;
+
+    for (; move < last; ++move) {
+        if (move_from(target) == move_from(*move) &&
+            move_to(target)   == move_to(*move) &&
+            move_to(target)   == move_to(*move) &&
+            move_promoted(target)   == move_promoted(*move))
+            return move;
+    }
+    return NULL;
 }
 
 int do_moves(__unused pos_t *pos, char *arg)
 {
-    char *saveptr = NULL, *move;
-
+    char *saveptr = NULL, *token, check[8];
+    move_t move, *foundmove;
+    state_t state;
+    movelist_t movelist;
     saveptr = NULL;
-    move = strtok_r(arg, " ", &saveptr);
-    while (move) {
-        printf("move: [%s]\n", move);
-        move = strtok_r(NULL, " ", &saveptr);
+    token = strtok_r(arg, " ", &saveptr);
+    while (token) {
+        move = move_from_str(pos, token);
+        move_to_str(check, move, 0);
+
+        printf("move: [%s] %s\n", token, check);
+        pos_set_checkers_pinners_blockers(pos);
+        pos_legal(pos, pos_gen_pseudo(pos, &movelist));
+        foundmove = move_find_move(move, &movelist);
+        if (!foundmove) {
+            printf("illegal move");
+            return 1;
+        }
+        move_do(pos, *foundmove, &state);
+        hist_push(&state, &move);
+        token = strtok_r(NULL, " ", &saveptr);
     }
+    hist_static_print();
     return 1;
 }
 

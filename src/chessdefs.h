@@ -97,9 +97,10 @@ typedef u64 bitboard_t;
  */
 //typedef s32 eval_t;
 
-/* forward enum definition is impossible in C11, to simplify
- * cross-dependancies, all important enum are moved here.
+/* forward enum definition is impossible in C11.
+ * To simplify cross-dependancies, all important enum are moved here.
  */
+
 typedef enum {
     _SSQUARE_ = -1,                               /* force signed enum */
     A1 = 0, B1, C1, D1, E1, F1, G1, H1,

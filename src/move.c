@@ -117,6 +117,37 @@ char *move_to_str(char *dst, const move_t move, __unused const int flags)
 }
 
 /**
+ * move_from_str() - create a move from a position and UCI move string
+ * @pos:  &pos_t
+ * @str:  uci move string
+ *
+ * string and corresponding move are considered valid (no check is done).
+ *
+ * @return move, or NULL if error.
+ */
+move_t move_from_str(const pos_t *pos, const char *str)
+{
+    move_t move;
+    square_t from = sq_from_string(str);
+    square_t to   = sq_from_string(str + 2);
+    piece_type_t piece = PIECE(pos->board[from]);
+    piece_type_t promoted = piece_t_from_char(*(str+5));
+
+    if (piece == KING && sq_dist(from, to) > 1) { /* castling */
+        move = move_make_flags(from, to, M_CASTLE);
+    } else if (piece == PAWN &&                   /* en-passant */
+               sq_file(from) != sq_file(to) &&
+               pos->board[to] == EMPTY) {
+        move = move_make_enpassant(from, to);
+    } else if (promoted != NO_PIECE_TYPE) {       /* promotion */
+        move = move_make_promote(from, to, promoted);
+    } else {
+        move = move_make(from, to);
+    }
+    return move;
+}
+
+/**
  * moves_print() - print movelist moves.
  * @moves: &movelist_t moves list
  * @flags: moves selection and display options.
