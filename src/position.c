@@ -108,6 +108,7 @@ pos_t *pos_clear(pos_t *pos)
     pos->castle = 0;
     pos->clock_50 = 0;
     pos->plycount = 0;
+    pos->move = MOVE_NONE;
     pos->captured = NO_PIECE;
 
     for (square_t sq = A1; sq <= H8; ++sq)
@@ -430,8 +431,9 @@ void pos_print(const pos_t *pos)
     char str[128];
 
     board_print(pos->board);
-    printf("key:%lx (#%lx)", pos->key, hash_short(pos->key));
     printf("fen: %s\n", pos2fen(pos, str));
+    printf("last move:%s ", move_to_str(str, pos->move, 0));
+    printf("key:%lx", pos->key);
     printf("checkers:%s ", pos_checkers2str(pos, str, sizeof(str)));
     printf("pinners: %s ", pos_pinners2str(pos, str, sizeof(str)));
     printf("blockers: %s\n", pos_blockers2str(pos, str, sizeof(str)));

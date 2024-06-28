@@ -70,6 +70,7 @@ pos_t *move_do(pos_t *pos, const move_t move, state_t *state)
     pos->en_passant = SQUARE_NONE;
     pos->turn = them;
     pos->captured = captured;
+    pos->move = move;
 
     bug_on(COLOR(piece) != us);
 
@@ -237,6 +238,7 @@ pos_t *move_do_alt(pos_t *pos, const move_t move, state_t *state)
     pos->en_passant = SQUARE_NONE;
     pos->turn = them;
     pos->captured = captured;
+    pos->move = move;
 
     bug_on(COLOR(piece) != us);
 
