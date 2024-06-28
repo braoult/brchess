@@ -49,7 +49,7 @@ typedef enum {
 /* special move_t values */
 #define MOVE_NULL    0                            /* hack: from = to = A1 */
 #define MOVE_NONE    07777                        /* hack: from = to = H8 */
-#define MOVE_NO_MOVE 01010                        /* hack: from = to = A2 */
+// #define MOVE_NO_MOVE 01010                        /* hack: from = to = A2 */
 
 #define move_set_flags(move, flags) ((move) | (flags))
 #define move_flags(move)            ((move) & M_FLAGS_MASK)

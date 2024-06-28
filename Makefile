@@ -398,9 +398,9 @@ TEST          += movedo-test perft-test tt-test
 
 PIECE_OBJS    := piece.o
 FEN_OBJS      := $(PIECE_OBJS) fen.o position.o bitboard.o board.o \
-	hyperbola-quintessence.o attack.o hash.o init.o misc.o
+	hyperbola-quintessence.o attack.o hash.o init.o misc.o move.o
 BB_OBJS       := $(FEN_OBJS)
-MOVEGEN_OBJS  := $(BB_OBJS) move.o move-gen.o
+MOVEGEN_OBJS  := $(BB_OBJS) move-gen.o
 ATTACK_OBJS   := $(MOVEGEN_OBJS)
 MOVEDO_OBJS   := $(ATTACK_OBJS) move-do.o
 PERFT_OBJS    := $(MOVEDO_OBJS) search.o
