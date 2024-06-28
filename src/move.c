@@ -94,6 +94,8 @@
  * @move: move
  * @flags: moves selection and display options.
  *
+ * @dst should be large enough to contain move string + '\0' terminator.
+ *
  * Possible flags are:
  * M_PR_CAPT:  print move if capture
  * M_PR_NCAPT: print move if non capture
@@ -104,47 +106,73 @@
  */
 char *move_to_str(char *dst, const move_t move, __unused const int flags)
 {
-    square_t from = move_from(move);
-    square_t to   = move_to(move);
-    int len;
-    sprintf(dst, "%s%s%n", sq_to_string(from), sq_to_string(to), &len);
+    if (move == MOVE_NONE) {
+        strcpy(dst, "none");
+    } else if (move == MOVE_NULL) {
+        strcpy(dst, "null");
+    } else {
+        square_t from = move_from(move);
+        square_t to   = move_to(move);
+        int len;
 
-    if (is_promotion(move)) {
-        piece_t promoted = (piece_t) move_promoted(move);
-        sprintf(dst + len, "%s", piece_to_low(promoted));
+        sprintf(dst, "%s%s%n", sq_to_string(from), sq_to_string(to), &len);
+
+        if (is_promotion(move)) {
+            piece_t promoted = (piece_t) move_promoted(move);
+            sprintf(dst + len, "%s", piece_to_low(promoted));
+        }
     }
     return dst;
 }
 
 /**
- * move_from_str() - create a move from a position and UCI move string
- * @pos:  &pos_t
+ * move_from_str() - create a move from an UCI move string
  * @str:  uci move string
  *
- * string and corresponding move are considered valid (no check is done).
+ * Only from/to squares and promotion information are filled.
+ * To get a full move, @move_find_in_movelist() can be called,
+ * with a list of moves to choose from.
  *
- * @return move, or NULL if error.
+ * @return: partial move.
  */
-move_t move_from_str(const pos_t *pos, const char *str)
+move_t move_from_str(const char *str)
 {
     move_t move;
     square_t from = sq_from_string(str);
     square_t to   = sq_from_string(str + 2);
-    piece_type_t piece = PIECE(pos->board[from]);
-    piece_type_t promoted = piece_t_from_char(*(str+5));
+    piece_type_t promoted = piece_t_from_char(*(str+4));
 
-    if (piece == KING && sq_dist(from, to) > 1) { /* castling */
-        move = move_make_flags(from, to, M_CASTLE);
-    } else if (piece == PAWN &&                   /* en-passant */
-               sq_file(from) != sq_file(to) &&
-               pos->board[to] == EMPTY) {
-        move = move_make_enpassant(from, to);
-    } else if (promoted != NO_PIECE_TYPE) {       /* promotion */
+    if (promoted != NO_PIECE_TYPE) {              /* promotion */
         move = move_make_promote(from, to, promoted);
     } else {
         move = move_make(from, to);
     }
     return move;
+}
+
+/**
+ * move_find_in_movelist() - find a partial move in movelist.
+ * @target:  partial move
+ * @list:    &movelist_t to search
+ *
+ * Look for @target into @list. @target must at least contain from and
+ * to square, as well as promotion information - see move_from_str().
+ * If these three pieces of information match, the corresponding move in
+ * @list is returned.
+ *
+ * @return: move, or MOVE_NONE if error.
+ */
+move_t move_find_in_movelist(move_t target, movelist_t *list)
+{
+    move_t *move = list->move, *last = move + list->nmoves;
+
+    for (; move < last; ++move) {
+        if (move_from(target) == move_from(*move) &&
+            move_to(target)   == move_to(*move) &&
+            move_promoted(target)   == move_promoted(*move))
+            return *move;
+    }
+    return MOVE_NONE;
 }
 
 /**

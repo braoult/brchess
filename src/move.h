@@ -143,9 +143,9 @@ static inline move_t move_make_promote(square_t from, square_t to,
 #define M_PR_SEPARATE  0x40                       /* separate captures */
 #define M_PR_LONG      0x80
 
-//int move_print(int movenum, move_t *move, move_flags_t flags);
 char *move_to_str(char *dst, const move_t move, __unused const int flags);
-move_t move_from_str(const pos_t *pos, const char *str);
+move_t move_from_str(const char *str);
+move_t move_find_in_movelist(move_t target, movelist_t *list);
 void moves_print(movelist_t *moves, int flags);
 void move_sort_by_sq(movelist_t *moves);
 
