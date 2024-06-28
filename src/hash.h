@@ -14,9 +14,11 @@
 #ifndef HASH_H
 #define HASH_H
 
+#include <brlib.h>
 #include <bug.h>
 
 #include "chessdefs.h"
+#include "move.h"
 
 #define ENTRIES_PER_BUCKET   4                    /* buckets per hash table entry */
 
@@ -31,9 +33,9 @@
 typedef u64 hkey_t;                               /* cannot use typedef for key_t */
 
 /**
- * hash_short: return the value of a hash first 7 MSB.
+ * hash_short: get the most significant 7 nibble of a 64 bits value.
  */
-#define hash_short(hash)  ((hash) >> (64 - 8))
+#define hash_short(hash)  ((hash) >> (64 - 4 * 7))
 
 /**
  * hentry_t: hashtable bucket.
@@ -48,9 +50,9 @@ typedef struct {
         struct {
             u16 depth;                            /* ply in search */
             s16 eval;
-            u16 move;
-            u8 flags;                             /* maybe for locking, etc... */
-            u8 filler;
+            move_t move;
+            //u8 flags;                             /* maybe for locking, etc... */
+            //u8 filler;
         };
     };
 } hentry_t;
