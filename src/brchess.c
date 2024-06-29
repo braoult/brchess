@@ -50,6 +50,7 @@ int do_moves(pos_t *, char *);
 int do_diagram(pos_t *, char *);
 int do_perft(pos_t *, char *);
 
+int do_hist(pos_t *, char *);
 int do_help(pos_t *, char *);
 int do_quit(pos_t *, char *);
 
@@ -67,6 +68,7 @@ struct command commands[] = {
     { "perft",      do_perft, "(not UCI) perft [divide] [alt] depth" },
     { "moves",      do_moves, "(not UCI) moves ..." },
     { "diagram",    do_diagram, "(not UCI) print current position diagram" },
+    { "hist",       do_hist, "(not UCI) print history states" },
 
  /*
  *     { "init", do_init, "Set position to normal start position" },
@@ -255,7 +257,6 @@ int do_ucinewgame(__unused pos_t *pos, __unused char *arg)
 {
     pos_clear(pos);
     tt_clear();
-    hist_init();
     return 1;
 }
 
@@ -291,62 +292,62 @@ int do_position(pos_t *pos, char *arg)
         startpos(pos);
         do_diagram(pos, "");
     } else if (!strcmp(token, "fen")) {
-        fen = strtok_r(NULL, " ", &saveptr);
-        fen2pos(pos, fen);
+        fen = strtok_r(NULL, "", &saveptr);       /* full fen (till '\0') */
+        //printf("fen=%s\n", fen);
+        if (!fen)
+            return 1;
+        if (!fen2pos(pos, fen))
+            return 1;
+        //do_diagram(pos, "");
     } else {
-        puts("fuck");
+        return 1;
     }
+    //puts("zob");
+    //move_t move_none = MOVE_NONE;
+    //hist_push(&pos->state, &move_none);
 
     if (moves) {
+        //puts("zobi");
         saveptr = NULL;
-        moves = strtok_r(moves, " ", &saveptr);
-        moves = strtok_r(NULL, "", &saveptr);
-        printf("moves = %s\n", moves);
+        moves = strtok_r(moves, " ", &saveptr);   /* skip "moves" */
+        moves = strtok_r(NULL, "", &saveptr);     /* all moves (till '\0') */
+        //printf("moves = %s\n", moves);
         do_moves(pos, moves);
     }
-
+    /* link last position t history */
+    //hist_pop();
+    hist_link(pos);
     return 1;
-}
-
-static move_t *move_find_move(move_t target, movelist_t *list)
-{
-    move_t *move = list->move, *last = move + list->nmoves;
-
-    for (; move < last; ++move) {
-        if (move_from(target) == move_from(*move) &&
-            move_to(target)   == move_to(*move) &&
-            move_to(target)   == move_to(*move) &&
-            move_promoted(target)   == move_promoted(*move))
-            return move;
-    }
-    return NULL;
 }
 
 int do_moves(__unused pos_t *pos, char *arg)
 {
     char *saveptr = NULL, *token, check[8];
-    move_t move, *foundmove;
+    move_t move;
     state_t state;
     movelist_t movelist;
     saveptr = NULL;
     token = strtok_r(arg, " ", &saveptr);
     while (token) {
-        move = move_from_str(pos, token);
+        move = move_from_str(token);
         move_to_str(check, move, 0);
 
         printf("move: [%s] %s\n", token, check);
         pos_set_checkers_pinners_blockers(pos);
         pos_legal(pos, pos_gen_pseudo(pos, &movelist));
-        foundmove = move_find_move(move, &movelist);
-        if (!foundmove) {
-            printf("illegal move");
+        move = move_find_in_movelist(move, &movelist);
+        if (move == MOVE_NONE) {
+            /* should we reset here ? */
             return 1;
         }
-        move_do(pos, *foundmove, &state);
-        hist_push(&state, &move);
+        //printf("move: %s\n", move_to_str(check, move, 0));
+        hist_push(&pos->state);                   /* push previous state */
+        move_do(pos, move, &state);
+        pos_print(pos);
+        hist_static_print();
         token = strtok_r(NULL, " ", &saveptr);
     }
-    hist_static_print();
+    //hist_static_print();
     return 1;
 }
 
@@ -381,13 +382,12 @@ int do_perft(__unused pos_t *pos, __unused char *arg)
     return 1;
 }
 
-/*
- * int do_debug(__unused pos_t *pos, __unused char *arg)
- * {
- *     debug_level_set(atoi(arg));
- *     return 1;
- * }
- */
+
+int do_hist(__unused pos_t *pos, __unused char *arg)
+{
+    hist_static_print();
+    return 0;
+}
 
 int do_help(__unused pos_t *pos, __unused char *arg)
 {
@@ -516,11 +516,13 @@ static int usage(char *prg)
 
 int main(int ac, char **av)
 {
-    pos_t *pos = pos_new();
+    pos_t *pos;
     int opt;
 
-    printf("brchess " VERSION "\n");
     init_all();
+    pos = pos_new();
+    hist_link(pos);
+    printf("\nWelcome to brchess " VERSION "\nEngine ready.\n");
 
     // size_t len = 0;
     // char *str = NULL;
