@@ -19,7 +19,7 @@ ifeq ($(CC),cc)
         CC = gcc
 endif
 ifeq ($(BUILD),)
-        BUILD = perf
+        BUILD = dev
 endif
 
 BEAR      := bear
