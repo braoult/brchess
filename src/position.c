@@ -433,7 +433,7 @@ void pos_print(const pos_t *pos)
     board_print(pos->board);
     printf("fen: %s\n", pos2fen(pos, str));
     printf("last move:%s ", move_to_str(str, pos->move, 0));
-    printf("key:%lx", pos->key);
+    printf("key:%lx\n", pos->key);
     printf("checkers:%s ", pos_checkers2str(pos, str, sizeof(str)));
     printf("pinners: %s ", pos_pinners2str(pos, str, sizeof(str)));
     printf("blockers: %s\n", pos_blockers2str(pos, str, sizeof(str)));

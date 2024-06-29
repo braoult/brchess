@@ -21,7 +21,7 @@
 
 hist_t hist = {
     .nstates = 1,
-    { { .move = MOVE_NO_MOVE, .key = U64(0), .prev = &hist.state[0] } },
+    { { .move = MOVE_NONE, .key = U64(0), .prev = &hist.state[0] } },
 };
 
 /**
@@ -33,23 +33,39 @@ void hist_init(void)
 {
     hist.nstates       = 1;
     hist.state[0].key  = U64(0);
-    hist.state[0].move = MOVE_NO_MOVE;
+    hist.state[0].move = MOVE_NONE;
     hist.state[0].prev = &hist.state[0];
 }
 
 /**
- * hist_push() - add a state and move to hist
+ * hist_push() - add a state to hist list
  * @st:   &state_t to add
- * @move: &move_t to add in @st
+ *
+ * Used to add moves when the UCI "position" command includes moves.
+ * These moves, but last one, should be pushed. Last move should be
+ * linked to hist with @hist_link().
  */
-void hist_push(state_t *st, move_t *move)
+void hist_push(state_t *st) //, move_t *move)
 {
     int last = hist.nstates++;
 
     bug_on(last >= HIST_SIZE);
     hist.state[last] = *st;
     hist.state[last].prev = &hist.state[last - 1];
-    hist.state[last].move = *move;
+    // hist.state[last].move = *move;
+}
+
+/**
+ * hist_link() - link a position to last hist element.
+ * @pos:   &pos_t to link
+ *
+ * Used to add position resulting from last "move" in UCI "position" command.
+ * All other moves in UCI "position" command should be pushed instead, with
+ * hist_push().
+ */
+void hist_link(pos_t *pos)
+{
+    pos->prev = hist_last();
 }
 
 /**
@@ -59,7 +75,9 @@ void hist_push(state_t *st, move_t *move)
  */
 state_t *hist_pop(void)
 {
-    return hist.state + --hist.nstates;
+    if (hist.nstates > 1)
+        hist.nstates--;
+    return hist_last();
 }
 
 /**
@@ -107,17 +125,41 @@ state_t *hist_prev4(state_t *st)
 }
 
 /**
- * hist_print() - print hist entries
+ * hist_static_print() - print hist entries
  */
 void hist_static_print(void)
 {
     char movestr[8];
+    state_t *st =  hist_last();
 
-    printf("rev history: ");
-    for (state_t *p = hist_last(); p != HIST_START; p = hist_prev(p)) {
-        printf("%s(%lx) ",
-               p->move == MOVE_NO_MOVE? "none": move_to_str(movestr, p->move, 0),
-               hash_short(p->key));
+    printf("UCI state history: ");
+    while (true) {
+        printf("%s(#%lx) ",
+               move_to_str(movestr, st->move, 0),
+               hash_short(st->key));
+        if (st == HIST_START)
+            break;
+        st = hist_prev(st);
+    }
+    printf("\n");
+}
+
+/**
+ * hist_print() - print position history
+ * @pos: &pos to start from
+ */
+void hist_print(pos_t *pos)
+{
+    char movestr[8];
+    state_t *st = &pos->state;
+    printf("position states history: ");
+    while (true) {
+        printf("%s(#%lx) ",
+               move_to_str(movestr, st->move, 0),
+               hash_short(st->key));
+        if (st == HIST_START)
+            break;
+        st = hist_prev(st);
     }
     printf("\n");
 }

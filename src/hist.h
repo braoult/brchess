@@ -48,12 +48,14 @@ extern hist_t hist;
 #define HIST_START  (hist.state)
 
 void hist_init(void);
-void hist_push(state_t *st, move_t *move);
+void hist_push(state_t *st); //, move_t *move);
+void hist_link(pos_t *pos);
 state_t *hist_pop(void);
 state_t *hist_last(void);
 state_t *hist_prev(state_t *st);
 state_t *hist_prev2(state_t *st);
 state_t *hist_prev4(state_t *st);
 void hist_static_print(void);
+void hist_print(pos_t *pos);
 
 #endif  /* HIST_H */
