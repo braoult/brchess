@@ -12,6 +12,7 @@
  */
 
 #include <stdio.h>
+#include <unistd.h>
 #include <locale.h>
 
 #include "chessdefs.h"
@@ -20,23 +21,36 @@
 #include "hyperbola-quintessence.h"
 
 #include "hash.h"
+#include "hist.h"
 
+#define printff(x) ({ printf(x); fflush(stdout); })
 void init_all(void)
 {
-    /* for printf() numeric thousands separator */
-    setlocale(LC_NUMERIC, "");
     /* line-buffered stdout */
+    printff("initiazing stdout buffering... ");
     setlinebuf(stdout);
 
+    /* for printf() numeric thousands separator */
+    printff("locale... ");
+    setlocale(LC_NUMERIC, "");
+
     /* pseudo random generator seed */
+    printff("random generator... ");
     rand_init(RAND_SEED_DEFAULT);
 
     /* bitboards & hq */
+    printff("bitboards... ");
     bitboard_init();
+
+    printff("hq bitboards... ");
     hyperbola_init();
 
     /* zobrist tables & default tt hashtable */
+    printff("zobrist tables... ");
     zobrist_init();
+
+    printff("transposition tables... ");
     tt_create(HASH_SIZE_DEFAULT);
 
+    printf("done.\n");
 }
