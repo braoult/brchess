@@ -52,10 +52,10 @@ typedef struct __pos_s {
                         move_t move;
                         struct state_s *prev;
         );
+    eval_t eval;
     bitboard_t checkers;                          /* opponent checkers */
     bitboard_t pinners;                           /* opponent pinners */
     bitboard_t blockers;                          /* pieces blocking pin */
-
     piece_t board[BOARDSIZE];
     bitboard_t bb[2][PIECE_TYPE_MAX];             /* bb[0][PAWN], bb[1][ALL_PIECES] */
     square_t king[2];                             /* dup with bb, faster retrieval */

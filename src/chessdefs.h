@@ -91,11 +91,9 @@ typedef struct __movelist_s movelist_t;
 
 /* basic types
  */
-typedef u64 bitboard_t;
 
-/* eval type
- */
-//typedef s32 eval_t;
+typedef u64 bitboard_t;
+typedef s16 eval_t;
 
 /* forward enum definition is impossible in C11.
  * To simplify cross-dependancies, all important enum are moved here.

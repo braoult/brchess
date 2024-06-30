@@ -44,23 +44,15 @@ typedef enum __piece_e {
     PIECE_MAX
 } piece_t;
 
-/* default values for opening, midgame, endgame
+/* default values for midgame, endgame
  */
-#define E_VAL_OPN    0                            /* empty */
-#define P_VAL_OPN    100
-#define N_VAL_OPN    300
-#define B_VAL_OPN    300
-#define R_VAL_OPN    500
-#define Q_VAL_OPN    900
-#define K_VAL_OPN    20000
-
 #define E_VAL_MID    0
 #define P_VAL_MID    100
 #define N_VAL_MID    300
 #define B_VAL_MID    300
 #define R_VAL_MID    500
 #define Q_VAL_MID    900
-#define K_VAL_MID    20000
+#define K_VAL_MID    10000
 
 #define E_VAL_END    0
 #define P_VAL_END    100
@@ -68,7 +60,7 @@ typedef enum __piece_e {
 #define B_VAL_END    300
 #define R_VAL_END    500
 #define Q_VAL_END    900
-#define K_VAL_END    20000
+#define K_VAL_END    10000
 
 /* some default values for pieces
  * @abbr:   char, piece capital letter (used for game notation)
@@ -86,9 +78,8 @@ extern const struct piece_details {
     char *fen;                                    /* cap=white, low=black */
     char *sym;                                    /* UTF-8 symbol */
     char *name;                                   /* piece name */
-    s64  opn_value;                               /* value opening */
-    s64  mid_value;                               /* value midgame */
-    s64  end_value;                               /* value endgame */
+    s16  mid_value;                               /* value midgame */
+    s16  end_value;                               /* value endgame */
 } piece_details[PIECE_MAX];
 
 extern const char pieces_str[6+6+1];              /* to search from fen/user input */
@@ -102,12 +93,17 @@ extern const char pieces_str[6+6+1];              /* to search from fen/user inp
 #define PIECE(p)          ((p) & MASK_PIECE)
 #define MAKE_PIECE(p, c)  ((p) | (c) << 3)
 
-#define IS_WHITE(p)       (!COLOR(p))
-#define IS_BLACK(p)       (COLOR(p))
+#define IS_BLACK(p)       ((p) & MASK_COLOR)
+#define IS_WHITE(p)       (! IS_BLACK(p))
 
 #define SET_WHITE(p)      (piece_t)((p) &= ~MASK_COLOR)
 #define SET_BLACK(p)      (piece_t)((p) |= MASK_COLOR)
 #define SET_COLOR(p, c)   (piece_t)(!(c)? SET_WHITE(p): SET_BLACK(p))
+
+static __inline s16 piece_val(piece_type_t pt)
+{
+    return piece_details[pt].mid_value;
+}
 
 bool piece_ok(piece_t p);
 
@@ -118,17 +114,12 @@ char *piece_to_sym(piece_t p);
 char *piece_to_name(piece_t p);
 
 #define piece_to_char(c) piece_to_fen(c)
-//#define piece_to_char_t(p) piece_to_uci(p)
+#define piece_to_uci(p)  piece_to_low(p)
 
-//piece_type_t char_to_piece(char c);
 piece_type_t piece_t_from_char(char c);
 piece_t piece_from_fen(char c);
 
 #define piece_from_char(c) piece_from_fen(c)
-
-/* use short name or symbol - no effect
- */
-#define P_USE_UTF      1
 
 //void piece_list_print(struct list_head *list);
 //pool_t *piece_pool_init();

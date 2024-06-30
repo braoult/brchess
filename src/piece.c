@@ -25,22 +25,22 @@
  * piece_details
  */
 const struct piece_details piece_details[PIECE_MAX] = {
-    /*             cap  low  fen  sym  name      values */
-    [EMPTY]    = { "",  "",  "",  "",  "",       0, 0, 0 },
-    [W_PAWN]   = { "",  "",  "P", "♙", "Pawn",   P_VAL_OPN, P_VAL_MID, P_VAL_END },
-    [W_KNIGHT] = { "N", "n", "N", "♘", "Knight", N_VAL_OPN, N_VAL_MID, N_VAL_END },
-    [W_BISHOP] = { "B", "b", "B", "♗", "Bishop", B_VAL_OPN, B_VAL_MID, B_VAL_END },
-    [W_ROOK]   = { "R", "r", "R", "♖", "Rook",   R_VAL_OPN, R_VAL_MID, R_VAL_END },
-    [W_QUEEN]  = { "Q", "q", "Q", "♕", "Queen",  Q_VAL_OPN, Q_VAL_MID, Q_VAL_END },
-    [W_KING]   = { "K", "k", "K", "♔", "King",   K_VAL_OPN, K_VAL_MID, K_VAL_END },
-    [7]        = { "",  "",  "",  "",  "",       0, 0, 0 },
-    [8]        = { "",  "",  "",  "",  "",       0, 0, 0 },
-    [B_PAWN]   = { "",  "",  "p", "♟", "Pawn",   P_VAL_OPN, P_VAL_MID, P_VAL_END },
-    [B_KNIGHT] = { "N", "n", "n", "♞", "Knight", P_VAL_OPN, N_VAL_MID, N_VAL_END },
-    [B_BISHOP] = { "B", "b", "b", "♝", "Bishop", P_VAL_OPN, B_VAL_MID, B_VAL_END },
-    [B_ROOK]   = { "R", "r", "r", "♜", "Rook",   P_VAL_OPN, R_VAL_MID, R_VAL_END },
-    [B_QUEEN]  = { "Q", "q", "q", "♛", "Queen",  P_VAL_OPN, Q_VAL_MID, Q_VAL_END },
-    [B_KING]   = { "K", "k", "k", "♚", "King",   P_VAL_OPN, K_VAL_MID, K_VAL_END },
+    /*             cap  low  fen  sym  name      midgame val endgame val */
+    [EMPTY]    = { "",  "",  "",  "",  "",       0,          0 },
+    [W_PAWN]   = { "",  "",  "P", "♙", "Pawn",   P_VAL_MID,  P_VAL_END },
+    [W_KNIGHT] = { "N", "n", "N", "♘", "Knight", N_VAL_MID,  N_VAL_END },
+    [W_BISHOP] = { "B", "b", "B", "♗", "Bishop", B_VAL_MID,  B_VAL_END },
+    [W_ROOK]   = { "R", "r", "R", "♖", "Rook",   R_VAL_MID,  R_VAL_END },
+    [W_QUEEN]  = { "Q", "q", "Q", "♕", "Queen",  Q_VAL_MID,  Q_VAL_END },
+    [W_KING]   = { "K", "k", "K", "♔", "King",   K_VAL_MID,  K_VAL_END },
+    [7]        = { "",  "",  "",  "",  "",       0,          0         },
+    [8]        = { "",  "",  "",  "",  "",       0,          0         },
+    [B_PAWN]   = { "",  "",  "p", "♟", "Pawn",   P_VAL_MID,  P_VAL_END },
+    [B_KNIGHT] = { "N", "n", "n", "♞", "Knight", N_VAL_MID,  N_VAL_END },
+    [B_BISHOP] = { "B", "b", "b", "♝", "Bishop", B_VAL_MID,  B_VAL_END },
+    [B_ROOK]   = { "R", "r", "r", "♜", "Rook",   R_VAL_MID,  R_VAL_END },
+    [B_QUEEN]  = { "Q", "q", "q", "♛", "Queen",  Q_VAL_MID,  Q_VAL_END },
+    [B_KING]   = { "K", "k", "k", "♚", "King",   K_VAL_MID,  K_VAL_END },
 };
 
 const char pieces_str[6+6+1] = "PNBRQKpnbrqk";

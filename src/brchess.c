@@ -37,15 +37,20 @@ struct command {
 };
 
 int execute_line (pos_t *, struct command *, char *);
+
 struct command *find_command (char *);
 int string_trim (char *str);
 
 /* The names of functions that actually do the manipulation. */
+
+/* standard UCI commands */
 int do_ucinewgame(pos_t *, char *);
 int do_uci(pos_t *, char *);
 int do_isready(pos_t *, char *);
 
 int do_position(pos_t *, char *);
+
+/* commands *NOT* in UCI standard */
 int do_moves(pos_t *, char *);
 int do_diagram(pos_t *, char *);
 int do_perft(pos_t *, char *);
@@ -70,22 +75,6 @@ struct command commands[] = {
     { "diagram",    do_diagram, "(not UCI) print current position diagram" },
     { "hist",       do_hist, "(not UCI) print history states" },
 
- /*
- *     { "init", do_init, "Set position to normal start position" },
-
- *     { "genmove", do_genmoves, "Generate move list for " },
- *     { "prmoves", do_prmoves, "Print position move list" },
- * //    { "prmovepos", do_prmovepos, "Print Nth move resulting position" },
- *     { "prpieces", do_prpieces, "Print Pieces (from pieces lists)" },
- *     { "memstats", do_memstats, "Generate next move list" },
- *     { "eval", do_eval, "Eval current position" },
- *     { "simple-eval", do_simple_eval, "Simple eval current position" },
- *     { "do_move", do_move, "execute nth move on current position" },
- *     { "debug", do_debug, "Set log level to LEVEL" },
- *     { "depth", do_depth, "Set search depth to N" },
- *     { "search", do_search, "Search best move (negamax)" },
- *     { "pvs", do_pvs, "Search best move (Principal Variation Search)" },
- */
     { NULL, (int(*)()) NULL, NULL }
 };
 
