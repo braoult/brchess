@@ -1,6 +1,6 @@
 /* eval-simple.h - simple position evaluation.
  *
- * Copyright (C) 2021 Bruno Raoult ("br")
+ * Copyright (C) 2021-2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
  * Some rights reserved. See COPYING.
  *
@@ -19,16 +19,16 @@
 
 /* no queen on board */
 #define simple_no_queen(p, c)              \
-    ( !(p)->bb[c][BB_QUEEN] )
+    ( !(p)->bb[c][QUEEN] )
 
 #define simple_one_queen(p, c)             \
-    ( popcount64((p)->bb[c][BB_QUEEN]) == 1 )
+    ( popcount64((p)->bb[c][QUEEN]) == 1 )
 
 #define simple_no_rook(p, c)               \
-    (!(p)->bb[c][BB_ROOK])
+    (!(p)->bb[c][ROOK])
 
 #define simple_one_minor_piece(p, c)       \
-    (popcount64((p)->bb[c][BB_KNIGHT] | (p)->bb[c][BB_BISHOP]) == 1)
+    (popcount64((p)->bb[c][KNIGHT] | (p)->bb[c][BISHOP]) == 1)
 
 #define simple_is_endgame(p)                  \
     ( (simple_no_queen(p, WHITE)   ||         \
