@@ -19,45 +19,45 @@
 #include "board.h"
 
 /* move structure:
- * 1  1 1 1 1
- * 8  5 4 2 1    6 5    0
- * FFFF ppp tttttt ffffff
+ * 11 11 1
+ * 54 32 1    6 5    0
+ * FF pp tttttt ffffff
  *
  * bits    len off range         type      mask        get  desc
  * ffffff    6   0   0-5     square_t       077        &077 from
  * tttttt    6   6  6-11     square_t     07700 (>>6)  &077 to
- * ppp       3  12 12-14 piece_type_t    070000 (>>12) &07  promoted
- * FFF       3  15 15-17 move_flags_t   0700000 (>>15) &07  flags
+ * pp        2  12 12-13 piece_type_t    030000 (>>12) &03  promoted
+ * FF        2  14 14-15 move_flags_t   0140000 (>>14) &03  flags
  */
-typedef u32 move_t;
+typedef u16 move_t;
 
 enum {
     M_OFF_FROM     = 0,
     M_OFF_TO       = 6,
     M_OFF_PROMOTED = 12,
-    M_OFF_FLAGS    = 15
+    M_OFF_FLAGS    = 14
 };
 
 typedef enum {
-    M_PROMOTION  =  070000,
-    M_FLAGS_MASK = 0700000,
-    M_ENPASSANT  = (1 << M_OFF_FLAGS),
-    M_CASTLE     = (2 << M_OFF_FLAGS),            /* maybe only one ? */
-//  M_CHECK      = (3 << M_OFF_FLAGS)             /* maybe unknown/useless ? */
+    M_PROMOTED_MASK = 0030000,
+    M_FLAGS_MASK    = 0140000,
+
+    M_ENPASSANT     =  040000,                       /* 1 << M_OFF_FLAGS */
+    M_CASTLE        = 0100000,                       /* 2 << M_OFF_FLAGS */
+    M_PROMOTION     = 0140000,                       /* 3 << M_OFF_FLAGS */
 } move_flags_t;
 
 /* special move_t values */
 #define MOVE_NULL    0                            /* hack: from = to = A1 */
 #define MOVE_NONE    07777                        /* hack: from = to = H8 */
-// #define MOVE_NO_MOVE 01010                        /* hack: from = to = A2 */
 
 #define move_set_flags(move, flags) ((move) | (flags))
 #define move_flags(move)            ((move) & M_FLAGS_MASK)
 
-#define is_promotion(m)             ((m) &  M_PROMOTION)
+#define is_promotion(m)             (move_flags(m) == M_PROMOTION)
 #define is_enpassant(m)             (move_flags(m) == M_ENPASSANT)
 #define is_castle(m)                (move_flags(m) == M_CASTLE)
-#define is_check(m)                 (move_flags(m) == M_CHECK)
+// #define is_check(m)                 (move_flags(m) == M_CHECK)
 
 #define MOVES_MAX   256
 
@@ -76,9 +76,14 @@ static inline square_t move_to(move_t move)
     return (move >> M_OFF_TO) & 077;
 }
 
+static inline square_t move_fromto(move_t move)
+{
+    return move & 07777;
+}
+
 static inline piece_type_t move_promoted(move_t move)
 {
-    return (move >> M_OFF_PROMOTED) & 07;
+    return ((move >> M_OFF_PROMOTED) & 03) + KNIGHT;
 }
 
 /*
@@ -114,7 +119,8 @@ static inline move_t move_make_enpassant(square_t from, square_t to)
 static inline move_t move_make_promote(square_t from, square_t to,
                                        piece_type_t promoted)
 {
-    return move_make(from, to) | (promoted << M_OFF_PROMOTED);
+    return move_make_flags(from, to, M_PROMOTION) |
+        ((promoted - KNIGHT) << M_OFF_PROMOTED);
 }
 
 /*

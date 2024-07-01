@@ -212,12 +212,9 @@ static inline __unused move_t *gen_pseudo_king(move_t *moves, square_t from,
  *  - castling, if king is in check
  *  - castling, if king passes an enemy-controlled square (not final square).
  * When immediately known, a few move flags are also applied in these cases:
- *  - castling: M_CASTLE_{K,Q}
- *  - capture (excl. en-passant): M_CAPTURE
+ *  - castling: M_CASTLE
  *  - en-passant: M_EN_PASSANT
- *  - pawn double push: M_DPUSH
  *  - promotion: M_PROMOTION
- *  - promotion and capture
  *
  * TODO: move code to specific functions (especially castling, pawn push/capture)
  *
@@ -281,6 +278,8 @@ static inline __unused move_t *moves_gen_flags(move_t *moves, square_t from, bit
  *
  * Generate  (at address @moves) all promotion (Q/R/B/N) moves on @to for
  * pawn @from.
+ * Actual promoted piece type is encoded as piece - 2, i.e. N = 0, B = 1,
+ * R = 2, Q = 3.
  *
  * @Return: New @moves.
  */
@@ -327,7 +326,6 @@ static inline move_t *moves_gen(move_t *moves, square_t from, bitboard_t to_bb)
  *  - castling: M_CASTLE_{K,Q}
  *  - capture (excl. en-passant): M_CAPTURE
  *  - en-passant: M_EN_PASSANT
- *  - pawn double push: M_DPUSH
  *  - promotion: M_PROMOTION
  *  - promotion and capture
  *
