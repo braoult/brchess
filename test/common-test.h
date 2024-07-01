@@ -28,48 +28,10 @@ struct fentest {
     char *comment;
     char *fen;
 } fentest[] = {
-    /************************************************************
-     * TEMP TESTS BELOW - only run them (till sentinel below)   *
-     ************************************************************/
+    /******************************************************************
+     * TEMP TESTS BELOW - only run them (till sentinel below)         *
+     ******************************************************************/
 
-    /*
-     * { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-     *   "startpos + 1.e4 e5 2.Nf3 Nc6 3.Bb5 a6 4.Ba4",
-     *   "r1bqkbnr/1ppp1ppp/p1n5/4p3/B3P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 1 4"
-     * },
-     * { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-     *   "",
-     *   "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"
-     * },
-     */
-
-    /*
-     * { __LINE__, MOVEGEN | MOVEDO | PERFT,
-     *   "from https://talkchess.com/viewtopic.php?t=74153",
-     *   "8/p7/8/1P6/K1k3p1/6P1/7P/8 w - - 0 1", // Perft(8) == 8,103,790
-     * },
-     * 8/5p2/8/2k3P1/p3K3/8/1P6/8 b - - // Perft(8) == 64,451,405
-
-     */
-    /*
-     * { __LINE__, MOVEGEN | MOVEDO | PERFT,
-     *   "from https://talkchess.com/viewtopic.php?t=74153",
-     *   "n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1" // Perft(6) == 71,179,139
-     * },
-     * { __LINE__, MOVEGEN | MOVEDO | PERFT,
-     *   "from https://talkchess.com/viewtopic.php?t=74153",
-     *   "r3k2r/p6p/8/B7/1pp1p3/3b4/P6P/R3K2R w KQkq - 0 1" // Perft(6) == 77,054,993
-     * },
-     */
-    /*
-     * { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-     *   "from https://www.talkchess.com/forum/viewtopic.php?t=42463",
-     *   "rnbqkb1r/pp1p1ppp/2p5/4P3/2B5/8/PPP1NnPP/RNBQK2R w KQkq - 0 6"
-     * },
-     */
-    /*
-      r3k2r/pb3p2/5npp/n2p4/1p1PPB2/6P1/P2N1PBP/R3K2R w KQkq - // Perft(5) == 29,179,893
-    */
     /******************************************************************
      * DO NOT DELETE NEXT LINE - sentinel entry for temp tests above. *
      *                           ignored if first array entry.        *
@@ -114,20 +76,6 @@ struct fentest {
       "illegal e.p. bug perft at depth 4",
       "1nbqkbn1/ppp2ppp/4p3/r1rpP3/6K1/P7/1PPP1PPP/RNBQ1BNR b - - 1 2"
     },
-    /*
-     * { __LINE__, MOVEGEN | MOVEDO | PERFT,
-     *   "illegal e.p. bug perft depth 3",
-     *   "1nbqkbn1/ppp2ppp/4p3/2rpP3/r5K1/P7/1PPP1PPP/RNBQ1BNR w - - 2 3"
-     * },
-     * { __LINE__, MOVEGEN | MOVEDO | PERFT,
-     *   "illegal e.p. bug perft depth 2",
-     *   "1nbqkbn1/ppp2ppp/4p3/2rpP3/r4PK1/P7/1PPP2PP/RNBQ1BNR b - - 0 3"
-     * },
-     * { __LINE__, MOVEGEN | MOVEDO | PERFT | PERFT,
-     *   "illegal e.p. bug perft depth 1 - fixed",
-     *   "1nb1kbn1/ppp2ppp/4p3/2rpP1q1/r4PK1/P7/1PPP2PP/RNBQ1BNR w - - 1 4"
-     * },
-     */
     { __LINE__, ATTACK,
       "only 3 K moves (but impossible situation)",
       "1k6/8/8/8/8/8/8/r2K3r w - - 0 1"
@@ -178,24 +126,8 @@ struct fentest {
       "4k3/8/8/8/7b/8/8/4K3 w - - 0 1"
     },
     /*
-     * { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-     *   "1.e3 - perft bug",
-     *   "rnbqkbnr/pppppppp/8/8/8/4P3/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
-     * },
-     * { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT | PERFT,
-     *   "1.e3 Nc6 - perft bug",
-     *   "r1bqkbnr/pppppppp/2n5/8/8/4P3/PPPP1PPP/RNBQKBNR w KQkq - 1 2"
-     * },
-     * { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT | PERFT,
-     *   "1.e3 Nc6 2.Ke2 - perft bug",
-     *   "r1bqkbnr/pppppppp/2n5/8/8/4P3/PPPPKPPP/RNBQ1BNR b kq - 2 2"
-     * },
-     * { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-     *   "1.e3 Nc6 2.Ke2 Nd4+ - perft bug",
-     *   "r1bqkbnr/pppppppp/8/8/3n4/4P3/PPPPKPPP/RNBQ1BNR w kq - 3 3"
-     * },
+     * First game moves
      */
-    // First game moves
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
       "startpos",
       "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -216,10 +148,11 @@ struct fentest {
       "startpos + 1.e4 e5 2.Nf3 Nc6 3.Bb5 a6 4.Ba4",
       "r1bqkbnr/1ppp1ppp/p1n5/4p3/B3P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 1 4"
     },
-    // castling test
-    // both can castle queen only
+    /******************
+     * Castling tests *
+     ******************/
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-      "no Q castling",
+      "both can castle K-side",
       "r3k2r/8/3B4/8/8/3b4/8/R3K2R w KQkq - 0 1"
     },
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
@@ -227,30 +160,27 @@ struct fentest {
       "r3k2r/8/3BB3/8/8/3bb3/8/R3K2R w KQkq - 0 1"
     },
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-      "",
+      "No castling for white",
       "r2bkb1r/8/8/8/8/3bb3/8/R2BKB1R w KQkq - 0 1"
     },
-    //
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-      "4 castle possible, only K+R",
+      "4 castling possible, only K+R",
       "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1"
     },
-    //
-    { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-      "only kings on A1/A8, white to play",
-      "k7/8/8/8/8/8/8/K7 w - - 0 1"
-    },
-    //
+    /*
+     * { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
+     *   "only kings on A1/A8, white to play",
+     *   "k7/8/8/8/8/8/8/K7 w - - 0 1"
+     * },
+     */
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
       "only one move possible (Pf2xBg3)",
       "k7/8/8/1p1p4/pPpPp3/P1PpPpb1/NBNP1P2/KBB1B3 w - - 0 1"
     },
-    //
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
       "only 2 moves possible (Ph5xg6 e.p., Ph5-h6)",
       "k7/8/8/1p1p2pP/pPpPp3/P1PpPp2/NBNP1P2/KBB1B3 w - g6 0 1"
     },
-    //
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
       "2 Kings, W/B/ pawns on 7th for promotion",
       "k4n2/4P3/8/8/8/8/4p3/K4N2 w - - 0 1"
@@ -276,14 +206,39 @@ struct fentest {
       "",
       "6k1/6pp/R2p4/p1p5/8/1P1r3P/6P1/6K1 b - - 3 3"
     },
+    /*************************************
+     * Some FEN found on talkchess forum *
+     *************************************/
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
       "from https://www.talkchess.com/forum/viewtopic.php?t=42463",
       "rnbqkb1r/pp1p1ppp/2p5/4P3/2B5/8/PPP1NnPP/RNBQK2R w KQkq - 0 6"
     },
+    { __LINE__, MOVEGEN | MOVEDO | PERFT,
+      "from https://talkchess.com/viewtopic.php?t=74153",
+      "8/p7/8/1P6/K1k3p1/6P1/7P/8 w - - 0 1", // Perft(8) == 8,103,790
+    },
+    { __LINE__, MOVEGEN | MOVEDO | PERFT,
+      "from https://talkchess.com/viewtopic.php?t=74153",
+      "8/5p2/8/2k3P1/p3K3/8/1P6/8 b - - 0 1"  // Perft(8) == 64,451,405
+    },
+    { __LINE__, MOVEGEN | MOVEDO | PERFT,
+      "from https://talkchess.com/viewtopic.php?t=74153",
+      "n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1" // Perft(6) == 71,179,139
+    },
+    { __LINE__, MOVEGEN | MOVEDO | PERFT,
+      "from https://talkchess.com/viewtopic.php?t=74153",
+      "r3k2r/p6p/8/B7/1pp1p3/3b4/P6P/R3K2R w KQkq - 0 1" // Perft(6) == 77,054,993
+    },
+    { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
+      "from https://talkchess.com/viewtopic.php?t=74153",
+      "r3k2r/pb3p2/5npp/n2p4/1p1PPB2/6P1/P2N1PBP/R3K2R w KQkq - 0 1" // Perft(5) == 29,179,893
+    },
 
-    // some of tests below are from:
-    // - Rodent IV
-    // - https://www.chessprogramming.net/perfect-perft/
+    /*****************************************************
+     * some of tests below are from:                     *
+     * - Rodent IV                                       *
+     * - https://www.chessprogramming.net/perfect-perft/ *
+     *****************************************************/
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
       "\"kiwipete\"",
       "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"
