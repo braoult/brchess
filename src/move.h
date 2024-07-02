@@ -119,8 +119,7 @@ static inline move_t move_make_enpassant(square_t from, square_t to)
 static inline move_t move_make_promote(square_t from, square_t to,
                                        piece_type_t promoted)
 {
-    return move_make_flags(from, to, M_PROMOTION) |
-        ((promoted - KNIGHT) << M_OFF_PROMOTED);
+    return move_make_flags(from, to, M_PROMOTION) | (promoted << M_OFF_PROMOTED);
 }
 
 /*

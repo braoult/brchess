@@ -259,8 +259,9 @@ static inline __unused move_t *gen_pseudo_king(move_t *moves, square_t from,
  *
  * @Return: New @moves.
  */
-static inline __unused move_t *moves_gen_flags(move_t *moves, square_t from, bitboard_t to_bb,
-    __unused move_flags_t flags)
+static inline __unused move_t *moves_gen_flags(move_t *moves, square_t from,
+                                               bitboard_t to_bb,
+                                               __unused move_flags_t flags)
 {
     square_t to;
     while(to_bb) {
@@ -285,7 +286,8 @@ static inline __unused move_t *moves_gen_flags(move_t *moves, square_t from, bit
  */
 static inline move_t *move_gen_promotions(move_t *moves, square_t from, square_t to)
 {
-    for (piece_type_t pt = QUEEN; pt >= KNIGHT; --pt)
+    /* your attention: "downto operator" */
+    for (piece_type_t pt = QUEEN - 1; pt --> KNIGHT - 2;)
         *moves++ = move_make_promote(from, to, pt);
     return moves;
 }
