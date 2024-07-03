@@ -292,7 +292,7 @@ char *pos2fen(const pos_t *pos, char *fen)
 
     /*  1) position
      */
-    for (rank_t r = RANK_8; r >= RANK_1; --r) {
+    for (rank_t r = RANK_8 + 1; r --> RANK_1;) {
         for (file_t f = FILE_A; f <= FILE_H;) {
             square_t sq = sq_make(f, r);
             piece_t piece = pos->board[sq];

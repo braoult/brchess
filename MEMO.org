@@ -1,2 +1,18 @@
 ** Some current ideas
-- hmmm. Empty brain.
+- Test popbit/square_of with intrinsincs, something like :
+  bitboard_t popbit64(bitboard_t *bb)
+  {
+    bitboard_t first = _blsi_u64(*bb);
+    *bb ^= lsb;
+    return first;
+  }
+
+  square_t square_of(bitboard_t bb) {
+    return _tzcnt_u64(bb);
+  }
+
+  loop:
+  while (bb) {
+	bitboard_t first = popbit(bb);
+    square_t sq = square_of(first);
+  }

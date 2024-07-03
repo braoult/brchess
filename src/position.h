@@ -43,14 +43,20 @@ typedef struct __pos_s {
      * This allows a memcpy on this data (to save/restore position state).
      */
     struct_group_tagged(state_s, state,
+
+                        /* 64 bits */
+                        struct state_s *prev;
                         hkey_t key;
+
+                        /* 16 bits */
+                        u16 plycount;             /* plies so far, start from 1 */
+                        move_t move;
+
+                        /* 8 bits */
                         square_t en_passant;
                         castle_rights_t castle;
-                        int clock_50;
-                        int plycount;             /* plies so far, start from 1 */
                         piece_t captured;         /* only used in move_undo */
-                        move_t move;
-                        struct state_s *prev;
+                        u8 clock_50;
         );
     eval_t eval;
     bitboard_t checkers;                          /* opponent checkers */

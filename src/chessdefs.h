@@ -99,8 +99,8 @@ typedef s16 eval_t;
  * To simplify cross-dependancies, all important enum are moved here.
  */
 
-typedef enum {
-    _SSQUARE_ = -1,                               /* force signed enum */
+enum {
+    //_SSQUARE_ = -1,                               /* force signed enum */
     A1 = 0, B1, C1, D1, E1, F1, G1, H1,
     A2,     B2, C2, D2, E2, F2, G2, H2,
     A3,     B3, C3, D3, E3, F3, G3, H3,
@@ -111,21 +111,24 @@ typedef enum {
     A8,     B8, C8, D8, E8, F8, G8, H8,
     SQUARE_MAX = 64,
     SQUARE_NONE = 64
-} square_t;
+};
+typedef u8 square_t;
 
-typedef enum {
-    _SFILE_ = -1,                                 /* force signed enum */
+enum {
+    //_SFILE_ = -1,                                 /* force signed enum */
     FILE_A = 0, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H,
     FILE_MAX,
-} file_t;
+};
+typedef u8 file_t;
 
-typedef enum {
-    _SRANK_ = -1,                                 /* force signed enum */
+enum {
+    //_SRANK_ = -1,                                 /* force signed enum */
     RANK_1 = 0, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8,
     RANK_MAX,
-} rank_t;
+};
+typedef u8 rank_t;
 
-typedef enum {
+enum {
     NORTH = 8,
     EAST =  1,
     SOUTH = -NORTH,
@@ -135,7 +138,8 @@ typedef enum {
     SOUTH_EAST = (SOUTH + EAST),
     SOUTH_WEST = (SOUTH + WEST),
     NORTH_WEST = (NORTH + WEST),
-} dir_t;
+};
+typedef u8 dir_t;
 
 /* define diff for relative squares */
 #define sq_up(c)          ((c) == WHITE ? NORTH: SOUTH)

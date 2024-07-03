@@ -24,26 +24,28 @@
  * C: 0 for white, 1: black
  * PPP: pawn (1), knight, bishop, rook, queen, king (6)
  */
-typedef enum {
+enum {
     WHITE, BLACK,
     COLOR_MAX
-} color_t;
+};
+typedef u8 color_t;
 
-typedef enum {
+enum {
     ALL_PIECES = 0,                               /* 'all pieces' bitboard */
     NO_PIECE_TYPE = 0,
     PAWN = 1, KNIGHT, BISHOP, ROOK, QUEEN, KING,
     PIECE_TYPE_MAX = 7                            /* bit 4 */
-} piece_type_t;
+};
+typedef u8 piece_type_t;
 
-typedef enum __piece_e {
+enum __piece_e {
     EMPTY = 0,
     NO_PIECE = 0,
     W_PAWN = PAWN, W_KNIGHT, W_BISHOP, W_ROOK, W_QUEEN, W_KING,
     B_PAWN = PAWN | 8, B_KNIGHT, B_BISHOP, B_ROOK, B_QUEEN, B_KING,
     PIECE_MAX
-} piece_t;
-
+};
+typedef u8  piece_t;
 /* default values for midgame, endgame
  */
 #define E_VAL_MID    0

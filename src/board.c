@@ -115,7 +115,7 @@ void board_print_mask(const piece_t *board, const bitboard_t mask)
  */
 void board_print_raw(const piece_t *board, const int type)
 {
-    for (rank_t r = RANK_8; r >= RANK_1; --r) {
+    for (rank_t r = RANK_8 + 1; r --> RANK_1;) {
         for (file_t f = FILE_A; f <= FILE_H; ++f) {
             piece_t p = board[sq_make(f, r)];
             if (type) {

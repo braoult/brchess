@@ -56,8 +56,8 @@ static __always_inline rank_t sq_rank(square_t square)
     return square >> 3;
 }
 
-#define sq_ok(sq)       ((sq) >= A1 && (sq) <= H8)
-#define sq_coord_ok(c)  ((c) >= 0 && (c) < 8)
+#define sq_ok(sq)       ((sq) <= H8)
+#define sq_coord_ok(c)  ((c) < 8)
 
 /**
  * sq_dist() - Chebyshev (king) distance between two squares (macro).

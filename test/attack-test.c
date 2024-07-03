@@ -53,7 +53,7 @@ int main(int __unused ac, __unused char**av)
 
         pos_set_checkers_pinners_blockers(pos);
 
-        printf("******* %s\n", cur_comment());
+        printf("******* line %d: %s\n", cur_line(), cur_comment());
         bb_print_multi("checkers", 2, checkers, pos->checkers);
         bb_print_multi("pinners", 2, pinners, pos->pinners);
         bb_print_multi("blockers", 2, blockers, pos->blockers);

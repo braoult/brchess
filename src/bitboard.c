@@ -217,7 +217,7 @@ void bb_print(const char *title, const bitboard_t bitboard)
     //char c = p? p: 'X';
     if (title)
         printf("%s\n", title);
-    for (rank_t r = RANK_8; r >= RANK_1; --r) {
+    for (rank_t r = RANK_8 + 1; r --> RANK_1;) {  /* "downto"" op." */
         printf("%d ", r + 1);
         for (file_t f = FILE_A; f <= FILE_H; ++f) {
             printf(" %c", bitboard & bb_sq[sq_make(f, r)] ? 'X': '.');
@@ -252,7 +252,7 @@ void bb_print_multi(const char *title, int n, ...)
     if (title)
         printf("%s\n", title);
 
-    for (rank_t r = RANK_8; r >= RANK_1; --r) {
+    for (rank_t r = RANK_8 + 1; r --> RANK_1;) {
         for (int i = 0; i < n; ++i) {
             printf("%d ", r + 1);
             for (file_t f = FILE_A; f <= FILE_H; ++f) {
