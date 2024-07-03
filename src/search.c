@@ -26,7 +26,7 @@
  * @pos:    &position to search
  * @depth:  Wanted depth.
  * @ply:    current perft depth level (root = 1)
- * @output: output total for 1st level moves.
+ * @divide: output total for 1st level moves.
  *
  * Run perft on a position. This function displays the available moves at @depth
  * level for each possible first move, and the total of moves.
@@ -42,17 +42,12 @@
  *
  * @return: total moves found at @depth level.
  */
-u64 perft(pos_t *pos, int depth, int ply, bool output)
+u64 perft(pos_t *pos, int depth, int ply, bool divide)
 {
-    u64 subnodes, nodes = 0;
+    u64 subnodes = 0, nodes = 0;
     movelist_t movelist;
     move_t *move, *last;
     state_t state;
-#   ifdef PERFT_MOVE_HISTORY
-    static movelist_t stack;
-    if (ply == 1)
-        stack.nmoves = 0;
-#   endif
 
     pos_set_checkers_pinners_blockers(pos);
 
@@ -60,12 +55,9 @@ u64 perft(pos_t *pos, int depth, int ply, bool output)
     last = movelist.move + movelist.nmoves;
     for (move = movelist.move; move < last; ++move) {
         if (depth == 1) {
-            nodes++;
+            subnodes = 1;
         } else {
             move_do(pos, *move, &state);
-#           ifdef PERFT_MOVE_HISTORY
-            stack.move[stack.nmoves++] = *move;
-#           endif
             if (depth == 2) {
                 movelist_t movelist2;
                 pos_set_checkers_pinners_blockers(pos);
@@ -75,26 +67,21 @@ u64 perft(pos_t *pos, int depth, int ply, bool output)
                 if (entry != TT_MISS) {
                     subnodes = HASH_PERFT_VAL(entry->data);
                 } else {
-                    subnodes = perft(pos, depth - 1, ply + 1, output);
+                    subnodes = perft(pos, depth - 1, ply + 1, divide);
                     tt_store_perft(pos->key, depth, subnodes);
                 }
             } else {
-                subnodes = perft(pos, depth - 1, ply + 1, output);
+                subnodes = perft(pos, depth - 1, ply + 1, divide);
             }
-            if (output && ply == 1) {
-                char movestr[8];
-                printf("%s: %lu\n", move_to_str(movestr, *move, 0), subnodes);
-            }
-            nodes += subnodes;
             move_undo(pos, *move, &state);
-#           ifdef PERFT_MOVE_HISTORY
-            stack.nmoves--;
-#           endif
+        }
+        nodes += subnodes;
+        if (ply == 1 && divide) {
+            char movestr[8];
+            printf("%s: %lu\n", move_to_str(movestr, *move, 0), subnodes);
         }
     }
 
-    if (output && ply == 1)
-        printf("Total: %lu\n", nodes);
     return nodes;
 }
 
@@ -103,16 +90,16 @@ u64 perft(pos_t *pos, int depth, int ply, bool output)
  * @pos:    &position to search
  * @depth:  Wanted depth.
  * @ply:    current perft depth level (root = 1)
- * @output: output total for 1st level moves.
+ * @divide: output total for 1st level moves.
  *
  * Run perft on a position. This function displays the available moves at @depth
  * level for each possible first move, and the total of moves.
  *
  * @return: total moves found at @depth level.
  */
-u64 perft_alt(pos_t *pos, int depth, int ply, bool output)
+u64 perft_alt(pos_t *pos, int depth, int ply, bool divide)
 {
-    u64 subnodes, nodes = 0;
+    u64 subnodes = 0, nodes = 0;
     movelist_t movelist;
     move_t *move, *last;
     state_t state;
@@ -123,7 +110,7 @@ u64 perft_alt(pos_t *pos, int depth, int ply, bool output)
     last = movelist.move + movelist.nmoves;
     for (move = movelist.move; move < last; ++move) {
         if (depth == 1) {
-            nodes++;
+            subnodes = 1;
         } else {
             move_do_alt(pos, *move, &state);
             if (depth == 2) {
@@ -131,19 +118,17 @@ u64 perft_alt(pos_t *pos, int depth, int ply, bool output)
                 pos_set_checkers_pinners_blockers(pos);
                 subnodes = pos_legal(pos, pos_gen_pseudo(pos, &movelist2))->nmoves;
             } else {
-                subnodes = perft_alt(pos, depth - 1, ply + 1, output);
+                subnodes = perft_alt(pos, depth - 1, ply + 1, divide);
             }
-            if (output && ply == 1) {
-                char movestr[8];
-                printf("%s: %lu\n", move_to_str(movestr, *move, 0), subnodes);
-            }
-            nodes += subnodes;
             move_undo_alt(pos, *move, &state);
+        }
+        nodes += subnodes;
+        if (ply == 1 && divide) {
+            char movestr[8];
+            printf("%s: %lu\n", move_to_str(movestr, *move, 0), subnodes);
         }
     }
 
-    if (output && ply == 1)
-        printf("Total: %lu\n", nodes);
     return nodes;
 }
 

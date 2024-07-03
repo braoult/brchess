@@ -116,9 +116,9 @@ static void stockfish_fen(FILE *desc, char *fen)
 }
 
 static u64 stockfish_perft(FILE *desc, pos_t *pos, movelist_t *movelist,
-                               int depth)
+                           int depth, int divide)
 {
-    char *buf = NULL;
+    char *buf = NULL, movestr[8];
     u64 count, mycount = 0, fishcount;
     size_t alloc = 0;
     ssize_t buflen;
@@ -144,27 +144,37 @@ static u64 stockfish_perft(FILE *desc, pos_t *pos, movelist_t *movelist,
             break;
         }
         //printf("%d: %s\n", line++, buf);
-        if (sscanf(buf, "%*4s: %lu", &count) == 1) {
-            square_t from = sq_from_string(buf);
-            square_t to   = sq_from_string(buf + 2);
+        if (sscanf(buf, "%6[a-z1-8]: %lu", movestr, &count) == 2) {
+            //printf("read:%s movestr:%s count:%lu\n", buf, movestr, count);
+            moves[(*nmoves)++] = move_from_str(movestr);
             mycount += count;
-            //printf("move found: %c%c->%c%c %s->%s count=%d\n",
-            //       buf[0], buf[1], buf[2], buf[3],
-            //       sq_to_string(from), sq_to_string(to),
-            //       count);
-            moves[(*nmoves)++] = move_make(from, to);
-
-        } else if (sscanf(buf, "%*5s: %lu", &count) == 1) {
-            square_t from = sq_from_string(buf);
-            square_t to   = sq_from_string(buf + 2);
-            piece_type_t promoted = piece_t_from_char(*(buf + 4));
-            mycount += count;
-            //printf("move found: %c%c->%c%c %s->%s count=%d\n",
-            //       buf[0], buf[1], buf[2], buf[3],
-            //       sq_to_string(from), sq_to_string(to),
-            //       count);
-            moves[(*nmoves)++] = move_make_promote(from, to, promoted);
+            if (divide) {
+                printf("%s: %lu\n", movestr, count);
+            }
         }
+        /*
+         * if (sscanf(buf, "%*4s: %lu", &count) == 1) {
+         *     square_t from = sq_from_string(buf);
+         *     square_t to   = sq_from_string(buf + 2);
+         *     mycount += count;
+         *     //printf("move found: %c%c->%c%c %s->%s count=%d\n",
+         *     //       buf[0], buf[1], buf[2], buf[3],
+         *     //       sq_to_string(from), sq_to_string(to),
+         *     //       count);
+         *     moves[(*nmoves)++] = move_make(from, to);
+         *
+         * } else if (sscanf(buf, "%*5s: %lu", &count) == 1) {
+         *     square_t from = sq_from_string(buf);
+         *     square_t to   = sq_from_string(buf + 2);
+         *     piece_type_t promoted = piece_t_from_char(*(buf + 4));
+         *     mycount += count;
+         *     //printf("move found: %c%c->%c%c %s->%s count=%d\n",
+         *     //       buf[0], buf[1], buf[2], buf[3],
+         *     //       sq_to_string(from), sq_to_string(to),
+         *     //       count);
+         *     moves[(*nmoves)++] = move_make_promote(from, to, promoted);
+         * }
+         */
     }
     //pos->moves.nmoves = nmoves;
     // printf("fishcount=%d mycount=%d\n", fishcount, mycount);
@@ -257,7 +267,7 @@ static int usage(char *prg)
 {
     fprintf(stderr, "Usage: %s [-cms][-d depth] [-p version] [-t size:\n", prg);
     fprintf(stderr, "\t-c:         do *not* print FEN comments\n");
-    fprintf(stderr, "\t-d depth:   perft depth (default: 6)");
+    fprintf(stderr, "\t-d depth:   perft depth (default: 6)\n");
     fprintf(stderr, "\t-m:         print moves details\n");
     fprintf(stderr, "\t-s:         use Stockfish to validate perft result\n");
     fprintf(stderr, "\t-t size:    Transposition Table size (Mb). Default: 32\n");
@@ -270,7 +280,7 @@ int main(int ac, char**av)
 {
     int curtest = 0;
     u64 sf_count = 0, my_count;
-    bool comment = true, sf_run = false, moves_output = false;
+    bool comment = true, sf_run = false, divide = false;
     char *fen;
     pos_t *pos = NULL, *fenpos;
     pos_t *fishpos = pos_new();
@@ -300,7 +310,7 @@ int main(int ac, char**av)
                     depth = 6;
                 break;
             case 'm':
-                moves_output = false;
+                divide = true;
                 break;
             case 'p':
                 run = atoi(optarg);
@@ -359,7 +369,7 @@ int main(int ac, char**av)
         if (sf_run) {
             stockfish_fen(outfd, fen);
             clock_start(&clock);
-            sf_count = stockfish_perft(outfd, fishpos, &fishmoves, depth);
+            sf_count = stockfish_perft(outfd, fishpos, &fishmoves, depth, divide);
             ms = clock_elapsed_ms(&clock);
             if (!ms) {
                 res[2].skipped++;
@@ -380,7 +390,7 @@ int main(int ac, char**av)
 
         if (run & 1) {
             clock_start(&clock);
-            my_count = perft(pos, depth, 1, moves_output);
+            my_count = perft(pos, depth, 1, divide);
             ms = clock_elapsed_ms(&clock);
             if (!ms) {
                 res[0].skipped++;
@@ -408,7 +418,7 @@ int main(int ac, char**av)
 
         if (run & 2) {
             clock_start(&clock);
-            my_count = perft_alt(pos, depth, 1, moves_output);
+            my_count = perft_alt(pos, depth, 1, divide);
             ms = clock_elapsed_ms(&clock);
             if (!ms) {
                 res[1].skipped++;
