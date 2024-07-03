@@ -143,7 +143,7 @@ move_t move_from_str(const char *str)
     piece_type_t promoted = piece_t_from_char(*(str+4));
 
     if (promoted != NO_PIECE_TYPE) {              /* promotion */
-        move = move_make_promote(from, to, promoted);
+        move = move_make_promote(from, to, promoted - 2);
     } else {
         move = move_make(from, to);
     }

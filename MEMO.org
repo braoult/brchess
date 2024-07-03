@@ -16,3 +16,8 @@
 	bitboard_t first = popbit(bb);
     square_t sq = square_of(first);
   }
+
+  Or maybe faster:
+  for (; bb; bb &= bb - 1) {
+    sq = _tzcnt_u64(bb);
+  }
