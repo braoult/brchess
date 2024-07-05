@@ -152,32 +152,7 @@ static u64 stockfish_perft(FILE *desc, pos_t *pos, movelist_t *movelist,
                 printf("%s: %lu\n", movestr, count);
             }
         }
-        /*
-         * if (sscanf(buf, "%*4s: %lu", &count) == 1) {
-         *     square_t from = sq_from_string(buf);
-         *     square_t to   = sq_from_string(buf + 2);
-         *     mycount += count;
-         *     //printf("move found: %c%c->%c%c %s->%s count=%d\n",
-         *     //       buf[0], buf[1], buf[2], buf[3],
-         *     //       sq_to_string(from), sq_to_string(to),
-         *     //       count);
-         *     moves[(*nmoves)++] = move_make(from, to);
-         *
-         * } else if (sscanf(buf, "%*5s: %lu", &count) == 1) {
-         *     square_t from = sq_from_string(buf);
-         *     square_t to   = sq_from_string(buf + 2);
-         *     piece_type_t promoted = piece_t_from_char(*(buf + 4));
-         *     mycount += count;
-         *     //printf("move found: %c%c->%c%c %s->%s count=%d\n",
-         *     //       buf[0], buf[1], buf[2], buf[3],
-         *     //       sq_to_string(from), sq_to_string(to),
-         *     //       count);
-         *     moves[(*nmoves)++] = move_make_promote(from, to, promoted);
-         * }
-         */
     }
-    //pos->moves.nmoves = nmoves;
-    // printf("fishcount=%d mycount=%d\n", fishcount, mycount);
     free(buf);
     return mycount;
 }
@@ -210,8 +185,6 @@ static __unused void compare_moves(movelist_t *fish, movelist_t *me)
 #define t(c) move_to(c)
 
     for (move_t *c1 = m1, *c2 = m2; (c1 - m1 < n1) || (c2 - m2 < n2);) {
-        // square_t f1 = move_from(*c1); square_t t1 = move_to(*c1);
-        // square_t f2 = move_from(*c2); square_t t2 = move_to(*c2);
 
         /* no more move in c2 */
         if (c2 - m2 >= n2) {
