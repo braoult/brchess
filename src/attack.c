@@ -17,7 +17,7 @@
 #include "chessdefs.h"
 #include "bitboard.h"
 #include "position.h"
-#include "hyperbola-quintessence.h"
+#include "hq.h"
 #include "attack.h"
 
 

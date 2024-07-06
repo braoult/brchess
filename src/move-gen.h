@@ -17,7 +17,7 @@
 #include "bitops.h"
 
 #include "bitboard.h"
-#include "hyperbola-quintessence.h"
+#include "hq.h"
 #include "piece.h"
 #include "move.h"
 

@@ -19,7 +19,7 @@
 #include "chessdefs.h"
 #include "board.h"
 #include "bitboard.h"
-#include "hyperbola-quintessence.h"
+#include "hq.h"
 
 
 uchar bb_rank_attacks[64 * 8];

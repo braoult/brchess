@@ -22,7 +22,7 @@
 #include "piece.h"
 #include "position.h"
 #include "move.h"
-#include "hyperbola-quintessence.h"
+#include "hq.h"
 #include "attack.h"
 #include "move-gen.h"
 

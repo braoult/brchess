@@ -18,7 +18,7 @@
 
 #include "chessdefs.h"
 #include "bitboard.h"
-#include "hyperbola-quintessence.h"
+#include "hq.h"
 
 int main(int __unused ac, __unused char**av)
 {
