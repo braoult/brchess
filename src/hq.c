@@ -1,4 +1,4 @@
-/* hyperbola-quintessence.c - hyperbola quintessence functions.
+/* hq.c - hyperbola quintessence functions.
  *
  * Copyright (C) 2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
@@ -25,7 +25,7 @@
 uchar bb_rank_attacks[64 * 8];
 
 /**
- * hyperbola_init() - init hyperbola quintessence attack bitboards
+ * hq_init() - init hyperbola quintessence attack bitboards
  *
  * See: https://www.chessprogramming.org/Kindergarten_Bitboards
  * and  https://www.chessprogramming.org/Hyperbola_Quintessence
@@ -45,11 +45,11 @@ uchar bb_rank_attacks[64 * 8];
  *      (O <<= 2)
  *
  * TODO ? create masks excluding slider (eg. bb_diag ^ bb_sq[square]),
- * to save one operation in hyperbola_moves().
+ * to save one operation in hq_moves().
  * TODO ? replace rank attack with this idea, mapping rank to diagonal ?
  * See http://timcooijmans.blogspot.com/2014/04/
  */
-void hyperbola_init()
+void hq_init()
 {
     /* generate rank attacks, not handled by HQ
      */
@@ -86,7 +86,7 @@ void hyperbola_init()
 }
 
 /**
- * hyperbola_rank_moves() - get rank moves for a sliding piece.
+ * hq_rank_moves() - get rank moves for a sliding piece.
  * @pieces: occupation bitboard
  * @sq: piece square
  *
@@ -110,7 +110,7 @@ bitboard_t hq_rank_moves(bitboard_t occ, square_t sq)
 }
 
 /**
- * hyperbola_moves() - get hyperbola pseudo-moves for a sliding piece
+ * hq_moves() - get hyperbola pseudo-moves for a sliding piece
  * @pieces: occupation bitboard
  * @sq: piece square
  * @mask: the appropriate mask (pre-calculated)
@@ -135,7 +135,7 @@ bitboard_t hq_moves(const bitboard_t pieces, const square_t sq,
 }
 
 /**
- * hyperbola_file_moves() - get file pseudo-moves for a sliding piece.
+ * hq_file_moves() - get file pseudo-moves for a sliding piece.
  * @pieces: occupation bitboard
  * @sq: piece square
  *
@@ -147,7 +147,7 @@ bitboard_t hq_file_moves(const bitboard_t occ, const square_t sq)
 }
 
 /**
- * hyperbola_diag_moves() - get diagonal pseudo-moves for a sliding piece.
+ * hq_diag_moves() - get diagonal pseudo-moves for a sliding piece.
  * @pieces: occupation bitboard
  * @sq: piece square
  *
@@ -159,7 +159,7 @@ bitboard_t hq_diag_moves(const bitboard_t occ, const square_t sq)
 }
 
 /**
- * hyperbola_anti_moves() - get anti-diagonal pseudo-moves for a sliding piece.
+ * hq_anti_moves() - get anti-diagonal pseudo-moves for a sliding piece.
  * @pieces: occupation bitboard
  * @sq: piece square
  *
@@ -171,7 +171,7 @@ bitboard_t hq_anti_moves(const bitboard_t occ, const square_t sq)
 }
 
 /**
- * hyperbola_bishop_moves() - get bitboard of bishop pseudo-moves
+ * hq_bishop_moves() - get bitboard of bishop pseudo-moves
  * @occ: occupation bitboard
  * @sq: bishop square
  *
@@ -183,7 +183,7 @@ bitboard_t hq_bishop_moves(const bitboard_t occ, const square_t sq)
 }
 
 /**
- * hyperbola_rook_moves() - get bitboard of rook pseudo-moves
+ * hq_rook_moves() - get bitboard of rook pseudo-moves
  * @occ: occupation bitboard
  * @sq: rook square
  *
@@ -195,7 +195,7 @@ bitboard_t hq_rook_moves(const bitboard_t occ, const square_t sq)
 }
 
 /**
- * hyperbola_queen_moves() - get bitboard of queen pseudo-moves
+ * hq_queen_moves() - get bitboard of queen pseudo-moves
  * @occ: occupation bitboard
  * @sq: queen square
  *

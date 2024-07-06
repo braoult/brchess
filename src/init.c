@@ -43,7 +43,7 @@ void init_all(void)
     bitboard_init();
 
     printff("hq bitboards... ");
-    hyperbola_init();
+    hq_init();
 
     /* zobrist tables & default tt hashtable */
     printff("zobrist tables... ");

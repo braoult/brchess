@@ -1,4 +1,4 @@
-/* hyperbola-quintessence.h - hyperbola-quintessence definitions.
+/* hq.h - hyperbola-quintessence definitions.
  *
  * Copyright (C) 2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
@@ -17,7 +17,7 @@
 #include "board.h"
 #include "bitboard.h"
 
-void hyperbola_init(void);
+void hq_init(void);
 
 bitboard_t hq_rank_moves(const bitboard_t occ, const square_t sq);
 bitboard_t hq_moves(const bitboard_t pieces, const square_t sq,

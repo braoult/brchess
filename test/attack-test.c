@@ -33,7 +33,7 @@ int main(int __unused ac, __unused char**av)
     setlinebuf(stdout);                           /* line-buffered stdout */
 
     bitboard_init();
-    hyperbola_init();
+    hq_init();
 
     while ((fen = next_fen(ATTACK))) {
         //printf(">>>>> %s\n", test[i]);

@@ -24,7 +24,7 @@ int main(int __unused ac, __unused char**av)
 {
     char str[256];
     bitboard_init();
-    hyperbola_init();
+    hq_init();
     for (int i = 0; i < 64; ++i) {
         sprintf(str, "\n%#x:\n   %-22s%-22s%-22s%-22s%-22s%-22s%-22s", i,
                 "sliding", "diagonal", "antidiagonal", "file", "rank", "knight",

@@ -224,7 +224,7 @@ int main(int __unused ac, __unused char**av)
     setlinebuf(stdout);                           /* line-buffered stdout */
 
     bitboard_init();
-    hyperbola_init();
+    hq_init();
     outfd = open_stockfish();
 
     while ((fen = next_fen(MOVEGEN))) {
