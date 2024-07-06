@@ -11,23 +11,23 @@
  *
  */
 
-#ifndef _HYPERBOLA_QUINTESSENCE_H
-#define _HYPERBOLA_QUINTESSENCE_H
+#ifndef _HQ_H
+#define _HQ_H
 
 #include "board.h"
 #include "bitboard.h"
 
 void hyperbola_init(void);
 
-bitboard_t hyperbola_rank_moves(const bitboard_t occ, const square_t sq);
-bitboard_t hyperbola_moves(const bitboard_t pieces, const square_t sq,
+bitboard_t hq_rank_moves(const bitboard_t occ, const square_t sq);
+bitboard_t hq_moves(const bitboard_t pieces, const square_t sq,
                            const bitboard_t mask);
-bitboard_t hyperbola_file_moves(const bitboard_t occ, const square_t sq);
-bitboard_t hyperbola_diag_moves(const bitboard_t occ, const square_t sq);
-bitboard_t hyperbola_anti_moves(const bitboard_t occ, const square_t sq);
+bitboard_t hq_file_moves(const bitboard_t occ, const square_t sq);
+bitboard_t hq_diag_moves(const bitboard_t occ, const square_t sq);
+bitboard_t hq_anti_moves(const bitboard_t occ, const square_t sq);
 
-bitboard_t hyperbola_bishop_moves(const bitboard_t occ, const square_t sq);
-bitboard_t hyperbola_rook_moves(const bitboard_t occ, const square_t sq);
-bitboard_t hyperbola_queen_moves(const bitboard_t occ, const square_t sq);
+bitboard_t hq_bishop_moves(const bitboard_t occ, const square_t sq);
+bitboard_t hq_rook_moves(const bitboard_t occ, const square_t sq);
+bitboard_t hq_queen_moves(const bitboard_t occ, const square_t sq);
 
-#endif  /* _HYPERBOLA_QUINTESSENCE_H */
+#endif  /* _HQ_H */

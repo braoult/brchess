@@ -152,15 +152,13 @@ move_t move_from_str(const char *str)
 
 /**
  * move_find_in_movelist() - find a partial move in movelist.
- * @target:  partial move
- * @list:    &movelist_t to search
+ * @move:      move (may be partial)
+ * @movelist:  &movelist_t to search
  *
- * Look for @target into @list. @target must at least contain from and
- * to square, as well as promotion information - see move_from_str().
- * If these three pieces of information match, the corresponding move in
- * @list is returned.
+ * Look for @target into @list, by comparing its from, to, and promotion
+ * information.
  *
- * @return: move, or MOVE_NONE if error.
+ * @return: move in @movelist if match found, MOVE_NONE otherwise.
  */
 move_t move_find_in_movelist(move_t target, movelist_t *list)
 {

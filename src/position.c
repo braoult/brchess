@@ -218,7 +218,7 @@ void pos_set_checkers_pinners_blockers(pos_t *pos)
     attackers = pos->bb[them][BISHOP] | pos->bb[them][QUEEN];
 
     /* targets is all "target" pieces if K was a bishop */
-    targets = hyperbola_bishop_moves(occ, king) & occ;
+    targets = hq_bishop_moves(occ, king) & occ;
 
     /* checkers = only opponent B/Q */
     tmpcheckers = targets & attackers;
@@ -229,7 +229,7 @@ void pos_set_checkers_pinners_blockers(pos_t *pos)
 
     /* we find second targets, by removing first ones (excl. checkers) */
     if (maybeblockers) {
-        targets = hyperbola_bishop_moves(occ ^ maybeblockers, king) ^ tmpcheckers;
+        targets = hq_bishop_moves(occ ^ maybeblockers, king) ^ tmpcheckers;
 
         /* pinners = only B/Q */
         tmppinners = targets & attackers;
@@ -244,14 +244,14 @@ void pos_set_checkers_pinners_blockers(pos_t *pos)
 
     /* same for rook type */
     attackers = pos->bb[them][ROOK] | pos->bb[them][QUEEN];
-    targets = hyperbola_rook_moves(occ, king) & occ;
+    targets = hq_rook_moves(occ, king) & occ;
 
     tmpcheckers = targets & attackers;
     checkers |= tmpcheckers;
 
     maybeblockers = targets & ~tmpcheckers;
     if (maybeblockers) {
-        targets = hyperbola_rook_moves(occ ^ maybeblockers, king) ^ tmpcheckers;
+        targets = hq_rook_moves(occ ^ maybeblockers, king) ^ tmpcheckers;
         tmppinners = targets & attackers;
         while (tmppinners) {
             pinner = bb_next(&tmppinners);

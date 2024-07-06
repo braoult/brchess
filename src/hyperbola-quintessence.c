@@ -95,7 +95,7 @@ void hyperbola_init()
  *
  * @Return: bitboard of @piece available pseudo-moves.
  */
-bitboard_t hyperbola_rank_moves(bitboard_t occ, square_t sq)
+bitboard_t hq_rank_moves(bitboard_t occ, square_t sq)
 {
     u32 rank = sq & SQ_RANKMASK;
     u32 file = sq & SQ_FILEMASK;
@@ -122,7 +122,7 @@ bitboard_t hyperbola_rank_moves(bitboard_t occ, square_t sq)
  *
  * @Return: bitboard of piece available pseudo-moves.
  */
-bitboard_t hyperbola_moves(const bitboard_t pieces, const square_t sq,
+bitboard_t hq_moves(const bitboard_t pieces, const square_t sq,
                                    const bitboard_t mask)
 {
     bitboard_t o = pieces & mask;
@@ -141,9 +141,9 @@ bitboard_t hyperbola_moves(const bitboard_t pieces, const square_t sq,
  *
  * @Return: bitboard of piece available pseudo-moves on its file.
  */
-bitboard_t hyperbola_file_moves(const bitboard_t occ, const square_t sq)
+bitboard_t hq_file_moves(const bitboard_t occ, const square_t sq)
 {
-    return hyperbola_moves(occ, sq, bb_sqfile[sq]);
+    return hq_moves(occ, sq, bb_sqfile[sq]);
 }
 
 /**
@@ -153,9 +153,9 @@ bitboard_t hyperbola_file_moves(const bitboard_t occ, const square_t sq)
  *
  * @Return: bitboard of piece available pseudo-moves on its diagonal.
  */
-bitboard_t hyperbola_diag_moves(const bitboard_t occ, const square_t sq)
+bitboard_t hq_diag_moves(const bitboard_t occ, const square_t sq)
 {
-    return hyperbola_moves(occ, sq, bb_sqdiag[sq]);
+    return hq_moves(occ, sq, bb_sqdiag[sq]);
 }
 
 /**
@@ -165,9 +165,9 @@ bitboard_t hyperbola_diag_moves(const bitboard_t occ, const square_t sq)
  *
  * @Return: bitboard of piece available pseudo-moves on its anti-diagonal.
  */
-bitboard_t hyperbola_anti_moves(const bitboard_t occ, const square_t sq)
+bitboard_t hq_anti_moves(const bitboard_t occ, const square_t sq)
 {
-    return hyperbola_moves(occ, sq, bb_sqanti[sq]);
+    return hq_moves(occ, sq, bb_sqanti[sq]);
 }
 
 /**
@@ -177,9 +177,9 @@ bitboard_t hyperbola_anti_moves(const bitboard_t occ, const square_t sq)
  *
  * @Return: bitboard of bishop available pseudo-moves.
  */
-bitboard_t hyperbola_bishop_moves(const bitboard_t occ, const square_t sq)
+bitboard_t hq_bishop_moves(const bitboard_t occ, const square_t sq)
 {
-    return hyperbola_diag_moves(occ, sq) | hyperbola_anti_moves(occ, sq);
+    return hq_diag_moves(occ, sq) | hq_anti_moves(occ, sq);
 }
 
 /**
@@ -189,9 +189,9 @@ bitboard_t hyperbola_bishop_moves(const bitboard_t occ, const square_t sq)
  *
  * @Return: bitboard of rook available pseudo-moves.
  */
-bitboard_t hyperbola_rook_moves(const bitboard_t occ, const square_t sq)
+bitboard_t hq_rook_moves(const bitboard_t occ, const square_t sq)
 {
-    return hyperbola_file_moves(occ, sq) | hyperbola_rank_moves(occ, sq);
+    return hq_file_moves(occ, sq) | hq_rank_moves(occ, sq);
 }
 
 /**
@@ -204,7 +204,7 @@ bitboard_t hyperbola_rook_moves(const bitboard_t occ, const square_t sq)
  *
  * @Return: bitboard of queen available pseudo-moves.
  */
-bitboard_t hyperbola_queen_moves(const bitboard_t occ, const square_t sq)
+bitboard_t hq_queen_moves(const bitboard_t occ, const square_t sq)
 {
-    return hyperbola_bishop_moves(occ, sq) | hyperbola_rook_moves(occ, sq);
+    return hq_bishop_moves(occ, sq) | hq_rook_moves(occ, sq);
 }

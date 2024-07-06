@@ -99,7 +99,7 @@ bool pseudo_is_legal(const pos_t *pos, const move_t move)
             bitboard_t exclude = BIT(ep + sq_up(them)) | BIT(from);
             bitboard_t rooks = (pos->bb[them][ROOK] | pos->bb[them][QUEEN]) & rank5;
 
-            return !(hyperbola_rank_moves(occ ^ exclude, kingsq) & rooks);
+            return !(hq_rank_moves(occ ^ exclude, kingsq) & rooks);
         }
     }
     return true;
@@ -394,13 +394,13 @@ movelist_t *pos_gen_pseudo(pos_t *pos, movelist_t *movelist)
     from_bb = pos->bb[us][BISHOP] | pos->bb[us][QUEEN];
     while (from_bb) {
         from = bb_next(&from_bb);
-        to_bb = hyperbola_bishop_moves(occ, from) & dest_squares;
+        to_bb = hq_bishop_moves(occ, from) & dest_squares;
         moves = moves_gen(moves, from, to_bb);
     }
     from_bb = pos->bb[us][ROOK] | pos->bb[us][QUEEN];
     while (from_bb) {
         from = bb_next(&from_bb);
-        to_bb = hyperbola_rook_moves(occ, from) & dest_squares;
+        to_bb = hq_rook_moves(occ, from) & dest_squares;
         moves = moves_gen(moves, from, to_bb);
     }
 
