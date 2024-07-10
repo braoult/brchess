@@ -76,7 +76,7 @@ static inline square_t move_to(move_t move)
     return (move >> M_OFF_TO) & 077;
 }
 
-static inline square_t move_fromto(move_t move)
+static inline move_t move_fromto(move_t move)
 {
     return move & 07777;
 }

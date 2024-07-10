@@ -165,9 +165,14 @@ move_t move_find_in_movelist(move_t target, movelist_t *list)
     move_t *move = list->move, *last = move + list->nmoves;
 
     for (; move < last; ++move) {
-        if (move_from(target) == move_from(*move) &&
-            move_to(target)   == move_to(*move) &&
-            move_promoted(target)   == move_promoted(*move))
+        /* note that we compare promoted piece without checking if the move
+         * is a promotion. But, in our move representation "promoted Knight"
+         * is encoded as zero, same as when there is no promotion. This can
+         * lead to false match is @target or some @list moves are invalid,
+         * which we do not consider.
+         */
+        if (move_fromto(target)   == move_fromto(*move) &&
+            move_promoted(target) == move_promoted(*move))
             return *move;
     }
     return MOVE_NONE;
@@ -205,12 +210,13 @@ static int _moves_cmp_bysquare(const void *p1, const void *p2)
     square_t t2 = move_to(m2);
     piece_type_t prom1 = move_promoted(m1);
     piece_type_t prom2 = move_promoted(m2);
+    /* We compare origin square first */
     if (f1 < f2) return -1;
     if (f1 > f2) return 1;
-    /* f1 == f2 */
+    /* f1 == f2, we compare destination squares */
     if (t1 < t2) return -1;
     if (t1 > t2) return 1;
-    /* t1 == t2 */
+    /* t1 == t2, we compare promoted piece */
     if (prom1 < prom2) return -1;
     if (prom1 > prom2) return 1;
     return 0;
