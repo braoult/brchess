@@ -18,7 +18,7 @@
 #include <bitops.h>
 
 #include "chessdefs.h"
-#include "misc.h"
+#include "alloc.h"
 #include "position.h"
 #include "piece.h"
 #include "hash.h"
@@ -211,7 +211,7 @@ int tt_create(s32 sizemb)
 
         hash_tt.mask     = -1ull >> (64 - nbits);
 
-        hash_tt.keys     = safe_malloc(hash_tt.bytes);
+        hash_tt.keys     = safe_alloc(hash_tt.bytes);
 
         //printf("bits=%2d size=%'15lu/%'6d Mb/%'14lu buckets ",
         //       hash_tt.nbits, hash_tt.bytes, hash_tt.mb, hash_tt.nbuckets);

@@ -21,7 +21,7 @@
 #include <bug.h>
 
 #include "chessdefs.h"
-#include "misc.h"
+#include "alloc.h"
 #include "position.h"
 #include "fen.h"
 
@@ -288,7 +288,7 @@ char *pos2fen(const pos_t *pos, char *fen)
     int cur = 0;
 
     if (!fen)
-        fen = safe_malloc(92);
+        fen = safe_alloc(92);
 
     /*  1) position
      */

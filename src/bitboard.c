@@ -30,7 +30,7 @@ bitboard_t bb_line[64][64];
 bitboard_t bb_knight[64], bb_king[64], bb_pawn_attacks[2][64];
 
 /*  vectors are clockwise from N */
-static int knight_vector[] = {
+static int knight_vector[8] = {
     NORTH_EAST + NORTH, NORTH_EAST + EAST,
     SOUTH_EAST + EAST,  SOUTH_EAST + SOUTH,
     SOUTH_WEST + SOUTH, SOUTH_WEST + WEST,

@@ -1,4 +1,4 @@
-/* util.h - various util functions.
+/* alloc.h - various memory allocation helpers
  *
  * Copyright (C) 2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
@@ -11,8 +11,11 @@
  *
  */
 
-#ifndef _UTIL_H
-#define _UTIL_H
+#include <stdio.h>
+#include <stdlib.h>
 
+#include "chessdefs.h"
 
-#endif  /* UTIL_H */
+void *safe_alloc(size_t size);
+void *safe_alloc_page_aligned(size_t size);
+void safe_free(void *ptr);

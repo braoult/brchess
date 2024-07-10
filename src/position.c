@@ -27,7 +27,7 @@
 #include "hq.h"
 #include "fen.h"
 #include "piece.h"
-#include "misc.h"
+#include "alloc.h"
 #include "board.h"
 #include "attack.h"
 #include "hist.h"
@@ -42,7 +42,7 @@
  */
 pos_t *pos_new(void)
 {
-    return safe_malloc(sizeof(pos_t));
+    return safe_alloc(sizeof(pos_t));
 }
 
 /**
@@ -57,7 +57,7 @@ pos_t *pos_new(void)
  */
 pos_t *pos_dup(const pos_t *pos)
 {
-    pos_t *newpos = safe_malloc(sizeof(pos_t));
+    pos_t *newpos = safe_alloc(sizeof(pos_t));
 
     *newpos = *pos;
     return newpos;
