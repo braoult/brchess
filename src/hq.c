@@ -56,7 +56,6 @@ void hq_init()
     for (int occ = 0; occ < 64; ++occ) {
         for (int file = 0; file < 8; ++file) {
             int attacks = 0;
-            //int o = mask << 1;                    /* skip right square */
 
             /* set f left attacks */
             for (int slide = file - 1; slide >= 0; --slide) {
@@ -70,17 +69,9 @@ void hq_init()
                 int b = bb_sq[slide];
                 attacks |= b;
                 if ((occ << 1) & b)               /* piece on b, we stop */
-                    //if ((o & b) == b)
                     break;
             }
             bb_rank_attacks[(occ << 3) + file] = attacks;
-
-            //if (((occ << 3) + file) == 171) {
-            //char str[64], str2[64];
-               //printf("mask=%x=%s file=%d att=%x=%s\n",
-               //       occ, bitboard_rank_sprint(str, occ), file,
-               //       attacks, bitboard_rank_sprint(str2, attacks));
-            //}
         }
     }
 }
@@ -100,12 +91,6 @@ bitboard_t hq_rank_moves(bitboard_t occ, square_t sq)
     u32 rank = sq & SQ_RANKMASK;
     u32 file = sq & SQ_FILEMASK;
     u64 o = (occ >> rank) & 0176;                 /* 01111110 clear bits 0 & 7 */
-    //char zob[128], zob2[128];
-    //printf("rank_moves: occ=%lx=%s file=%d o=%lx=%s index=%ld=%ld attack=%lx=%s\n", occ,
-    //       bitboard_rank_sprint(zob, occ), file, o,
-    //       bitboard_rank_sprint(zob, o), (o << 2) + file, (o * 4) + file,
-    //       (bitboard_t)bb_rank_attacks[(o << 2) + file] << rank,
-    //       bitboard_rank_sprint(zob2, (bitboard_t)bb_rank_attacks[(o << 2) + file] << rank));
     return ((bitboard_t)bb_rank_attacks[(o << 2) + file]) << rank;
 }
 
