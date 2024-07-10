@@ -20,3 +20,4 @@ perf.data
 valgrind.out
 gmon.out
 compile_commands.json
+.lastbuild

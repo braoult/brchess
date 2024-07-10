@@ -12,16 +12,6 @@
 
 SHELL     := /bin/bash
 
-ifeq ($(CC),)
-        CC = gcc
-endif
-ifeq ($(CC),cc)
-        CC = gcc
-endif
-ifeq ($(BUILD),)
-        BUILD = dev
-endif
-
 BEAR      := bear
 TOUCH     := touch
 RM        := rm
@@ -60,6 +50,38 @@ TARGET    := $(addprefix $(BINDIR)/,$(TARGET_FN))
 ASMFILES  := $(SRC:.c=.s) $(TSTSRC:.c=.s)
 CPPFILES  := $(SRC:.c=.i) $(TSTSRC:.c=.i)
 
+##################################### Check for compiler and requested build
+BUILDS    := release dev perf debug
+# last compilation build
+BUILDFILE := .lastbuild
+lastbuild := $(file < $(BUILDFILE))
+$(info last:$(lastbuild))
+# default to gcc
+CC        ?= cc
+ifeq ($(CC),cc)
+        CC = gcc
+endif
+
+# if no build specified, use last one
+ifeq ($(build),)
+        build := $(lastbuild)
+endif
+# if build is still undefined, set a default
+ifeq ($(build),)
+        build := release
+endif
+
+# check for valid build
+ifeq ($(filter $(build),$(BUILDS)),)
+        $(error Error: Unknown build=`$(build)`. Possible builds are: $(BUILDS))
+endif
+
+# if new build, rewrite BUILDFILE
+ifneq ($(build),$(lastbuild))
+        $(info New build:`$(build)` (was:$(lastbuild)))
+        $(file >$(BUILDFILE),$(build))
+endif
+
 ##################################### set a version string
 # inspired from:
 #  https://eugene-babichenko.github.io/blog/2019/09/28/nightly-versions-makefiles/
@@ -90,11 +112,13 @@ endif
 ##################################### pre-processor flags
 CPPFLAGS  := -I$(BRINCDIR) -I$(INCDIR) -DVERSION=\"$(VERSION)\"
 
+CPPFLAGS  += -DDIAGRAM_SYM                                  # UTF8 symbols in diagrams
+
 ifeq ($(BUILD),release)
         CPPFLAGS  += -DNDEBUG                               # assert (unused)
 else # ifeq ($(BUILD),dev)
-        CPPFLAGS  += -DWARN_ON                              # brlib bug.h
-        CPPFLAGS  += -DBUG_ON                               # brlib bug.h
+        CPPFLAGS  += -DWARN_ON=1                            # brlib bug.h
+        CPPFLAGS  += -DBUG_ON=1                             # brlib bug.h
 
         #CPPFLAGS  += -DDEBUG                               # global - unused
         #CPPFLAGS  += -DDEBUG_DEBUG                         # enable log() functions
@@ -115,8 +139,6 @@ else # ifeq ($(BUILD),dev)
         #CPPFLAGS  += -DDEBUG_SEARCH                        # move search
 endif
 
-CPPFLAGS  += -DDIAGRAM_SYM                                  # UTF8 symbols in diagrams
-
 # remove extraneous spaces (due to spaces before comments)
 CPPFLAGS  := $(strip $(CPPFLAGS))
 
@@ -132,8 +154,8 @@ CFLAGS    += -march=native
 ### dev OR release
 ifeq ($(BUILD),release)
         CFLAGS    += -O3
-        CFLAGS    += -g
-        CFLAGS    += -ginline-points                   # inlined funcs debug info
+        #CFLAGS    += -g
+        #CFLAGS    += -ginline-points                   # inlined funcs debug info
         CFLAGS    += -funroll-loops
         CFLAGS    += -flto
 else ifeq ($(BUILD),dev)
@@ -210,9 +232,9 @@ $(sort all $(MAKECMDGOALS)):
 else
 
 ##################################### General targets
-.PHONY: all release dev perf debug compile clean cleanall
+.PHONY: all release dev perf debug compile libs clean cleanall
 
-all: testing $(TARGET)
+all: libs testing $(TARGET)
 
 release:
 	$(MAKE) BUILD=release clean all
@@ -314,7 +336,7 @@ cleanobjdir: cleanobj
 # "normal" ones, but do not imply to rebuild target.
 $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR) $(DEPDIR)
 	@echo compiling brchess module: $< "->" $@.
-	@$(CC) -c $(ALL_CFLAGS) $< -o $@
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
 
 ##################################### brlib libraries
 .PHONY: cleanbrlib cleanallbrlib brlib
@@ -325,8 +347,10 @@ cleanbrlib:
 cleanallbrlib:
 	$(MAKE) -C $(BRLIB) cleanall
 
+export build
 brlib:
-	$(MAKE) -C $(BRLIB) libs
+	$(info calling with build=$(build))
+	$(MAKE) -e -C $(BRLIB) lib-static
 
 ##################################### brchess binaries
 .PHONY: targets cleanbin cleanbindir
@@ -398,7 +422,7 @@ TEST          += movedo-test perft-test tt-test
 
 PIECE_OBJS    := piece.o
 FEN_OBJS      := $(PIECE_OBJS) fen.o position.o bitboard.o board.o \
-	hq.o attack.o hash.o init.o misc.o move.o
+	hq.o attack.o hash.o init.o misc.o alloc.o move.o
 BB_OBJS       := $(FEN_OBJS)
 MOVEGEN_OBJS  := $(BB_OBJS) move-gen.o
 ATTACK_OBJS   := $(MOVEGEN_OBJS)
