@@ -11,11 +11,20 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef _ALLOC_H
+#define _ALLOC_H
 
 #include "chessdefs.h"
 
+void *alloc(size_t size);
+void *alloc_aligned(size_t align, size_t size);
+void *alloc_aligned_page(size_t size);
+void *alloc_aligned_hugepage(size_t size);
+
 void *safe_alloc(size_t size);
-void *safe_alloc_page_aligned(size_t size);
+void *safe_alloc_aligned(size_t align, size_t size);
+void *safe_alloc_aligned_page(size_t size);
+void *safe_alloc_aligned_hugepage(size_t size);
 void safe_free(void *ptr);
+
+#endif /* _ALLOC_H */

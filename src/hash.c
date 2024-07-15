@@ -16,6 +16,7 @@
 
 #include <brlib.h>
 #include <bitops.h>
+#include <bug.h>
 
 #include "chessdefs.h"
 #include "alloc.h"
@@ -101,13 +102,6 @@ hkey_t zobrist_calc(pos_t *pos)
  */
 #ifdef ZOBRIST_VERIFY
 
-#pragma push_macro("BUG_ON")                      /* force BUG_ON and WARN_ON */
-#pragma push_macro("WARN_ON")
-#undef BUG_ON
-#define BUG_ON
-#undef WARN_ON
-#define WARN_ON
-
 bool zobrist_verify(pos_t *pos)
 {
     hkey_t diff, key = zobrist_calc(pos);
@@ -147,12 +141,10 @@ bool zobrist_verify(pos_t *pos)
     }
     warn(true, "zobrist diff %lx is unknown\n", diff);
 end:
-    bug_on(false);
+    bug_on_always(false);
     /* not reached */
     return true;
 }
-#pragma pop_macro("WARN_ON")
-#pragma pop_macro("BUG_ON")
 
 #endif
 
@@ -211,7 +203,7 @@ int tt_create(s32 sizemb)
 
         hash_tt.mask     = -1ull >> (64 - nbits);
 
-        hash_tt.keys     = safe_alloc(hash_tt.bytes);
+        hash_tt.keys     = safe_alloc_aligned_hugepage(hash_tt.bytes);
 
         //printf("bits=%2d size=%'15lu/%'6d Mb/%'14lu buckets ",
         //       hash_tt.nbits, hash_tt.bytes, hash_tt.mb, hash_tt.nbuckets);

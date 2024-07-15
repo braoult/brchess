@@ -20,6 +20,7 @@
 
 #include <brlib.h>
 #include <bitops.h>
+#include <bug.h>
 
 #include "chessdefs.h"
 #include "position.h"
@@ -362,33 +363,24 @@ bitboard_t pos_king_blockers(const pos_t *pos, const color_t color, const bitboa
 bool pos_ok(pos_t *pos, const bool strict)
 {
     int n, count = 0, bbcount = 0, error = 0;
-    color_t __unused us = pos->turn, __unused them = OPPONENT(us);
-
-    /* force BUG_ON and WARN_ON */
-#   pragma push_macro("BUG_ON")
-#   pragma push_macro("WARN_ON")
-#   undef BUG_ON
-#   define BUG_ON
-#   undef WARN_ON
-#   define WARN_ON
-#   include <bug.h>
+    color_t us = pos->turn, __unused them = OPPONENT(us);
 
     /* pawns on 1st ot 8th rank */
-    error += warn_on((pos->bb[WHITE][PAWN] | pos->bb[BLACK][PAWN]) &
-                     (RANK_1bb | RANK_8bb));
+    error += warn_on_or_eval((pos->bb[WHITE][PAWN] | pos->bb[BLACK][PAWN]) &
+                            (RANK_1bb | RANK_8bb));
 
     for (color_t color = WHITE; color <= BLACK; ++color) {
         /* pawn count */
         n = popcount64(pos->bb[color][PAWN]);
-        error += warn_on(n > 8);
+        error += warn_on_or_eval(n > 8);
         /* king count */
         n = popcount64(pos->bb[color][KING]);
-        error += warn_on(n != 1);
+        error += warn_on_or_eval(n != 1);
         /* king mismatch with board */
-        error += warn_on(PIECE(pos->board[pos->king[color]]) != KING);
+        error += warn_on_or_eval(PIECE(pos->board[pos->king[color]]) != KING);
         /* pieces count */
         n = popcount64(pos->bb[color][ALL_PIECES]);
-        error += warn_on(n == 0 || n > 16);
+        error += warn_on_or_eval(n == 0 || n > 16);
         bbcount += n;
     }
     for (square_t sq = 0; sq < 64; ++sq) {
@@ -399,27 +391,24 @@ bool pos_ok(pos_t *pos, const bool strict)
         color_t c = COLOR(piece);
         piece_type_t p = PIECE(piece);
         match = pos->bb[c][p] & BIT(sq);
-        error += warn_on(!match);
+        error += warn_on_or_eval(!match);
         count++;
     }
     /* occupied board is different from bitboards */
-    error += warn_on(count != bbcount);
+    error += warn_on_or_eval(count != bbcount);
     /* is opponent already in check ? */
-    error += warn_on(pos_checkers(pos, them));
+    error += warn_on_or_eval(pos_checkers(pos, them));
     /* is color to play in check more than twice ? */
-    error += warn_on(popcount64(pos_checkers(pos, us)) > 2);
+    error += warn_on_or_eval(popcount64(pos_checkers(pos, us)) > 2);
     /* kings distance is less than 2 */
-    error += warn_on(sq_dist(pos->king[WHITE], pos->king[BLACK]) < 2);
+    error += warn_on_or_eval(sq_dist(pos->king[WHITE], pos->king[BLACK]) < 2);
     /* e.p. and castling rights check */
     error += fen_ok(pos, false);
 
     if (strict) {
-        bug_on(error);
-        /* not reached */
+        bug_on_always(error);
     }
     return error? false: true;
-#   pragma pop_macro("WARN_ON")
-#   pragma pop_macro("BUG_ON")
 }
 
 /**
