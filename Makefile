@@ -55,7 +55,7 @@ BUILDS    := release dev perf debug
 # last compilation build
 BUILDFILE := .lastbuild
 lastbuild := $(file < $(BUILDFILE))
-$(info last:$(lastbuild))
+
 # default to gcc
 CC        ?= cc
 ifeq ($(CC),cc)
@@ -77,8 +77,10 @@ ifeq ($(filter $(build),$(BUILDS)),)
 endif
 
 # if new build, rewrite BUILDFILE
-ifneq ($(build),$(lastbuild))
-        $(info New build:`$(build)` (was:$(lastbuild)))
+ifeq ($(build),$(lastbuild))
+        $(info Using last used build:`$(build)`.)
+else
+        $(info Using new build:`$(build)` (previous:$(lastbuild)))
         $(file >$(BUILDFILE),$(build))
 endif
 
@@ -100,9 +102,9 @@ endif
 # if no version, use last commit and date.
 # else, if last commit != last tag commit, add commit and date to version number
 ifeq ($(VERSION),)
-  VERSION := build-$(COMMIT)-$(DATE)
+  VERSION := $(build)-$(COMMIT)-$(DATE)
 else ifneq ($(COMMIT), $(TAG_COMMIT))
-  VERSION := $(VERSION)-next-$(COMMIT)-$(DATE)
+  VERSION := $(VERSION)-next-$(build)-$(COMMIT)-$(DATE)
 endif
 # if uncommited changes, add "dirty" indicator
 ifneq ($(shell git status --porcelain),)
@@ -114,18 +116,11 @@ CPPFLAGS  := -I$(BRINCDIR) -I$(INCDIR) -DVERSION=\"$(VERSION)\"
 
 CPPFLAGS  += -DDIAGRAM_SYM                                  # UTF8 symbols in diagrams
 
-ifeq ($(BUILD),release)
+ifeq ($(build),release)
         CPPFLAGS  += -DNDEBUG                               # assert (unused)
-else # ifeq ($(BUILD),dev)
-        CPPFLAGS  += -DWARN_ON=1                            # brlib bug.h
-        CPPFLAGS  += -DBUG_ON=1                             # brlib bug.h
+else # ifeq ($(build),dev)
+        CPPFLAGS  += -DBUG_ON                               # brlib bug.h
 
-        #CPPFLAGS  += -DDEBUG                               # global - unused
-        #CPPFLAGS  += -DDEBUG_DEBUG                         # enable log() functions
-        #CPPFLAGS  += -DDEBUG_DEBUG_C                       # enable log() settings
-        #CPPFLAGS  += -DDEBUG_POOL                          # memory pools management
-        #CPPFLAGS  += -DDEBUG_POS                           # position.c
-        #CPPFLAGS  += -DDEBUG_MOVE                          # move generation
         #        fen.c
         #CPPFLAGS  += -DDEBUG_FEN                           # FEN decoding
         #        hash / TT
@@ -134,45 +129,49 @@ else # ifeq ($(BUILD),dev)
         #        attack.c
         #CPPFLAGS  += -DDEBUG_ATTACK_ATTACKERS              # sq_attackers
         #CPPFLAGS  += -DDEBUG_ATTACK_PINNERS                # sq_pinners details
-        #       CPPFLAGS  += -DDEBUG_EVAL                   # eval functions
-        #CPPFLAGS  += -DDEBUG_PIECE                         # piece list management
-        #CPPFLAGS  += -DDEBUG_SEARCH                        # move search
+
+        #        old unused flags
+        #CPPFLAGS  += -DDEBUG_POS                           # position.c
+        #CPPFLAGS  += -DDEBUG_MOVE                          # move generation
+        #CPPFLAGS  += -DDEBUG_EVAL                          # eval functions
 endif
 
 # remove extraneous spaces (due to spaces before comments)
 CPPFLAGS  := $(strip $(CPPFLAGS))
 
-##################################### compiler flags
+##################################### compiler / linker flags
 CFLAGS    := -std=gnu11
 
-CFLAGS    += -Wall
-CFLAGS    += -Wextra
-CFLAGS    += -Wshadow
-CFLAGS    += -Wmissing-declarations
+CFLAGS    += -Wall -Wextra -Wshadow -Wmissing-declarations
 CFLAGS    += -march=native
 
+LDFLAGS   := --static
+LDFLAGS   += -L$(BRLIBDIR)
+
 ### dev OR release
-ifeq ($(BUILD),release)
+ifeq ($(build),release)
         CFLAGS    += -O3
-        #CFLAGS    += -g
-        #CFLAGS    += -ginline-points                   # inlined funcs debug info
         CFLAGS    += -funroll-loops
         CFLAGS    += -flto
-else ifeq ($(BUILD),dev)
+        #CFLAGS    += -g
+        #CFLAGS    += -ginline-points                   # inlined funcs debug info
+        LDFLAGS   += -flto
+else ifeq ($(build),dev)
         CFLAGS    += -Og
         CFLAGS    += -g                                # symbols (gdb, perf, etc.)
         CFLAGS    += -ginline-points                   # inlined funcs debug info
         #CFLAGS += -pg                                 # gprof
         # Next one may be useful for valgrind (when invalid instructions)
         #CFLAGS += -mno-tbm
-else ifeq ($(BUILD),perf)
+else ifeq ($(build),perf)
         CFLAGS    += -O3
         CFLAGS    += -g                                # symbols (gdb, perf, etc.)
         CFLAGS    += -ginline-points                   # inlined funcs debug info
         CFLAGS    += -funroll-loops
-else ifeq ($(BUILD),debug)
-        CFLAGS    += -O0
+else ifeq ($(build),debug)
+        CFLAGS    += -Og
         CFLAGS    += -g                                # symbols (gdb, perf, etc.)
+        CFLAGS    += -ginline-points                   # inlined funcs debug info
         # for gprof
         #CFLAGS += -pg
         # Next one may be useful for valgrind (when invalid instructions)
@@ -180,19 +179,9 @@ else ifeq ($(BUILD),debug)
 endif
 
 CFLAGS    := $(strip $(CFLAGS))
-
-##################################### linker flags
-LDFLAGS   := --static
-LDFLAGS   += -L$(BRLIBDIR)
-
-ifeq ($(BUILD),release)
-        LDFLAGS   += -flto
-endif
-
 LDFLAGS   := $(strip $(LDFLAGS))
 
-##################################### archiver/dependency flags
-ARFLAGS   := rcs
+##################################### dependency flags
 DEPFLAGS   = -MMD -MP -MF $(DEPDIR)/$*.d
 
 ##################################### archiver/dependency flags
@@ -310,7 +299,8 @@ $(ALLDIRS): $@
 
 -include $(wildcard $(DEP))
 
-# Don't use $(DEPDIR)/*.d, to control mismatches between dep and src files.
+# Don't use "rm $(DEPDIR)/*.d", to understand mismatches between dep/ and src/
+# files.
 # See second rule below.
 cleandep:
 	$(call rmfiles,$(DEP),depend)
@@ -334,7 +324,8 @@ cleanobjdir: cleanobj
 
 # The part right of '|' are "order-only prerequisites": They are build as
 # "normal" ones, but do not imply to rebuild target.
-$(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR) $(DEPDIR)
+$(OBJDIR)/%.o: $(BUILDFILE)
+$(OBJDIR)/%.o: $(SRCDIR)/%.c $(BUILDFILE) | $(OBJDIR) $(DEPDIR)
 	@echo compiling brchess module: $< "->" $@.
 	$(CC) -c $(ALL_CFLAGS) $< -o $@
 
@@ -351,7 +342,7 @@ export build
 brlib:
 	$(info calling with build=$(build))
 	$(MAKE) -e -C $(BRLIB) lib-static
-
+unexport build
 ##################################### brchess binaries
 .PHONY: targets cleanbin cleanbindir
 
@@ -415,7 +406,7 @@ memcheck: targets
 	@$(VALGRIND) $(VALGRINDFLAGS) $(BINDIR)/brchess
 
 ##################################### test binaries
-.PHONY: testing test
+.PHONY: testing
 
 TEST          := piece-test fen-test bitboard-test movegen-test attack-test
 TEST          += movedo-test perft-test tt-test
@@ -440,10 +431,6 @@ ATTACK_OBJS   := $(addprefix $(OBJDIR)/,$(ATTACK_OBJS))
 MOVEDO_OBJS   := $(addprefix $(OBJDIR)/,$(MOVEDO_OBJS))
 PERFT_OBJS    := $(addprefix $(OBJDIR)/,$(PERFT_OBJS))
 TT_OBJS       := $(addprefix $(OBJDIR)/,$(TT_OBJS))
-
-test:
-	echo TEST=$(TEST)
-	echo FEN_OBJS=$(FEN_OBJS)
 
 testing: $(TEST)
 

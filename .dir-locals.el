@@ -1,3 +1,3 @@
 ((nil . ((compile-command . (concat "make -C "
                                        (vc-root-dir)
-                                       " -k -j4 dev")))))
+                                       " -k -j4 build=dev")))))
