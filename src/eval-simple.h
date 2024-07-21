@@ -16,6 +16,22 @@
 
 
 #include "chessdefs.h"
+#include "piece.h"
+
+struct pc_sq {
+    char *name;                                   /* one word only, no spaces */
+    int val[PIECE_TYPE_NB][PHASE_NB][SQUARE_NB];  /* MG then EG */
+};
+
+/**
+ * pc_sq - pre-defined piece-square tables.
+ */
+extern const struct pc_sq pc_sq_def[];
+extern const int nb_pc_sq;                        /* # of pc_sq_def */
+
+extern int pc_sq_current;
+extern int pc_sq_mg[COLOR_NB][PT_NB][SQUARE_NB];
+extern int pc_sq_eg[COLOR_NB][PT_NB][SQUARE_NB];
 
 /* no queen on board */
 #define simple_no_queen(p, c)              \
@@ -41,6 +57,9 @@
         simple_no_rook(p, BLACK)   &&         \
         simple_one_minor_piece(p, BLACK))) )
 
+int calc_phase(pos_t *pos);
+int eval_simple_find(char *str);
+void eval_simple_set(int set);
 void eval_simple_init(void);
 eval_t eval_simple(pos_t *pos);
 

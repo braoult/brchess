@@ -26,7 +26,7 @@
  */
 enum {
     WHITE, BLACK,
-    COLOR_MAX
+    COLOR_NB
 };
 typedef u8 color_t;
 
@@ -34,7 +34,8 @@ enum {
     ALL_PIECES = 0,                               /* 'all pieces' bitboard */
     NO_PIECE_TYPE = 0,
     PAWN = 1, KNIGHT, BISHOP, ROOK, QUEEN, KING,
-    PIECE_TYPE_MAX = 7                            /* bit 4 */
+    PIECE_TYPE_NB,
+    PT_NB = PIECE_TYPE_NB
 };
 typedef u8 piece_type_t;
 
@@ -43,7 +44,7 @@ enum __piece_e {
     NO_PIECE = 0,
     W_PAWN = PAWN, W_KNIGHT, W_BISHOP, W_ROOK, W_QUEEN, W_KING,
     B_PAWN = PAWN | 8, B_KNIGHT, B_BISHOP, B_ROOK, B_QUEEN, B_KING,
-    PIECE_MAX
+    PIECE_NB
 };
 typedef u8  piece_t;
 /* default values for midgame, endgame
@@ -82,7 +83,7 @@ extern const struct piece_details {
     char *name;                                   /* piece name */
     s16  mid_value;                               /* value midgame */
     s16  end_value;                               /* value endgame */
-} piece_details[PIECE_MAX];
+} piece_details[PIECE_NB];
 
 extern const char pieces_str[6+6+1];              /* to search from fen/user input */
 

@@ -129,6 +129,8 @@ else # ifeq ($(build),dev)
         #        attack.c
         #CPPFLAGS  += -DDEBUG_ATTACK_ATTACKERS              # sq_attackers
         #CPPFLAGS  += -DDEBUG_ATTACK_PINNERS                # sq_pinners details
+        #        eval.c eval-simple.c
+        CPPFLAGS  += -DEVAL                                 # eval
 
         #        old unused flags
         #CPPFLAGS  += -DDEBUG_POS                           # position.c
@@ -413,7 +415,7 @@ TEST          += movedo-test perft-test tt-test
 
 PIECE_OBJS    := piece.o
 FEN_OBJS      := $(PIECE_OBJS) fen.o position.o bitboard.o board.o \
-	hq.o attack.o hash.o init.o misc.o alloc.o move.o
+	hq.o attack.o hash.o init.o misc.o alloc.o move.o eval-simple.o
 BB_OBJS       := $(FEN_OBJS)
 MOVEGEN_OBJS  := $(BB_OBJS) move-gen.o
 ATTACK_OBJS   := $(MOVEGEN_OBJS)

@@ -24,7 +24,7 @@
 /**
  * piece_details
  */
-const struct piece_details piece_details[PIECE_MAX] = {
+const struct piece_details piece_details[PIECE_NB] = {
     /*             cap  low  fen  sym  name      midgame val endgame val */
     [EMPTY]    = { "",  "",  "",  "",  "",       0,          0 },
     [W_PAWN]   = { "",  "",  "P", "♙", "Pawn",   P_VAL_MID,  P_VAL_END },

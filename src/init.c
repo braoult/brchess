@@ -19,7 +19,7 @@
 
 #include "bitboard.h"
 #include "hq.h"
-
+#include "eval-simple.h"
 #include "hash.h"
 #include "hist.h"
 
@@ -51,6 +51,10 @@ void init_all(void)
 
     printff("transposition tables... ");
     tt_create(HASH_SIZE_DEFAULT);
+
+    /* eval tables */
+    printf("eval data... ");
+    eval_simple_init();
 
     printf("done.\n");
 }

@@ -81,9 +81,11 @@ typedef enum {
 
 /* game phases
  */
-#define OPENING    0
-#define MIDDLEGAME 1
-#define ENDGAME    2
+typedef enum {
+    MIDGAME,
+    ENDGAME,
+    PHASE_NB
+} phase_t;
 
 /* forward defs */
 typedef struct __pos_s pos_t;
@@ -109,7 +111,7 @@ enum {
     A6,     B6, C6, D6, E6, F6, G6, H6,
     A7,     B7, C7, D7, E7, F7, G7, H7,
     A8,     B8, C8, D8, E8, F8, G8, H8,
-    SQUARE_MAX = 64,
+    SQUARE_NB = 64,
     SQUARE_NONE = 64
 };
 typedef u8 square_t;
@@ -117,14 +119,14 @@ typedef u8 square_t;
 enum {
     //_SFILE_ = -1,                                 /* force signed enum */
     FILE_A = 0, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H,
-    FILE_MAX,
+    FILE_NB,
 };
 typedef u8 file_t;
 
 enum {
     //_SRANK_ = -1,                                 /* force signed enum */
     RANK_1 = 0, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8,
-    RANK_MAX,
+    RANK_NB,
 };
 typedef u8 rank_t;
 

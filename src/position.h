@@ -49,8 +49,9 @@ typedef struct __pos_s {
                         hkey_t key;
 
                         /* 16 bits */
-                        u16 plycount;             /* plies so far, start from 1 */
                         move_t move;
+                        u16 plycount;             /* plies so far, start from 1 */
+                        s16 phase;
 
                         /* 8 bits */
                         square_t en_passant;
@@ -63,7 +64,7 @@ typedef struct __pos_s {
     bitboard_t pinners;                           /* opponent pinners */
     bitboard_t blockers;                          /* pieces blocking pin */
     piece_t board[BOARDSIZE];
-    bitboard_t bb[2][PIECE_TYPE_MAX];             /* bb[0][PAWN], bb[1][ALL_PIECES] */
+    bitboard_t bb[2][PT_NB];                      /* bb[0][PAWN], bb[1][ALL_PIECES] */
     square_t king[2];                             /* dup with bb, faster retrieval */
 } pos_t;
 
