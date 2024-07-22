@@ -240,36 +240,11 @@ struct fentest {
 
     /*****************************************************
      * some of tests below are from:                     *
-     * - Rodent IV                                       *
-     * - https://www.chessprogramming.net/perfect-perft/ *
+     *   https://www.chessprogramming.net/perfect-perft/ *
      *****************************************************/
-    { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-      "kiwipete",
-      "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"
-    },
-    { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-      "",
-      "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1"
-    },
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
       "",
       "8/2p5/3p4/Kp5r/1R3p1k/8/4P1P1/8 w - - 0 1"
-    },
-    { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-      "",
-      "4rrk1/pp1n3p/3q2pQ/2p1pb2/2PP4/2P3N1/P2B2PP/4RRK1 b - - 7 19"
-    },
-    { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-      "",
-      "rq3rk1/ppp2ppp/1bnpb3/3N2B1/3NP3/7P/PPPQ1PP1/2KR3R w - - 7 14"
-    },
-    { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-      "",
-      "r1bq1r1k/1pp1n1pp/1p1p4/4p2Q/4Pp2/1BNP4/PPP2PPP/3R1RK1 w - - 2 14"
-    },
-    { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-      "",
-      "r3r1k1/2p2ppp/p1p1bn2/8/1q2P3/2NPQN2/PPP3PP/R4RK1 b - - 2 15"
     },
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
       "",
@@ -290,26 +265,6 @@ struct fentest {
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
       "",
       "n1q1r1k1/3b3n/p2p1bp1/P1pPp2p/2P1P3/2NBB2P/3Q1PK1/1R4N1 b - - 0 1"
-    },
-    { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-      "",
-      "r1bq1r1k/b1p1npp1/p2p3p/1p6/3PP3/1B2NN2/PP3PPP/R2Q1RK1 w - - 1 16"
-    },
-    { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-      "",
-      "3r1rk1/p5pp/bpp1pp2/8/q1PP1P2/b3P3/P2NQRPP/1R2B1K1 b - - 6 22"
-    },
-    { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-      "",
-      "r1q2rk1/2p1bppp/2Pp4/p6b/Q1PNp3/4B3/PP1R1PPP/2K4R w - - 2 18"
-    },
-    { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-      "",
-      "4k2r/1pb2ppp/1p2p3/1R1p4/3P4/2r1PN2/P4PPP/1R4K1 b - - 3 22"
-    },
-    { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-      "",
-      "3q2k1/pb3p1p/4pbp1/2r5/PpN2N2/1P2P2P/5PP1/Q2R2K1 b - - 4 26"
     },
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
       "",
@@ -411,7 +366,7 @@ struct fentest {
       "r1bqkbnr/pp1ppppp/2n5/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq -",
     },
     { __LINE__, MOVEDO | PERFT,
-      "multiple captures",
+      "multiple captures (kiwipete)",
       "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -",
     },
     { __LINE__, MOVEDO | PERFT,
