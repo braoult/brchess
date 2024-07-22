@@ -1,6 +1,6 @@
-/* eval-simple.c - simple position evaluation.
+/* eval-values.c - eval static definitions.
  *
- * Copyright (C) 2023 Bruno Raoult ("br")
+ * Copyright (C) 2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
  * Some rights reserved. See COPYING.
  *
@@ -15,10 +15,11 @@
 #include <bitops.h>
 
 #include "chessdefs.h"
-#include "piece.h"
 #include "position.h"
-#include "eval-simple.h"
-#include "eval.h"
+#include "piece.h"
+#include "eval-defs.h"
+//#include "eval-simple.h"
+//#include "eval.h"
 
 /*
  * Piece-square tables. For easier reading, they are defined for black side:
@@ -30,7 +31,7 @@
  *        A1 .... H1
  *      }
  */
-const struct pc_sq pc_sq_def[] = {
+const struct pst pst_defs[] = {
     {
         /*
          * rofchade:
@@ -457,10 +458,10 @@ const struct pc_sq pc_sq_def[] = {
     },                                            /* sjeng */
 };
 
-const int nb_pc_sq = ARRAY_SIZE(pc_sq_def);       /* # of predefined pc_sq tables */
-int pc_sq_current = 0;
-int pc_sq_mg[COLOR_NB][PT_NB][SQUARE_NB];
-int pc_sq_eg[COLOR_NB][PT_NB][SQUARE_NB];
+const int nb_pc_sq = ARRAY_SIZE(pst_defs);        /* # of predefined pc_sq tables */
+int pst_current = 0;
+int pst_mg[COLOR_NB][PT_NB][SQUARE_NB];
+int pst_eg[COLOR_NB][PT_NB][SQUARE_NB];
 
 /* phase calculation from Fruit:
  * https://github.com/Warpten/Fruit-2.1
@@ -492,108 +493,33 @@ s16 calc_phase(pos_t *pos)
     return phase;
 }
 
-int eval_simple_find(char *str)
+static int pst_find(char *str)
 {
     for (int i = 0; i < nb_pc_sq; ++i)
-        if (!strcmp(pc_sq_def[i].name, str))
+        if (!strcmp(pst_defs[i].name, str))
             return i;
     return -1;
 }
 
-void eval_simple_set(int set)
+void pst_init(char *name)
 {
-    const struct pc_sq *cur = pc_sq_def + set;
+    const struct pst *cur;
+    int set = pst_find(name);
 #   ifdef DEBUG_EVAL
-    printf("initializing piece-square tables %d\n", set);
+    printf("initializing piece-square tables `%s`(%d)\n", name, set);
 #   endif
-    pc_sq_current = set;
+    if (set < 0)
+        set = 0;
+
+    cur = pst_defs + set;
+    pst_current = set;
     for (piece_type_t pt = PAWN; pt < PT_NB; ++pt) {
         for (square_t sq = 0; sq < SQUARE_NB; ++sq) {
-            pc_sq_mg[BLACK][pt][sq] = cur->val[MIDGAME][pt][sq];
-            pc_sq_mg[WHITE][pt][sq] = cur->val[MIDGAME][pt][FLIP_V(sq)];
+            pst_mg[BLACK][pt][sq] = cur->val[MIDGAME][pt][sq];
+            pst_mg[WHITE][pt][sq] = cur->val[MIDGAME][pt][FLIP_V(sq)];
 
-            pc_sq_eg[BLACK][pt][sq] = cur->val[ENDGAME][pt][sq];
-            pc_sq_eg[WHITE][pt][sq] = cur->val[ENDGAME][pt][FLIP_V(sq)];
+            pst_eg[BLACK][pt][sq] = cur->val[ENDGAME][pt][sq];
+            pst_eg[WHITE][pt][sq] = cur->val[ENDGAME][pt][FLIP_V(sq)];
         }
     }
-}
-
-void eval_simple_init(char *set)
-{
-    int n = eval_simple_find(set);
-#   ifdef DEBUG_EVAL
-    printf("initializing eval_simple with set=%s: found=%d\n", set, n);
-#   endif
-
-    if (n >= 0)
-        pc_sq_current = n;
-    eval_simple_set(pc_sq_current);
-}
-
-/**
- * eval_material() - eval position material
- * @pos: &position to evaluate
- *
- * Basic material evaluation. Only midgame value is used.
- *
- * @return: the @pos material evaluation in centipawns
- */
-eval_t eval_material(pos_t *pos)
-{
-    eval_t val[COLOR_NB] = { 0 };
-
-    for (piece_type_t pt = PAWN; pt < KING; ++pt) {
-        eval_t pval = piece_midval(pt);
-        val[WHITE] += popcount64(pos->bb[WHITE][pt]) * pval;
-        val[BLACK] += popcount64(pos->bb[BLACK][pt]) * pval;
-    }
-#   ifdef DEBUG_EVAL
-    printf("material: w:%d b:%d\n", val[WHITE], val[BLACK]);
-#   endif
-
-    return val[WHITE] - val[BLACK];
-}
-
-/**
- * eval_simple() - simple and fast position evaluation
- * @pos: &position to evaluate
- *
- * This function is normally used only during initialization,
- * or when changing phase (middlegame <--> endgame), as the eval
- * will be done incrementally when doing moves.
- *
- * @return: the @pos evaluation in centipawns
- */
-eval_t eval_simple(pos_t *pos)
-{
-    eval_t eval[2] = { 0, 0 };
-    eval_t mg_eval[2], eg_eval[2];
-    //struct pc_sq = sq_ int (*gg)[6 + 2][64] = eg? pc_sq_eg: pc_sq_mg;
-
-    //pos->eval_simple_phase = ENDGAME;
-
-    for (color_t color = WHITE; color < COLOR_NB; ++color) {
-        mg_eval[color] = 0;
-        eg_eval[color] = 0;
-        for (piece_type_t pt = PAWN; pt < KING; pt++) {
-            bitboard_t bb = pos->bb[color][pt];
-            while (bb) {
-                square_t sq = bb_next(&bb);
-                mg_eval[color] += pc_sq_mg[color][pt][sq];
-                eg_eval[color] += pc_sq_eg[color][pt][sq];
-            }
-
-#           ifdef DEBUG_EVAL
-            printf("c=%d pt=%d mg=%d eg=%d\n", color, pt,
-                   mg_eval[color], eg_eval[color]);
-#           endif
-
-        }
-    }
-#   ifdef DEBUG_EVAL
-    printf("phase:%d mg[WHITE]:%d mg[BLACK]:%d eg[WHITE]:%d eg[BLACK]:%d\n",
-           pos->phase, mg_eval[WHITE], mg_eval[BLACK], eg_eval[WHITE], eg_eval[BLACK]);
-#   endif
-
-    return eval[WHITE] - eval[BLACK];
 }

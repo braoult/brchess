@@ -14,8 +14,4 @@
 #ifndef BRCHESS_H
 #define BRCHESS_H
 
-#include "position.h"
-
-int brchess(pos_t *pos);
-
 #endif  /* BRCHESS_H */

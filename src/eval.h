@@ -17,25 +17,7 @@
 #include <limits.h>
 
 #include "chessdefs.h"
-
-/* game phases
- */
-enum {
-    MIDGAME,
-    ENDGAME,
-    PHASE_NB
-};
-typedef s16 phase_t;
-
-/* max pieces eval is 9*QUEEN_VALUE + 2*ROOK_VALUE + 2*BISHOP_VALUE
- * + 2*KNIGHT_VALUE which is (for a pawn valued at 100) well less than 15,000.
- */
-#define EVAL_MAX     (SHRT_MAX)                   /* 32767 */
-#define EVAL_MIN     (-EVAL_MAX)
-
-#define EVAL_INVALID EVAL_MIN
-
-#define EVAL_MATE    30000
+#include "eval-defs.h"
 
 eval_t eval_mobility(pos_t *pos, bool color);
 eval_t eval_square_control(pos_t *pos, bool color);

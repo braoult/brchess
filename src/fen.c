@@ -23,7 +23,7 @@
 #include "chessdefs.h"
 #include "alloc.h"
 #include "position.h"
-#include "eval-simple.h"
+#include "eval-defs.h"
 #include "fen.h"
 
 /* FEN description:

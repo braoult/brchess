@@ -415,7 +415,7 @@ TEST          += movedo-test perft-test tt-test
 
 PIECE_OBJS    := piece.o
 FEN_OBJS      := $(PIECE_OBJS) fen.o position.o bitboard.o board.o \
-	hq.o attack.o hash.o init.o misc.o alloc.o move.o eval-simple.o
+	hq.o attack.o hash.o init.o misc.o alloc.o move.o eval-defs.o
 BB_OBJS       := $(FEN_OBJS)
 MOVEGEN_OBJS  := $(BB_OBJS) move-gen.o
 ATTACK_OBJS   := $(MOVEGEN_OBJS)

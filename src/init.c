@@ -19,11 +19,12 @@
 
 #include "bitboard.h"
 #include "hq.h"
-#include "eval-simple.h"
+#include "eval-defs.h"
 #include "hash.h"
 #include "hist.h"
 
 #define printff(x) ({ printf(x); fflush(stdout); })
+
 void init_all(void)
 {
     /* line-buffered stdout */
@@ -53,8 +54,8 @@ void init_all(void)
     tt_create(HASH_SIZE_DEFAULT);
 
     /* eval tables */
-    printf("eval data... ");
-    eval_simple_init("cpw");
+    printf("pst data... ");
+    pst_init("cpw");
 
     printf("done.\n");
 }

@@ -14,36 +14,9 @@
 #ifndef EVAL_SIMPLE_H
 #define EVAL_SIMPLE_H
 
-
 #include "chessdefs.h"
 #include "piece.h"
 #include "eval.h"
-
-struct pc_sq {
-    char *name;                                   /* one word only, no spaces */
-    int val[PIECE_TYPE_NB][PHASE_NB][SQUARE_NB];  /* MG then EG */
-};
-
-/* pieces weight in phase calculation.
- */
-enum {
-    P_PHASE = 0,
-    N_PHASE = 1,
-    B_PHASE = 1,
-    R_PHASE = 2,
-    Q_PHASE = 4,
-    ALL_PHASE = P_PHASE*16 + N_PHASE*4 + B_PHASE*4 + R_PHASE*4 + Q_PHASE*2
-};
-
-/**
- * pc_sq - pre-defined piece-square tables.
- */
-extern const struct pc_sq pc_sq_def[];
-extern const int nb_pc_sq;                        /* # of pc_sq_def */
-
-extern int pc_sq_current;
-extern int pc_sq_mg[COLOR_NB][PT_NB][SQUARE_NB];
-extern int pc_sq_eg[COLOR_NB][PT_NB][SQUARE_NB];
 
 /* no queen on board */
 #define simple_no_queen(p, c)              \
@@ -69,10 +42,10 @@ extern int pc_sq_eg[COLOR_NB][PT_NB][SQUARE_NB];
         simple_no_rook(p, BLACK)   &&         \
         simple_one_minor_piece(p, BLACK))) )
 
-s16 calc_phase(pos_t *pos);
-int eval_simple_find(char *str);
-void eval_simple_set(int set);
-void eval_simple_init(char *set);
+//s16 calc_phase(pos_t *pos);
+//int eval_simple_find(char *str);
+//void eval_simple_set(int set);
+//void eval_simple_init(char *set);
 
 eval_t eval_material(pos_t *pos);
 eval_t eval_simple(pos_t *pos);
