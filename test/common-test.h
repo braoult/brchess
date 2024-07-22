@@ -167,12 +167,6 @@ struct fentest {
       "4 castling possible, only K+R",
       "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1"
     },
-    /*
-     * { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-     *   "only kings on A1/A8, white to play",
-     *   "k7/8/8/8/8/8/8/K7 w - - 0 1"
-     * },
-     */
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
       "only one move possible (Pf2xBg3)",
       "k7/8/8/1p1p4/pPpPp3/P1PpPpb1/NBNP1P2/KBB1B3 w - - 0 1"
@@ -182,18 +176,13 @@ struct fentest {
       "k7/8/8/1p1p2pP/pPpPp3/P1PpPp2/NBNP1P2/KBB1B3 w - g6 0 1"
     },
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-      "2 Kings, W/B/ pawns on 7th for promotion",
+      "2 Kings, W/B pawns on 7th for promotion",
       "k4n2/4P3/8/8/8/8/4p3/K4N2 w - - 0 1"
     },
-    // white castled, and can e.p. on c6 black can castle
-    // white is a pawn down
-    // white has 36 moves: P=11 + 1 e.p. N=6+3 B=5+5 R=1 Q=3 K=1 + 1 e.p.
-    // black has 33 moves: P=11 N=2+7 B=5 R=3 Q=3 K=1 + castle
-    { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
-      "",
+    { __LINE__, FEN | MOVEGEN,
+      "movegen: white has 36 moves",
       "rnbqk2r/pp1pbpp1/7p/2pPp3/4n3/3B1N2/PPP2PPP/RNBQ1RK1 w kq c6 0 7"
     },
-
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
       "",
       "4k3/4p3/8/b7/1BR1p2p/1Q3P2/5N2/4K3 w - - 0 1"
@@ -206,9 +195,9 @@ struct fentest {
       "",
       "6k1/6pp/R2p4/p1p5/8/1P1r3P/6P1/6K1 b - - 3 3"
     },
-    /*************************************
-     * Some FEN found on talkchess forum *
-     *************************************/
+    /*****************************************************
+     * tests from talkchess                              *
+     *****************************************************/
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
       "https://www.talkchess.com/forum3/viewtopic.php?f=7&t=71379",
       "8/6kR/8/8/8/bq6/1rqqqqqq/K1nqnbrq b - - 0 1"
@@ -239,7 +228,7 @@ struct fentest {
     },
 
     /*****************************************************
-     * some of tests below are from:                     *
+     * tests from:                                       *
      *   https://www.chessprogramming.net/perfect-perft/ *
      *****************************************************/
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
