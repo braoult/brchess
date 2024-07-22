@@ -79,14 +79,6 @@ typedef enum {
 #define clr_ooo(f, c)    ((f) & ~(CASTLE_Q  << (2 * (c))))
 #define clr_castle(f, c) ((f) & ~(CASTLE_KQ << (2 * (c)) ))
 
-/* game phases
- */
-typedef enum {
-    MIDGAME,
-    ENDGAME,
-    PHASE_NB
-} phase_t;
-
 /* forward defs */
 typedef struct __pos_s pos_t;
 typedef struct __movelist_s movelist_t;

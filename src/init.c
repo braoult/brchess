@@ -49,12 +49,12 @@ void init_all(void)
     printff("zobrist tables... ");
     zobrist_init();
 
-    printff("transposition tables... ");
+    printff("hash tables... ");
     tt_create(HASH_SIZE_DEFAULT);
 
     /* eval tables */
     printf("eval data... ");
-    eval_simple_init();
+    eval_simple_init("cpw");
 
     printf("done.\n");
 }

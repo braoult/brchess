@@ -23,6 +23,7 @@
 #include "chessdefs.h"
 #include "alloc.h"
 #include "position.h"
+#include "eval-simple.h"
 #include "fen.h"
 
 /* FEN description:
@@ -258,6 +259,7 @@ end:
         return NULL;                              /* invalid position: ignored */
 
     tmppos.key = zobrist_calc(&tmppos);
+    tmppos.phase = calc_phase(&tmppos);
     if (!pos)
         pos = pos_new();
     pos_copy(&tmppos, pos);

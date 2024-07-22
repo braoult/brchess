@@ -88,7 +88,7 @@ void *alloc_aligned_hugepage(size_t size)
     /* round size (up) to alignment */
     size_t rounded = (size + PAGE_SIZE - 1) & -PAGE_SIZE;
     void *mem = alloc_aligned(PAGE_SIZE, rounded);
-    printf("size=%zu rounded=%zu\n", size, rounded);
+    //printf("size=%zu rounded=%zu\n", size, rounded);
     //void *mem = aligned_alloc(HUGE_PAGE_SIZE, size);
     if (mem) {
         if (madvise(mem, rounded, MADV_HUGEPAGE | MADV_RANDOM))

@@ -20,26 +20,6 @@
 #include "eval.h"
 #include "eval-simple.h"
 
-inline eval_t eval_material(pos_t *pos, bool color)
-{
-    eval_t res = 0;
-
-    /* I need to do something about the king, if it can be potentially taken
-     * if pseudo-moves include a pinned piece on King.
-     */
-    for (piece_type_t pt = PAWN; pt < KING; ++pt) {
-#       ifdef DEBUG_EVAL
-        log_f(2, "color=%u piece=%u bb=%u=%c count=%ul val=%ld\n",
-              color, piece, bb, P_LETTER(piece), popcount64(pos->bb[color][bb]),
-              P_VALUE(piece));
-#       endif
-        res += popcount64(pos->bb[color][pt]) * piece_val(pt);
-    }
-    return res;
-}
-
-
-
 /*
  * inline eval_t eval_mobility(pos_t *pos, bool color)
  * {
@@ -66,7 +46,7 @@ eval_t eval(pos_t *pos)
     //material[BLACK] = eval_material(pos, BLACK);
     simple = eval_simple(pos);
 
-#   ifdef DEBUG_EVAL
+#   ifdef DEBUG_EVAL2
     log_f(2, "eval_simple=%d\n", simple);
 #   endif
 
@@ -74,7 +54,7 @@ eval_t eval(pos_t *pos)
     //control[WHITE] = eval_square_control(pos, WHITE);
     //control[BLACK] = eval_square_control(pos, BLACK);
 
-#   ifdef DEBUG_EVAL
+#   ifdef DEBUG_EVAL2
     log_f(2, "square control: W:%d B:%d diff=%d\n",
           control[WHITE], control[BLACK],
           (control[WHITE] - control[BLACK]) * 10);
@@ -82,7 +62,7 @@ eval_t eval(pos_t *pos)
 
     /* 3) mobility: 10 mobility diff = 1 pawn
      */
-#   ifdef DEBUG_EVAL
+#   ifdef DEBUG_EVAL2
     log_f(2, "mobility: W:%u B:%u diff=%d\n",
           pos->mobility[WHITE], pos->mobility[BLACK],
           (pos->mobility[WHITE] - pos->mobility[BLACK]) * 10);
@@ -91,7 +71,7 @@ eval_t eval(pos_t *pos)
     //eval_t res = simple +
     //    (control[WHITE] - control[BLACK]) * 10 +
     //    (pos->mobility[WHITE] - pos->mobility[BLACK]) * 10;
-#   ifdef DEBUG_EVAL
+#   ifdef DEBUG_EVAL2
     log_f(2, "eval: %d\n", res);
 #   endif
     pos->eval = simple;

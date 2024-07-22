@@ -130,7 +130,7 @@ else # ifeq ($(build),dev)
         #CPPFLAGS  += -DDEBUG_ATTACK_ATTACKERS              # sq_attackers
         #CPPFLAGS  += -DDEBUG_ATTACK_PINNERS                # sq_pinners details
         #        eval.c eval-simple.c
-        CPPFLAGS  += -DEVAL                                 # eval
+        CPPFLAGS  += -DDEBUG_EVAL                           # eval
 
         #        old unused flags
         #CPPFLAGS  += -DDEBUG_POS                           # position.c

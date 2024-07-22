@@ -12,11 +12,13 @@
  */
 
 #include <brlib.h>
+#include <bitops.h>
 
 #include "chessdefs.h"
 #include "piece.h"
 #include "position.h"
 #include "eval-simple.h"
+#include "eval.h"
 
 /*
  * Piece-square tables. For easier reading, they are defined for black side:
@@ -463,29 +465,31 @@ int pc_sq_eg[COLOR_NB][PT_NB][SQUARE_NB];
 /* phase calculation from Fruit:
  * https://github.com/Warpten/Fruit-2.1
 */
-int phase;
-static u16 piece_phase[] = { 0, 1, 1, 2, 4, 0 };
 
-static const int p_phase = 0;
-static const int n_phase = 1;
-static const int b_phase = 1;
-static const int r_phase = 2;
-static const int q_phase = 4;
-
-static const int total_phase = p_phase * 16 + n_phase * 4 +
-    b_phase * 4 + r_phase * 4 + q_phase * 2;
-
-int calc_phase(pos_t *pos)
+/**
+ * calc_phase - calculate position phase
+ * @pos: &position
+ *
+ * This function should be calculated when a new position is setup, or as
+ * a verification of an incremental one.
+ * phase is clamped between 0 (opening) and 24 (ending).
+ *
+ * @return:
+ */
+s16 calc_phase(pos_t *pos)
 {
-    phase = total_phase;
-    phase -= p_phase * popcount64(pos->bb[WHITE][PAWN] | pos->bb[BLACK][PAWN]);
-    phase -= n_phase * popcount64(pos->bb[WHITE][KNIGHT] | pos->bb[BLACK][KNIGHT]);
-    phase -= b_phase * popcount64(pos->bb[WHITE][BISHOP] | pos->bb[BLACK][BISHOP]);
-    phase -= r_phase * popcount64(pos->bb[WHITE][ROOK] | pos->bb[BLACK][ROOK]);
-    phase -= q_phase * popcount64(pos->bb[WHITE][QUEEN] | pos->bb[BLACK][QUEEN]);
+    int phase = ALL_PHASE;
+    phase -= P_PHASE * popcount64(pos->bb[WHITE][PAWN] | pos->bb[BLACK][PAWN]);
+    phase -= N_PHASE * popcount64(pos->bb[WHITE][KNIGHT] | pos->bb[BLACK][KNIGHT]);
+    phase -= B_PHASE * popcount64(pos->bb[WHITE][BISHOP] | pos->bb[BLACK][BISHOP]);
+    phase -= R_PHASE * popcount64(pos->bb[WHITE][ROOK] | pos->bb[BLACK][ROOK]);
+    phase -= Q_PHASE * popcount64(pos->bb[WHITE][QUEEN] | pos->bb[BLACK][QUEEN]);
 
-    phase = max(phase, 0);
-    return (phase * 256 + (total_phase / 2)) / total_phase;
+    phase = clamp(phase, 0, ALL_PHASE);
+#   ifdef DEBUG_EVAL
+    printf("calc phase:%d\n", phase);
+#   endif
+    return phase;
 }
 
 int eval_simple_find(char *str)
@@ -514,12 +518,40 @@ void eval_simple_set(int set)
     }
 }
 
-void eval_simple_init(void)
+void eval_simple_init(char *set)
 {
+    int n = eval_simple_find(set);
 #   ifdef DEBUG_EVAL
-    printf("initializing eval_simple\n");
+    printf("initializing eval_simple with set=%s: found=%d\n", set, n);
 #   endif
+
+    if (n >= 0)
+        pc_sq_current = n;
     eval_simple_set(pc_sq_current);
+}
+
+/**
+ * eval_material() - eval position material
+ * @pos: &position to evaluate
+ *
+ * Basic material evaluation. Only midgame value is used.
+ *
+ * @return: the @pos material evaluation in centipawns
+ */
+eval_t eval_material(pos_t *pos)
+{
+    eval_t val[COLOR_NB] = { 0 };
+
+    for (piece_type_t pt = PAWN; pt < KING; ++pt) {
+        eval_t pval = piece_midval(pt);
+        val[WHITE] += popcount64(pos->bb[WHITE][pt]) * pval;
+        val[BLACK] += popcount64(pos->bb[BLACK][pt]) * pval;
+    }
+#   ifdef DEBUG_EVAL
+    printf("material: w:%d b:%d\n", val[WHITE], val[BLACK]);
+#   endif
+
+    return val[WHITE] - val[BLACK];
 }
 
 /**
@@ -539,9 +571,6 @@ eval_t eval_simple(pos_t *pos)
     //struct pc_sq = sq_ int (*gg)[6 + 2][64] = eg? pc_sq_eg: pc_sq_mg;
 
     //pos->eval_simple_phase = ENDGAME;
-#   ifdef DEBUG_EVAL
-    log_f(5, "phase = %d\n", eg? "endgame": "midgame");
-#   endif
 
     for (color_t color = WHITE; color < COLOR_NB; ++color) {
         mg_eval[color] = 0;
@@ -555,8 +584,7 @@ eval_t eval_simple(pos_t *pos)
             }
 
 #           ifdef DEBUG_EVAL
-            printf("c=%d p=%d mg=%ld eg=%ld\n", color, pt,
-                   popcount64(pos->bb[color][pt]),
+            printf("c=%d pt=%d mg=%d eg=%d\n", color, pt,
                    mg_eval[color], eg_eval[color]);
 #           endif
 
@@ -564,7 +592,7 @@ eval_t eval_simple(pos_t *pos)
     }
 #   ifdef DEBUG_EVAL
     printf("phase:%d mg[WHITE]:%d mg[BLACK]:%d eg[WHITE]:%d eg[BLACK]:%d\n",
-           mg_eval[WHITE], mg_eval[BLACK], eg_eval[WHITE], eg_eval[BLACK]);
+           pos->phase, mg_eval[WHITE], mg_eval[BLACK], eg_eval[WHITE], eg_eval[BLACK]);
 #   endif
 
     return eval[WHITE] - eval[BLACK];

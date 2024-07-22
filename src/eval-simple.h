@@ -17,10 +17,22 @@
 
 #include "chessdefs.h"
 #include "piece.h"
+#include "eval.h"
 
 struct pc_sq {
     char *name;                                   /* one word only, no spaces */
     int val[PIECE_TYPE_NB][PHASE_NB][SQUARE_NB];  /* MG then EG */
+};
+
+/* pieces weight in phase calculation.
+ */
+enum {
+    P_PHASE = 0,
+    N_PHASE = 1,
+    B_PHASE = 1,
+    R_PHASE = 2,
+    Q_PHASE = 4,
+    ALL_PHASE = P_PHASE*16 + N_PHASE*4 + B_PHASE*4 + R_PHASE*4 + Q_PHASE*2
 };
 
 /**
@@ -57,10 +69,12 @@ extern int pc_sq_eg[COLOR_NB][PT_NB][SQUARE_NB];
         simple_no_rook(p, BLACK)   &&         \
         simple_one_minor_piece(p, BLACK))) )
 
-int calc_phase(pos_t *pos);
+s16 calc_phase(pos_t *pos);
 int eval_simple_find(char *str);
 void eval_simple_set(int set);
-void eval_simple_init(void);
+void eval_simple_init(char *set);
+
+eval_t eval_material(pos_t *pos);
 eval_t eval_simple(pos_t *pos);
 
 #endif  /* EVAL_SIMPLE_H */

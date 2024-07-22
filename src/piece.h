@@ -103,10 +103,15 @@ extern const char pieces_str[6+6+1];              /* to search from fen/user inp
 #define SET_BLACK(p)      (piece_t)((p) |= MASK_COLOR)
 #define SET_COLOR(p, c)   (piece_t)(!(c)? SET_WHITE(p): SET_BLACK(p))
 
-static __inline s16 piece_val(piece_type_t pt)
+static __inline s16 piece_midval(piece_type_t pt)
 {
     return piece_details[pt].mid_value;
 }
+static __inline s16 piece_endval(piece_type_t pt)
+{
+    return piece_details[pt].mid_value;
+}
+#define piece_val(pt) piece_midval(pt)
 
 bool piece_ok(piece_t p);
 
