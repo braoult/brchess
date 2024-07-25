@@ -100,31 +100,14 @@ pos_t *pos_clear(pos_t *pos)
 #   ifdef DEBUG_POS
     printf("size(pos_board=%lu elt=%lu\n", sizeof(pos->board), sizeof(int));
 #   endif
-    pos->node_count = 0;
-    pos->turn = WHITE;
+    memset(pos, 0, sizeof (pos_t));
 
-    /* move_do/undo position state */
-    pos->key = 0;
+    /* non-zero values */
     pos->en_passant = SQUARE_NONE;
-    pos->castle = 0;
-    pos->clock_50 = 0;
-    pos->plycount = 0;
     pos->move = MOVE_NONE;
-    pos->captured = NO_PIECE;
 
-    for (square_t sq = A1; sq <= H8; ++sq)
-        pos->board[sq] = EMPTY;
-
-    for (color_t color = WHITE; color <= BLACK; ++color) {
-        for (piece_type_t piece = 0; piece <= KING; ++piece)
-            pos->bb[color][piece] = 0;
-        //pos->controlled[color] = 0;
-        pos->king[color] = SQUARE_NONE;
-    }
-
-    pos->checkers = 0;
-    pos->pinners = 0;
-    pos->blockers = 0;
+    pos->king[WHITE] = SQUARE_NONE;
+    pos->king[BLACK] = SQUARE_NONE;
 
     return pos;
 }
