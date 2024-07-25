@@ -1,6 +1,6 @@
 /* uci.c - uci protocol
  *
- * Copyright (C) 2024 Bruno Raoult ("br")
+ * Copyright (C) 2021-2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
  * Some rights reserved. See COPYING.
  *
@@ -10,7 +10,6 @@
  * SPDX-License-Identifier: GPL-3.0-or-later <https://spdx.org/licenses/GPL-3.0-or-later.html>
  *
  */
-
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,7 +29,7 @@
 #include "search.h"
 
 struct command {
-    char *name;                                   /* User printable name */
+    char *name;                                   /* command name */
     int (*func)(pos_t *, char *);                 /* function doing the job */
     char *doc;                                    /* function doc */
 };
@@ -46,6 +45,7 @@ int string_trim (char *str);
 int do_ucinewgame(pos_t *, char *);
 int do_uci(pos_t *, char *);
 int do_isready(pos_t *, char *);
+int do_quit(pos_t *, char *);
 
 int do_position(pos_t *, char *);
 
@@ -56,7 +56,6 @@ int do_perft(pos_t *, char *);
 
 int do_hist(pos_t *, char *);
 int do_help(pos_t *, char *);
-int do_quit(pos_t *, char *);
 
 struct command commands[] = {
     { "help",       do_help, "(not UCI) This help" },
@@ -76,33 +75,6 @@ struct command commands[] = {
 
     { NULL, (int(*)()) NULL, NULL }
 };
-
-static int done = 0;
-
-int uci(pos_t *pos)
-{
-    char *str = NULL, *saveptr, *token, *args;
-    int len;
-    size_t lenstr = 0;
-    struct command *command;
-
-    while (!done && getline(&str, &lenstr, stdin) >= 0) {
-        if (!(len = string_trim(str)))
-            continue;
-        token = strtok_r(str, " ", &saveptr);
-        if (! (command= find_command(token))) {
-            fprintf(stderr, "Unknown [%s] command. Try 'help'.\n", token);
-            continue;
-        }
-        args = strtok_r(NULL, "", &saveptr);
-        execute_line(pos, command, args);
-    }
-
-    if (str)
-        free(str);
-
-    return 0;
-}
 
 /* Execute a command line. */
 int execute_line(pos_t *pos, struct command *command, char *args)
@@ -370,7 +342,6 @@ int do_perft(__unused pos_t *pos, __unused char *arg)
     return 1;
 }
 
-
 int do_hist(__unused pos_t *pos, __unused char *arg)
 {
     hist_static_print();
@@ -385,11 +356,6 @@ int do_help(__unused pos_t *pos, __unused char *arg)
     }
 
     return 0;
-}
-
-int do_quit(__unused pos_t *pos, __unused char *arg)
-{
-    return done = 1;
 }
 
 /*
@@ -489,4 +455,36 @@ int string_trim(char *str)
         to--;
     *to = 0;
     return to - str;
+}
+
+static int done = 0;
+
+int do_quit(__unused pos_t *pos, __unused char *arg)
+{
+    return done = 1;
+}
+
+int uci(pos_t *pos)
+{
+    char *str = NULL, *saveptr, *token, *args;
+    int len;
+    size_t lenstr = 0;
+    struct command *command;
+
+    while (!done && getline(&str, &lenstr, stdin) >= 0) {
+        if (!(len = string_trim(str)))
+            continue;
+        token = strtok_r(str, " ", &saveptr);
+        if (! (command= find_command(token))) {
+            fprintf(stderr, "Unknown [%s] command. Try 'help'.\n", token);
+            continue;
+        }
+        args = strtok_r(NULL, "", &saveptr);
+        execute_line(pos, command, args);
+    }
+
+    if (str)
+        free(str);
+
+    return 0;
 }
