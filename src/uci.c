@@ -27,6 +27,7 @@
 #include "move-gen.h"
 #include "move-do.h"
 #include "search.h"
+#include "eval-defs.h"
 
 struct command {
     char *name;                                   /* command name */
@@ -224,8 +225,16 @@ int do_uci(__unused pos_t *pos, __unused char *arg)
 {
     printf("id name brchess " VERSION "\n");
     printf("id author Bruno Raoult\n");
-    printf("option option name Hash type spin default %d min %d max %d\n",
+    printf("option name Hash type spin default %d min %d max %d\n",
            hash_tt.mb, HASH_SIZE_MIN, HASH_SIZE_MAX);
+
+    if (PST_NB > 1) {
+        printf("option name pst type combo default %s",
+               pst_name(pst_current));
+        for (int i = 0; i < PST_NB; ++i)
+            printf(" var %s", pst_name(i));
+    }
+    printf("\n");
     printf("uciok\n");
     return 1;
 }

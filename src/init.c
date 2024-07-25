@@ -68,9 +68,7 @@ void init_all(void)
 
     /* eval tables */
     printf("pst tables... ");
-    int pst;
-    bug_on_always((pst = pst_find(PST_DEFAULT)) < 0);
-    pst_init(pst);
+    pst_init(PST_DEFAULT);
 
     printf("done.\n");
 }

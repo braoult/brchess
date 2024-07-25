@@ -80,16 +80,6 @@ void param_set(int num, eval_t val)
  *        A1 .... H1
  *      }
  */
-/**
- * pst_defs - pre-defined piece-square tables.
- */
-enum {
-    PST_ROFCHADE,
-    PST_CPW,
-    PST_SJENG,
-    PST_NB
-};
-
 static const struct pst {
     char *name;                                   /* one word only, no spaces */
     int val[PIECE_TYPE_NB][PHASE_NB][SQUARE_NB];  /* MG then EG */
@@ -536,7 +526,7 @@ static const struct pst {
     },                                            /* sjeng end */
 };
 
-int pst_current = 0;
+int pst_current = PST_DEFAULT;
 eval_t pst_mg[COLOR_NB][PT_NB][SQUARE_NB];
 eval_t pst_eg[COLOR_NB][PT_NB][SQUARE_NB];
 
@@ -577,4 +567,11 @@ void pst_init(int set)
             pst_eg[WHITE][pt][FLIP_V(sq)] =  pst_eg[BLACK][pt][sq];
         }
     }
+}
+
+char *pst_name(int i)
+{
+    if (i >= 0 && i < PST_NB)
+        return pst_defs[i].name;
+    return "undef";
 }

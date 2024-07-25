@@ -83,7 +83,17 @@ extern eval_t parameters[EV_PARAMS_NB];
 void param_set (int num, eval_t val);
 
 /* PST data */
-#define PST_DEFAULT "cpw"
+/**
+ * pst_defs - pre-defined piece-square tables.
+ */
+enum {
+    PST_ROFCHADE,
+    PST_CPW,
+    PST_SJENG,
+    PST_NB
+};
+
+#define PST_DEFAULT PST_CPW
 extern int pst_current;
 extern eval_t pst_mg[COLOR_NB][PT_NB][SQUARE_NB];
 extern eval_t pst_eg[COLOR_NB][PT_NB][SQUARE_NB];
