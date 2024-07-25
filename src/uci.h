@@ -1,6 +1,6 @@
-/* eval.h - static position evaluation.
+/* uci.h - main loop.
  *
- * Copyright (C) 2021-2024 Bruno Raoult ("br")
+ * Copyright (C) 2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
  * Some rights reserved. See COPYING.
  *
@@ -11,19 +11,11 @@
  *
  */
 
-#ifndef EVAL_H
-#define EVAL_H
+#ifndef UCI_H
+#define UCI_H
 
-#include <limits.h>
+#include "position.h"
 
-#include "chessdefs.h"
-#include "eval-defs.h"
+int uci(pos_t *pos);
 
-s16 calc_phase(pos_t *pos);
-
-eval_t eval_mobility(pos_t *pos, bool color);
-eval_t eval_square_control(pos_t *pos, bool color);
-
-eval_t eval(pos_t *pos);
-
-#endif  /* EVAL_H */
+#endif  /* UCI_H */

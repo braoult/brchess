@@ -1,4 +1,4 @@
-/* eval-values.c - eval static definitions.
+/* eval-values.c - eval parameters
  *
  * Copyright (C) 2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
@@ -21,6 +21,55 @@
 //#include "eval-simple.h"
 //#include "eval.h"
 
+/* eval parameters definition. */
+static const struct ev_params ev_param_def [EV_PARAMS_NB] = {
+    /*           default  min    max  setable    string */
+    [WT_MAT] = {    100,    0,   400,    true,   "material weight" },
+    [WT_PST] = {    100,    0,   400,    true,   "pst weight" },
+};
+
+void param_init()
+{
+    for (int i = 0; i < EV_PARAMS_NB; ++i)
+        parameters[i] = ev_param_def[i].init;
+}
+
+int param_find_name(char *name)
+{
+    for (int i = 0; i < EV_PARAMS_NB; ++i)
+        if (!strcmp(ev_param_def[i].name, name))
+            return i;
+    return -1;
+}
+char *param_name(const int num)
+{
+    return ev_param_def[num].name;
+}
+
+eval_t param_default(const int num)
+{
+    return ev_param_def[num].init;
+}
+eval_t param_min(const int num)
+{
+    return ev_param_def[num].min;
+}
+eval_t param_max(const int num)
+{
+    return ev_param_def[num].max;
+}
+
+/* parameters in use */
+eval_t parameters[EV_PARAMS_NB];
+void param_set(int num, eval_t val)
+{
+    if (num >= 0 && num < EV_PARAMS_NB &&
+        val >= param_min(num) && val <= param_max(num)) {
+        parameters[num] = val;
+    }
+}
+
+
 /*
  * Piece-square tables. For easier reading, they are defined for black side:
  *
@@ -31,38 +80,56 @@
  *        A1 .... H1
  *      }
  */
-const struct pst pst_defs[] = {
-    {
+/**
+ * pst_defs - pre-defined piece-square tables.
+ */
+enum {
+    PST_ROFCHADE,
+    PST_CPW,
+    PST_SJENG,
+    PST_NB
+};
+
+static const struct pst {
+    char *name;                                   /* one word only, no spaces */
+    int val[PIECE_TYPE_NB][PHASE_NB][SQUARE_NB];  /* MG then EG */
+} pst_defs[PST_NB] = {
+    [PST_ROFCHADE] = {
         /*
          * rofchade:
          * https://www.talkchess.com/forum3/viewtopic.php?f=2&t=68311&start=19
          */
         "rofchade",
         {
+            /* A8 ..... H8
+             * ...........
+             * A1 ..... H1
+             */
             [PAWN] = {
                 {                                 /* midgame */
-                    0,   0,   0,   0,   0,   0,  0,   0,
-                    98, 134,  61,  95,  68, 126, 34, -11,
-                    -6,   7,  26,  31,  65,  56, 25, -20,
+                    + 0,   0,   0,   0,   0,   0,  0,   0,
+                    +98, 134,  61,  95,  68, 126, 34, -11,
+                    - 6,   7,  26,  31,  65,  56, 25, -20,
                     -14,  13,   6,  21,  23,  12, 17, -23,
                     -27,  -2,  -5,  12,  17,   6, 10, -25,
                     -26,  -4,  -4, -10,   3,   3, 33, -12,
                     -35,  -1, -20, -23, -15,  24, 38, -22,
-                    0,   0,   0,   0,   0,   0,  0,   0,
+                    + 0,   0,   0,   0,   0,   0,  0,   0,
                 },
                 {                                 /* endgame */
-                    0,   0,   0,   0,   0,   0,   0,   0,
+                    + 0,   0,   0,   0,   0,   0,   0,   0,
                     178, 173, 158, 134, 147, 132, 165, 187,
-                    94, 100,  85,  67,  56,  53,  82,  84,
-                    32,  24,  13,   5,  -2,   4,  17,  17,
-                    13,   9,  -3,  -7,  -7,  -8,   3,  -1,
-                    4,   7,  -6,   1,   0,  -5,  -1,  -8,
-                    13,   8,   8,  10,  13,   0,   2,  -7,
-                    0,   0,   0,   0,   0,   0,   0,   0,
+                    +94, 100,  85,  67,  56,  53,  82,  84,
+                    +32,  24,  13,   5,  -2,   4,  17,  17,
+                    +13,   9,  -3,  -7,  -7,  -8,   3,  -1,
+                    + 4,   7,  -6,   1,   0,  -5,  -1,  -8,
+                    +13,   8,   8,  10,  13,   0,   2,  -7,
+                    + 0,   0,   0,   0,   0,   0,   0,   0,
                 }
             },
             [KNIGHT] = {
-                {                                 /* midgame */
+                {
+                    /* midgame */
                     -167, -89, -34, -49,  61, -97, -15, -107,
                     -73, -41,  72,  36,  23,  62,   7,  -17,
                     -47,  60,  37,  65,  84, 129,  73,   44,
@@ -88,18 +155,18 @@ const struct pst pst_defs[] = {
                     -29,  4, -82, -37, -25, -42,   7,  -8,
                     -26, 16, -18, -13,  30,  59,  18, -47,
                     -16, 37,  43,  40,  35,  50,  37,  -2,
-                     -4,  5,  19,  50,  37,  37,   7,  -2,
-                     -6, 13,  13,  26,  34,  12,  10,   4,
-                      0, 15,  15,  15,  14,  27,  18,  10,
-                      4, 15,  16,   0,   7,  21,  33,   1,
+                    - 4,  5,  19,  50,  37,  37,   7,  -2,
+                    - 6, 13,  13,  26,  34,  12,  10,   4,
+                    + 0, 15,  15,  15,  14,  27,  18,  10,
+                    + 4, 15,  16,   0,   7,  21,  33,   1,
                     -33, -3, -14, -21, -13, -12, -39, -21,
                 },
                 {                                 /* endgame */
                     -14, -21, -11,  -8, -7,  -9, -17, -24,
-                     -8,  -4,   7, -12, -3, -13,  -4, -14,
-                      2,  -8,   0,  -1, -2,   6,   0,   4,
-                     -3,   9,  12,   9, 14,  10,   3,   2,
-                     -6,   3,  13,  19,  7,  10,  -3,  -9,
+                    - 8,  -4,   7, -12, -3, -13,  -4, -14,
+                    + 2,  -8,   0,  -1, -2,   6,   0,   4,
+                    - 3,   9,  12,   9, 14,  10,   3,   2,
+                    - 6,   3,  13,  19,  7,  10,  -3,  -9,
                     -12,  -3,   8,  10, 13,   3,  -7, -15,
                     -14, -18,  -7,  -1,  4,  -9, -15, -27,
                     -23,  -9, -23,  -5, -9, -16,  -5, -17,
@@ -107,9 +174,9 @@ const struct pst pst_defs[] = {
             },
             [ROOK] = {
                 {                                 /* midgame */
-                    32,  42,  32,  51, 63,  9,  31,  43,
-                    27,  32,  58,  62, 80, 67,  26,  44,
-                    -5,  19,  26,  36, 17, 45,  61,  16,
+                    +32,  42,  32,  51, 63,  9,  31,  43,
+                    +27,  32,  58,  62, 80, 67,  26,  44,
+                    - 5,  19,  26,  36, 17, 45,  61,  16,
                     -24, -11,   7,  26, 24, 35,  -8, -20,
                     -36, -26, -12,  -1,  9, -7,   6, -23,
                     -45, -25, -16, -17,  3,  0,  -5, -33,
@@ -119,9 +186,9 @@ const struct pst pst_defs[] = {
                 {                                 /* endgame */
                     13, 10, 18, 15, 12,  12,   8,   5,
                     11, 13, 13, 11, -3,   3,   8,   3,
-                    7,  7,  7,  5,  4,  -3,  -5,  -3,
-                    4,  3, 13,  1,  2,   1,  -1,   2,
-                    3,  5,  8,  4, -5,  -6,  -8, -11,
+                    +7,  7,  7,  5,  4,  -3,  -5,  -3,
+                    +4,  3, 13,  1,  2,   1,  -1,   2,
+                    +3,  5,  8,  4, -5,  -6,  -8, -11,
                     -4,  0, -5, -1, -7, -12,  -8, -16,
                     -6, -6,  0,  2, -9,  -9, -11,  -3,
                     -9,  2,  3, -1, -5, -13,   4, -20,
@@ -133,16 +200,16 @@ const struct pst pst_defs[] = {
                     -24, -39,  -5,   1, -16,  57,  28,  54,
                     -13, -17,   7,   8,  29,  56,  47,  57,
                     -27, -27, -16, -16,  -1,  17,  -2,   1,
-                    -9, -26,  -9, -10,  -2,  -4,   3,  -3,
+                    - 9, -26,  -9, -10,  -2,  -4,   3,  -3,
                     -14,   2, -11,  -2,  -5,   2,  14,   5,
                     -35,  -8,  11,   2,   8,  15,  -3,   1,
-                    -1, -18,  -9,  10, -15, -25, -31, -50,
+                    - 1, -18,  -9,  10, -15, -25, -31, -50,
                 },
                 {                                 /* endgame */
-                    -9,  22,  22,  27,  27,  19,  10,  20,
+                    - 9,  22,  22,  27,  27,  19,  10,  20,
                     -17,  20,  32,  41,  58,  25,  30,   0,
                     -20,   6,   9,  49,  47,  35,  19,   9,
-                    3,  22,  24,  45,  57,  40,  57,  36,
+                    + 3,  22,  24,  45,  57,  40,  57,  36,
                     -18,  28,  19,  47,  31,  34,  39,  23,
                     -16, -27,  15,   6,   9,  17,  10,   5,
                     -22, -23, -30, -16, -16, -23, -36, -32,
@@ -152,19 +219,19 @@ const struct pst pst_defs[] = {
             [KING] = {                            /* midgame */
                 {
                     -65,  23,  16, -15, -56, -34,   2,  13,
-                    29,  -1, -20,  -7,  -8,  -4, -38, -29,
-                    -9,  24,   2, -16, -20,   6,  22, -22,
+                    +29,  -1, -20,  -7,  -8,  -4, -38, -29,
+                    - 9,  24,   2, -16, -20,   6,  22, -22,
                     -17, -20, -12, -27, -30, -25, -14, -36,
                     -49,  -1, -27, -39, -46, -44, -33, -51,
                     -14, -14, -22, -46, -44, -30, -15, -27,
-                    1,   7,  -8, -64, -43, -16,   9,   8,
+                    + 1,   7,  -8, -64, -43, -16,   9,   8,
                     -15,  36,  12, -54,   8, -28,  24,  14,
                 },
                 {                                 /* endgame */
                     -74, -35, -18, -18, -11,  15,   4, -17,
                     -12,  17,  14,  17,  17,  38,  23,  11,
-                    10,  17,  23,  15,  20,  45,  44,  13,
-                    -8,  22,  24,  27,  26,  33,  26,   3,
+                    +10,  17,  23,  15,  20,  45,  44,  13,
+                    - 8,  22,  24,  27,  26,  33,  26,   3,
                     -18,  -4,  21,  24,  27,  23,   9, -11,
                     -19,  -3,  11,  21,  23,  16,   7,  -9,
                     -27, -11,   4,  13,  14,   4,  -5, -17,
@@ -172,8 +239,9 @@ const struct pst pst_defs[] = {
                 }
             }
         }
-    },                                            /* CPW */
-    {
+    },                                            /* rofchade end */
+
+    [PST_CPW] = {
         /*
          * CPW:
          * https://www.chessprogramming.org/Simplified_Evaluation_Function
@@ -181,26 +249,31 @@ const struct pst pst_defs[] = {
          */
         "cpw",
         {
+            /* A8 ..... H8
+             * ...........
+             * A1 ..... H1
+             */
             [PAWN] = {
-                {                                 /* midgame */
-                    0,  0,   0,   0,   0,   0,  0,  0,
+                { /* H1                                 H8 */
+                    /* midgame */
+                    +0,  0,   0,   0,   0,   0,  0,  0,
                     50, 50,  50,  50,  50,  50, 50, 50,
                     10, 10,  20,  30,  30,  20, 10, 10,
-                    5,  5,  10,  25,  25,  10,  5,  5,
-                    0,  0,   0,  20,  20,   0,  0,  0,
-                    5, -5, -10,   0,   0, -10, -5,  5,
-                    5, 10,  10, -20, -20,  10, 10,  5,
-                    0,  0,   0,   0,   0,   0,  0,  0,
+                    +5,  5,  10,  25,  25,  10,  5,  5,
+                    +0,  0,   0,  20,  20,   0,  0,  0,
+                    +5, -5, -10,   0,   0, -10, -5,  5,
+                    +5, 10,  10, -20, -20,  10, 10,  5,
+                    +0,  0,   0,   0,   0,   0,  0,  0,
                 },
                 {                                 /* endgame */
-                    0,  0,   0,   0,   0,   0,  0,  0,
+                    +0,  0,   0,   0,   0,   0,  0,  0,
                     50, 50,  50,  50,  50,  50, 50, 50,
                     10, 10,  20,  30,  30,  20, 10, 10,
-                    5,  5,  10,  25,  25,  10,  5,  5,
-                    0,  0,   0,  20,  20,   0,  0,  0,
-                    5, -5, -10,   0,   0, -10, -5,  5,
-                    5, 10,  10, -20, -20,  10, 10,  5,
-                    0,  0,   0,   0,   0,   0,  0,  0,
+                    +5,  5,  10,  25,  25,  10,  5,  5,
+                    +0,  0,   0,  20,  20,   0,  0,  0,
+                    +5, -5, -10,   0,   0, -10, -5,  5,
+                    +5, 10,  10, -20, -20,  10, 10,  5,
+                    +0,  0,   0,   0,   0,   0,  0,  0,
                 },
             },
             [KNIGHT] = {
@@ -249,24 +322,24 @@ const struct pst pst_defs[] = {
             },
             [ROOK] = {
                 {                                 /* midgame */
-                    0,  0,  0,  0,  0,  0,  0,  0,
-                    5, 10, 10, 10, 10, 10, 10,  5,
+                    +0,  0,  0,  0,  0,  0,  0,  0,
+                    +5, 10, 10, 10, 10, 10, 10,  5,
                     -5,  0,  0,  0,  0,  0,  0, -5,
                     -5,  0,  0,  0,  0,  0,  0, -5,
                     -5,  0,  0,  0,  0,  0,  0, -5,
                     -5,  0,  0,  0,  0,  0,  0, -5,
                     -5,  0,  0,  0,  0,  0,  0, -5,
-                    0,  0,  0,  5,  5,  0,  0,  0,
+                    +0,  0,  0,  5,  5,  0,  0,  0,
                 },
                 {                                 /* endgame */
-                    0,  0,  0,  0,  0,  0,  0,  0,
-                    5, 10, 10, 10, 10, 10, 10,  5,
+                    +0,  0,  0,  0,  0,  0,  0,  0,
+                    +5, 10, 10, 10, 10, 10, 10,  5,
                     -5,  0,  0,  0,  0,  0,  0, -5,
                     -5,  0,  0,  0,  0,  0,  0, -5,
                     -5,  0,  0,  0,  0,  0,  0, -5,
                     -5,  0,  0,  0,  0,  0,  0, -5,
                     -5,  0,  0,  0,  0,  0,  0, -5,
-                    0,  0,  0,  5,  5,  0,  0,  0,
+                    +0,  0,  0,  5,  5,  0,  0,  0,
                 },
             },
             [QUEEN] = {
@@ -274,8 +347,8 @@ const struct pst pst_defs[] = {
                     -20, -10, -10, -5, -5, -10, -10, -20,
                     -10,   0,   0,  0,  0,   0,   0, -10,
                     -10,   0,   5,  5,  5,   5,   0, -10,
-                    -5,   0,   5,  5,  5,   5,   0,  -5,
-                    0,   0,   5,  5,  5,   5,   0,  -5,
+                    - 5,   0,   5,  5,  5,   5,   0,  -5,
+                    + 0,   0,   5,  5,  5,   5,   0,  -5,
                     -10,   5,   5,  5,  5,   5,   0, -10,
                     -10,   0,   5,  0,  0,   0,   0, -10,
                     -20, -10, -10, -5, -5, -10, -10, -20,
@@ -284,8 +357,8 @@ const struct pst pst_defs[] = {
                     -20, -10, -10, -5, -5, -10, -10, -20,
                     -10,   0,   0,  0,  0,   0,   0, -10,
                     -10,   0,   5,  5,  5,   5,   0, -10,
-                    -5,   0,   5,  5,  5,   5,   0,  -5,
-                    0,   0,   5,  5,  5,   5,   0,  -5,
+                    - 5,   0,   5,  5,  5,   5,   0,  -5,
+                    + 0,   0,   5,  5,  5,   5,   0,  -5,
                     -10,   5,   5,  5,  5,   5,   0, -10,
                     -10,   0,   5,  0,  0,   0,   0, -10,
                     -20, -10, -10, -5, -5, -10, -10, -20,
@@ -299,8 +372,8 @@ const struct pst pst_defs[] = {
                     -30, -40, -40, -50, -50, -40, -40, -30,
                     -20, -30, -30, -40, -40, -30, -30, -20,
                     -10, -20, -20, -20, -20, -20, -20, -10,
-                    20,  20,   0,   0,   0,   0,  20,  20,
-                    20,  30,  10,   0,   0,  10,  30,  20,
+                    +20,  20,   0,   0,   0,   0,  20,  20,
+                    +20,  30,  10,   0,   0,  10,  30,  20,
                 },
                 {                                 /* endgame */
                     -50, -40, -30, -20, -20, -30, -40, -50,
@@ -314,14 +387,19 @@ const struct pst pst_defs[] = {
                 }
             }
         }
-    },                                            /* CPW */
-    {
+    },                                            /* CPW end */
+
+    [PST_SJENG] = {
         /*
          * sjeng: https://github.com/gcp/sjeng
          * Rook and Queen from CPW.
          */
         "sjeng",
         {
+            /* A8 ..... H8
+             * ...........
+             * A1 ..... H1
+             */
             [PAWN] = {
                 {                                 /* midgame */
                     0,  0,  0,  0,  0,  0,  0, 0,
@@ -390,24 +468,24 @@ const struct pst pst_defs[] = {
             },
             [ROOK] = {
                 {                                 /* midgame */
-                    0,  0,  0,  0,  0,  0,  0,  0,
-                    5, 10, 10, 10, 10, 10, 10,  5,
+                    +0,  0,  0,  0,  0,  0,  0,  0,
+                    +5, 10, 10, 10, 10, 10, 10,  5,
                     -5,  0,  0,  0,  0,  0,  0, -5,
                     -5,  0,  0,  0,  0,  0,  0, -5,
                     -5,  0,  0,  0,  0,  0,  0, -5,
                     -5,  0,  0,  0,  0,  0,  0, -5,
                     -5,  0,  0,  0,  0,  0,  0, -5,
-                    0,  0,  0,  5,  5,  0,  0,  0,
+                    +0,  0,  0,  5,  5,  0,  0,  0,
                 },
                 {                                 /* endgame */
-                    0,  0,  0,  0,  0,  0,  0,  0,
-                    5, 10, 10, 10, 10, 10, 10,  5,
+                    +0,  0,  0,  0,  0,  0,  0,  0,
+                    +5, 10, 10, 10, 10, 10, 10,  5,
                     -5,  0,  0,  0,  0,  0,  0, -5,
                     -5,  0,  0,  0,  0,  0,  0, -5,
                     -5,  0,  0,  0,  0,  0,  0, -5,
                     -5,  0,  0,  0,  0,  0,  0, -5,
                     -5,  0,  0,  0,  0,  0,  0, -5,
-                    0,  0,  0,  5,  5,  0,  0,  0,
+                    +0,  0,  0,  5,  5,  0,  0,  0,
                 },
             },
             [QUEEN] = {
@@ -415,8 +493,8 @@ const struct pst pst_defs[] = {
                     -20, -10, -10, -5, -5, -10, -10, -20,
                     -10,   0,   5,  0,  0,   0,   0, -10,
                     -10,   5,   5,  5,  5,   5,   0, -10,
-                    0,   0,   5,  5,  5,   5,   0,  -5,
-                    -5,   0,   5,  5,  5,   5,   0,  -5,
+                    + 0,   0,   5,  5,  5,   5,   0,  -5,
+                    -05,   0,   5,  5,  5,   5,   0,  -5,
                     -10,   0,   5,  5,  5,   5,   0, -10,
                     -10,   0,   0,  0,  0,   0,   0, -10,
                     -20, -10, -10, -5, -5, -10, -10, -20,
@@ -425,8 +503,8 @@ const struct pst pst_defs[] = {
                     -20, -10, -10, -5, -5, -10, -10, -20,
                     -10,   0,   5,  0,  0,   0,   0, -10,
                     -10,   5,   5,  5,  5,   5,   0, -10,
-                    0,   0,   5,  5,  5,   5,   0,  -5,
-                    -5,   0,   5,  5,  5,   5,   0,  -5,
+                    + 0,   0,   5,  5,  5,   5,   0,  -5,
+                    - 5,   0,   5,  5,  5,   5,   0,  -5,
                     -10,   0,   5,  5,  5,   5,   0, -10,
                     -10,   0,   0,  0,  0,   0,   0, -10,
                     -20, -10, -10, -5, -5, -10, -10, -20,
@@ -438,88 +516,65 @@ const struct pst pst_defs[] = {
                     -34, -34, -55, -55, -55, -55, -34, -34,
                     -21, -21, -34, -34, -34, -34, -21, -21,
                     -13, -13, -21, -21, -21, -21, -13, -13,
-                    -8,  -8, -13, -13, -13, -13,  -8,  -8,
-                    -5,  -5,  -8,  -8,  -8,  -8,  -5,  -5,
-                    -3,  -5,  -6,  -6,  -6,  -6,  -5,  -3,
-                    2,  14,   0,   0,   0,   9,  14,   2,
+                    - 8,  -8, -13, -13, -13, -13,  -8,  -8,
+                    - 5,  -5,  -8,  -8,  -8,  -8,  -5,  -5,
+                    - 3,  -5,  -6,  -6,  -6,  -6,  -5,  -3,
+                    + 2,  14,   0,   0,   0,   9,  14,   2,
                 },
                 {                                 /* endgame */
                     -5, -3, -1,  0,  0, -1, -3, -5,
                     -3, 10, 10, 10, 10, 10, 10, -3,
                     -1, 10, 25, 25, 25, 25, 10, -1,
-                    0, 10, 25, 30, 30, 25, 10,  0,
-                    0, 10, 25, 30, 30, 25, 10,  0,
+                    +0, 10, 25, 30, 30, 25, 10,  0,
+                    +0, 10, 25, 30, 30, 25, 10,  0,
                     -1, 10, 25, 25, 25, 25, 10, -1,
                     -3, 10, 10, 10, 10, 10, 10, -3,
                     -5, -3, -1,  0,  0, -1, -3, -5,
                 }
             }
         },
-    },                                            /* sjeng */
+    },                                            /* sjeng end */
 };
 
-const int nb_pc_sq = ARRAY_SIZE(pst_defs);        /* # of predefined pc_sq tables */
 int pst_current = 0;
-int pst_mg[COLOR_NB][PT_NB][SQUARE_NB];
-int pst_eg[COLOR_NB][PT_NB][SQUARE_NB];
+eval_t pst_mg[COLOR_NB][PT_NB][SQUARE_NB];
+eval_t pst_eg[COLOR_NB][PT_NB][SQUARE_NB];
 
-/* phase calculation from Fruit:
- * https://github.com/Warpten/Fruit-2.1
-*/
-
-/**
- * calc_phase - calculate position phase
- * @pos: &position
- *
- * This function should be calculated when a new position is setup, or as
- * a verification of an incremental one.
- * phase is clamped between 0 (opening) and 24 (ending).
- *
- * @return:
- */
-s16 calc_phase(pos_t *pos)
+int pst_find(char *str)
 {
-    int phase = ALL_PHASE;
-    phase -= P_PHASE * popcount64(pos->bb[WHITE][PAWN] | pos->bb[BLACK][PAWN]);
-    phase -= N_PHASE * popcount64(pos->bb[WHITE][KNIGHT] | pos->bb[BLACK][KNIGHT]);
-    phase -= B_PHASE * popcount64(pos->bb[WHITE][BISHOP] | pos->bb[BLACK][BISHOP]);
-    phase -= R_PHASE * popcount64(pos->bb[WHITE][ROOK] | pos->bb[BLACK][ROOK]);
-    phase -= Q_PHASE * popcount64(pos->bb[WHITE][QUEEN] | pos->bb[BLACK][QUEEN]);
-
-    phase = clamp(phase, 0, ALL_PHASE);
-#   ifdef DEBUG_EVAL
-    printf("calc phase:%d\n", phase);
-#   endif
-    return phase;
-}
-
-static int pst_find(char *str)
-{
-    for (int i = 0; i < nb_pc_sq; ++i)
+    for (int i = 0; i < PST_NB; ++i)
         if (!strcmp(pst_defs[i].name, str))
             return i;
     return -1;
 }
 
-void pst_init(char *name)
+void pst_init(int set)
 {
-    const struct pst *cur;
-    int set = pst_find(name);
-#   ifdef DEBUG_EVAL
-    printf("initializing piece-square tables `%s`(%d)\n", name, set);
-#   endif
-    if (set < 0)
+    const struct pst *pst;
+
+    if (warn(set < 0 || set >= PST_NB, "wrong PST, defaulting to zero."))
         set = 0;
 
-    cur = pst_defs + set;
-    pst_current = set;
-    for (piece_type_t pt = PAWN; pt < PT_NB; ++pt) {
-        for (square_t sq = 0; sq < SQUARE_NB; ++sq) {
-            pst_mg[BLACK][pt][sq] = cur->val[MIDGAME][pt][sq];
-            pst_mg[WHITE][pt][sq] = cur->val[MIDGAME][pt][FLIP_V(sq)];
+#   ifdef DEBUG_EVAL2
+    printf("initializing piece-square tables %d ('%s')\n", set, pst_defs[set].name);
+#   endif
 
-            pst_eg[BLACK][pt][sq] = cur->val[ENDGAME][pt][sq];
-            pst_eg[WHITE][pt][sq] = cur->val[ENDGAME][pt][FLIP_V(sq)];
+    pst = pst_defs + set;
+    pst_current = set;
+    int wmat = param(WT_MAT);
+    int wpst = param(WT_PST);
+    for (piece_type_t pt = PAWN; pt < PT_NB; ++pt) {
+        eval_t mid_pc = piece_midval(pt);
+        eval_t end_pc = piece_endval(pt);
+        for (square_t sq = 0; sq < SQUARE_NB; ++sq) {
+            eval_t mid_pst = pst->val[MIDGAME][pt][sq];
+            eval_t end_pst = pst->val[ENDGAME][pt][sq];
+
+            pst_mg[BLACK][pt][sq] = (mid_pc * wmat + mid_pst * wpst) / 100;
+            pst_eg[BLACK][pt][sq] = (end_pc * wmat + end_pst * wpst) / 100;
+
+            pst_mg[WHITE][pt][FLIP_V(sq)] =  pst_mg[BLACK][pt][sq];
+            pst_eg[WHITE][pt][FLIP_V(sq)] =  pst_eg[BLACK][pt][sq];
         }
     }
 }

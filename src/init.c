@@ -27,8 +27,9 @@
 
 void init_all(void)
 {
+    printff("initiazing system: ");
     /* line-buffered stdout */
-    printff("initiazing stdout buffering... ");
+    printff("stdout buffering... ");
     setlinebuf(stdout);
 
     /* for printf() numeric thousands separator */
@@ -39,6 +40,9 @@ void init_all(void)
     printff("random generator... ");
     rand_init(RAND_SEED_DEFAULT);
 
+    printf("done.\n");
+
+    printff("initiazing board data: ");
     /* bitboards & hq */
     printff("bitboards... ");
     bitboard_init();
@@ -46,16 +50,27 @@ void init_all(void)
     printff("hq bitboards... ");
     hq_init();
 
+    printf("done.\n");
+
+    printff("initiazing move data: ");
     /* zobrist tables & default tt hashtable */
     printff("zobrist tables... ");
     zobrist_init();
 
-    printff("hash tables... ");
+    printff("transposition tables... ");
     tt_create(HASH_SIZE_DEFAULT);
 
+    printf("done.\n");
+
+    printff("initiazing eval data: ");
+    printf("parameters... ");
+    param_init();
+
     /* eval tables */
-    printf("pst data... ");
-    pst_init("cpw");
+    printf("pst tables... ");
+    int pst;
+    bug_on_always((pst = pst_find(PST_DEFAULT)) < 0);
+    pst_init(pst);
 
     printf("done.\n");
 }

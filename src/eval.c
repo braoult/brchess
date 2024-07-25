@@ -20,6 +20,47 @@
 #include "eval.h"
 #include "eval-simple.h"
 
+/**
+ * calc_phase - calculate position phase
+ * @pos: &position
+ *
+ * This function should be calculated when a new position is setup, or as
+ * a verification of an incremental one.
+ * phase is clamped between 0 (opening) and 24 (ending).
+ *
+ * @return:
+ */
+s16 calc_phase(pos_t *pos)
+{
+    int phase = ALL_PHASE;
+    phase -= P_PHASE * popcount64(pos->bb[WHITE][PAWN]   | pos->bb[BLACK][PAWN]);
+    phase -= N_PHASE * popcount64(pos->bb[WHITE][KNIGHT] | pos->bb[BLACK][KNIGHT]);
+    phase -= B_PHASE * popcount64(pos->bb[WHITE][BISHOP] | pos->bb[BLACK][BISHOP]);
+    phase -= R_PHASE * popcount64(pos->bb[WHITE][ROOK]   | pos->bb[BLACK][ROOK]);
+    phase -= Q_PHASE * popcount64(pos->bb[WHITE][QUEEN]  | pos->bb[BLACK][QUEEN]);
+
+    phase = max(phase, 0);
+#   ifdef DEBUG_EVAL
+    printf("calc phase:%d\n", phase);
+#   endif
+    return phase;
+}
+
+
+
+/*
+ * inline eval_t eval_mobility(pos_t *pos, bool color)
+ * {
+ *     return pos->mobility[color];
+ * }
+ *
+ *
+ * inline eval_t eval_square_control(pos_t *pos, bool color)
+ * {
+ *     return popcount64(pos->controlled[color]);
+ * }
+ */
+
 /*
  * inline eval_t eval_mobility(pos_t *pos, bool color)
  * {

@@ -34,10 +34,6 @@
 
 #define MICRO_IN_MILLI 1000ll
 
-//#define NANO_IN_MILLI  1000000ll                         /* nanosecond in millisecond */
-//#define NANO_IN_SEC    (NANOS_IN_MS * MS_IN_SEC)
-
-
 /**
  * clock_start - start or restart a clock.
  * @clock: &mclock_t clock

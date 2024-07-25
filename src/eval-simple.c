@@ -70,7 +70,7 @@ eval_t eval_simple(pos_t *pos)
             while (bb) {
                 square_t sq = bb_next(&bb);
                 mg_eval[color] += pst_mg[color][pt][sq];
-                eg_eval[color] += pst_mg[color][pt][sq];
+                eg_eval[color] += pst_eg[color][pt][sq];
             }
 
 #           ifdef DEBUG_EVAL

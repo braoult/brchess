@@ -135,7 +135,6 @@ else # ifeq ($(build),dev)
         #        old unused flags
         #CPPFLAGS  += -DDEBUG_POS                           # position.c
         #CPPFLAGS  += -DDEBUG_MOVE                          # move generation
-        #CPPFLAGS  += -DDEBUG_EVAL                          # eval functions
 endif
 
 # remove extraneous spaces (due to spaces before comments)
@@ -415,7 +414,8 @@ TEST          += movedo-test perft-test tt-test
 
 PIECE_OBJS    := piece.o
 FEN_OBJS      := $(PIECE_OBJS) fen.o position.o bitboard.o board.o \
-	hq.o attack.o hash.o init.o misc.o alloc.o move.o eval-defs.o
+	hq.o attack.o hash.o init.o misc.o alloc.o move.o \
+	eval.o eval-defs.o eval-simple.o
 BB_OBJS       := $(FEN_OBJS)
 MOVEGEN_OBJS  := $(BB_OBJS) move-gen.o
 ATTACK_OBJS   := $(MOVEGEN_OBJS)
