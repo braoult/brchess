@@ -13,13 +13,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
+//#include <string.h>
+//#include <ctype.h>
 #include <unistd.h>
 
 #include <brlib.h>
 
 #include "chessdefs.h"
+#include "util.h"
 #include "position.h"
 #include "uci.h"
 #include "hist.h"
@@ -47,6 +48,7 @@ int do_ucinewgame(pos_t *, char *);
 int do_uci(pos_t *, char *);
 int do_isready(pos_t *, char *);
 int do_quit(pos_t *, char *);
+int do_setoption(pos_t *, char *);
 
 int do_position(pos_t *, char *);
 
@@ -59,20 +61,19 @@ int do_hist(pos_t *, char *);
 int do_help(pos_t *, char *);
 
 struct command commands[] = {
-    { "help",       do_help, "(not UCI) This help" },
-    { "?",          do_help, "(not UCI) This help" },
     { "quit",       do_quit, "Quit" },
-
     { "uci",        do_uci, "" },
     { "ucinewgame", do_ucinewgame, "" },
     { "isready",    do_isready, "" },
-
+    { "setoption name",  do_setoption, ""},
     { "position",   do_position, "position startpos|fen [moves ...]" },
 
     { "perft",      do_perft, "(not UCI) perft [divide] [alt] depth" },
     { "moves",      do_moves, "(not UCI) moves ..." },
     { "diagram",    do_diagram, "(not UCI) print current position diagram" },
     { "hist",       do_hist, "(not UCI) print history states" },
+    { "help",       do_help, "(not UCI) This help" },
+    { "?",          do_help, "(not UCI) This help" },
 
     { NULL, (int(*)()) NULL, NULL }
 };
@@ -244,6 +245,20 @@ int do_isready(__unused pos_t *pos, __unused char *arg)
     printf("readyok\n");
     return 1;
 }
+
+int do_setoption(__unused pos_t *pos, __unused char *arg)
+{
+    __unused char *name, *value, *saveptr;
+
+    /* Note: space in var name are unsupported */
+    saveptr = NULL;
+    name = strtok_r(arg, " ", &saveptr);
+
+    value = strstr(arg, "value");
+
+    return 1;
+}
+
 
 int do_position(pos_t *pos, char *arg)
 {
@@ -423,48 +438,6 @@ int do_help(__unused pos_t *pos, __unused char *arg)
  * }
  */
 
-/**
- * string_trim - cleanup (trim) blank characters in string.
- * @str: &string to clean
- *
- * str is cleaned and packed with the following rules:
- * - Leading and trailing blank characters are removed.
- * - consecutive blank characters are replaced by one space.
- * - non printable characters are removed.
- *
- * "blank" means characters as understood by isspace(3): space, form-feed ('\f'),
- * newline ('\n'), carriage return ('\r'), horizontal tab  ('\t'), and vertical
- * tab ('\v').
- *
- * @return: new @str len.
- */
-int string_trim(char *str)
-{
-    char *to = str, *from = str;
-    int state = 1;
-
-    while (*from) {
-        switch (state) {
-            case 1:                               /* blanks */
-                while (*from && isspace(*from))
-                    from++;
-                state = 0;
-                break;
-            case 0:                               /* token */
-                while (*from && !isspace(*from)) {
-                    if (isprint(*from))
-                        *to++ = *from;
-                    from++;
-                }
-                *to++ = ' ';
-                state = 1;
-        }
-    }
-    if (to > str)
-        to--;
-    *to = 0;
-    return to - str;
-}
 
 static int done = 0;
 
@@ -476,12 +449,12 @@ int do_quit(__unused pos_t *pos, __unused char *arg)
 int uci(pos_t *pos)
 {
     char *str = NULL, *saveptr, *token, *args;
-    int len;
     size_t lenstr = 0;
     struct command *command;
 
     while (!done && getline(&str, &lenstr, stdin) >= 0) {
-        if (!(len = string_trim(str)))
+        str = str_trim(str);
+        if (! *str)
             continue;
         token = strtok_r(str, " ", &saveptr);
         if (! (command= find_command(token))) {

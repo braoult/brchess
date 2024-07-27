@@ -19,6 +19,7 @@
 #include <bug.h>
 
 #include "chessdefs.h"
+#include "util.h"
 #include "alloc.h"
 #include "position.h"
 #include "piece.h"

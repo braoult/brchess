@@ -142,42 +142,6 @@ typedef u8 dir_t;
 #define sq_upwest(up)     ((up) - 1)
 #define sq_upeast(up)     ((up) + 1)
 
-#include <time.h>
-
-typedef struct mclock {
-    clockid_t clocktype;
-    ulong elapsed_l;
-    double elapsed_f;
-    struct timespec start;
-} mclock_t;
-
-#define CLOCK_WALL    CLOCK_REALTIME
-#define CLOCK_SYSTEM  CLOCK_MONOTONIC_RAW
-#define CLOCK_PROCESS CLOCK_PROCESS_CPUTIME_ID
-#define CLOCK_THREAD  CLOCK_THREAD_CPUTIME_ID
-
-/**
- * CLOCK_DEFINE - define a clock type.
- * @name: clock name
- * @type: clock type
- *
- * This macro is equivalent to:
- *   mclock_t name;
- *   clock_init(&name, type);
- */
-#define CLOCK_DEFINE(name, type) struct mclock name = { .clocktype = type }
-
-void clock_init(mclock_t *clock, clockid_t type);
-void clock_start(mclock_t *clock);
-s64 clock_elapsed_μs(mclock_t *clock);
-s64 clock_elapsed_ms(mclock_t *clock);
-double clock_elapsed_sec(mclock_t *clock);
-
-#define RAND_SEED_DEFAULT U64(0xb0d1ccea)
-
-void rand_init(u64 seed);
-u64 rand64(void);
-
 void init_all(void);
 
 #endif  /* _CHESSDEFS_H */

@@ -16,7 +16,7 @@
 #include <locale.h>
 
 #include "chessdefs.h"
-
+#include "util.h"
 #include "bitboard.h"
 #include "hq.h"
 #include "eval-defs.h"

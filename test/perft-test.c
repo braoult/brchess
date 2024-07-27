@@ -19,6 +19,7 @@
 #include <limits.h>
 
 #include "chessdefs.h"
+#include "util.h"
 #include "fen.h"
 #include "position.h"
 #include "move.h"

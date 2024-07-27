@@ -1,4 +1,4 @@
-/* misc.c - generic/catchall functions.
+/* util.c - generic/catchall functions.
  *
  * Copyright (C) 2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
@@ -11,12 +11,15 @@
  *
  */
 
-#include <time.h>
-#include <stdlib.h>
+//#include <time.h>
+//#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 
 #include <bug.h>
 
 #include "chessdefs.h"
+#include "util.h"
 
 /*
  * 1 sec      = 1000 millisec
@@ -145,4 +148,76 @@ u64 rand64(void)
     rand_seed ^= rand_seed << 25;
     rand_seed ^= rand_seed >> 27;
     return rand_seed * 0x2545f4914f6cdd1dull;
+}
+
+/**
+ * str_trim - cleanup (trim) blank characters in string.
+ * @str: &string to clean
+ *
+ * str is cleaned and packed with the following rules:
+ * - Leading and trailing blank characters are removed.
+ * - consecutive blank characters are replaced by one space.
+ * - non printable characters are removed.
+ *
+ * "blank" means characters as understood by isspace(3): space, form-feed ('\f'),
+ * newline ('\n'), carriage return ('\r'), horizontal tab  ('\t'), and vertical
+ * tab ('\v').
+ *
+ * @return: new @str len.
+ */
+char *str_trim(char *str)
+{
+    char *to = str, *from = str;
+    int state = 1;
+
+    while (*from) {
+        switch (state) {
+            case 1:                               /* blanks */
+                while (*from && isspace(*from))
+                    from++;
+                state = 0;
+                break;
+            case 0:                               /* token */
+                while (*from && !isspace(*from)) {
+                    if (isprint(*from))
+                        *to++ = *from;
+                    from++;
+                }
+                *to++ = ' ';
+                state = 1;
+        }
+    }
+    if (to > str)
+        to--;
+    *to = 0;
+    return to;
+}
+
+/**
+ * str_token - find a token in string.
+ * @str:   string to search
+ * @token: token to look for
+ *
+ * Look for token @token in string @str.
+ * A token is a string delimited by space characters. However, it may contain
+ * space characters itself.
+ *
+ * @return: @token address if found, NULL otherwise.
+ */
+char *str_token(const char *str, const char *token)
+{
+    int len = strlen(token);
+    const char *found = str;
+
+    while (found && *found) {
+        printf("trying pos=%ld\n", found - str);
+        found = strstr(found, token);
+        if (found) {
+            if (!found[len] || isspace(found[len]))
+                break;
+            found = strchr(found, ' ') + 1;
+            printf("new pos=%ld\n", found - str);
+        }
+    }
+    return (char *) found;
 }
