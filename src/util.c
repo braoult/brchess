@@ -151,6 +151,28 @@ u64 rand64(void)
 }
 
 /**
+ * str_eq_case - test if two strings are equal ignoring case
+ * @str1: string1
+ * @str2: string2
+ *
+ * Compare @str1 and @str2 byte-by-byte, ignoring case.
+ *
+ * @return: true is equal, false otherwise.
+ */
+bool str_eq_case(char *str1, char *str2)
+{
+    uchar *s1 = (uchar *) str1;
+    uchar *s2 = (uchar *) str2;
+
+    for (; *s1 && *s2; ++s1, ++s2) {
+        if (tolower(*s1) != tolower(*s2))
+            break;
+    }
+    //printf("d=%lu *s1=%d *s2=%d\n", s1 - (uchar *) str1, *s1, *s2);
+    return *s2 == *s1;
+}
+
+/**
  * str_trim - cleanup (trim) blank characters in string.
  * @str: &string to clean
  *
@@ -170,6 +192,7 @@ char *str_trim(char *str)
     char *to = str, *from = str;
     int state = 1;
 
+    bug_on(!str);
     while (*from) {
         switch (state) {
             case 1:                               /* blanks */
@@ -190,34 +213,62 @@ char *str_trim(char *str)
     if (to > str)
         to--;
     *to = 0;
-    return to;
+    return str;
 }
 
 /**
- * str_token - find a token in string.
+ * str_token - split a string from next token.
  * @str:   string to search
  * @token: token to look for
  *
- * Look for token @token in string @str.
- * A token is a string delimited by space characters. However, it may contain
+ * Look for token @token in string @str, and if found, split @str just before it.
+ * A token is a string delimited by one space character. However, it may contain
  * space characters itself.
+ * @str should normally be normalized with @str_trim(), so that all consecutive
+ * blank characters are replaced by one, and leading/trailing ones removed.
  *
  * @return: @token address if found, NULL otherwise.
  */
-char *str_token(const char *str, const char *token)
+char *str_token(char *str, const char *token)
 {
     int len = strlen(token);
-    const char *found = str;
+    char *found = str;
+
+    bug_on(!str || !token);
+    if (!*token)                                  /* nothing to search */
+        return str;
 
     while (found && *found) {
-        printf("trying pos=%ld\n", found - str);
+        //printf("trying pos=%ld\n", found - str);
         found = strstr(found, token);
         if (found) {
             if (!found[len] || isspace(found[len]))
                 break;
             found = strchr(found, ' ') + 1;
-            printf("new pos=%ld\n", found - str);
+            //printf("new pos=%ld\n", found - str);
         }
     }
-    return (char *) found;
+    if (found > str)                              /* split string */
+        *(found - 1) = 0;
+    return found;
+}
+
+/**
+ * str_skip_word - find next word in a string.
+ * @str:   input string
+ *
+ * skip current word and following blank char.
+ * @str must be normalized with @str_trim(), so that all consecutive blank
+ * characters are already replaced by one, and leading/trailing ones removed.
+ * Note that 'word' means any sequence of non-space character.
+ *
+ * @str is not modified.
+ *
+ * @return: next word if found, NULL otherwise.
+ */
+char *str_skip_word(char *str)
+{
+    bug_on(!str);
+    str = strchr(str, ' ');
+    return str? str + 1: NULL;
 }

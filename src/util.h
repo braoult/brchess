@@ -53,8 +53,9 @@ void rand_init(u64 seed);
 u64 rand64(void);
 
 
+bool str_eq_case(char *str1, char *str2);
 char *str_trim(char *str);
-char *str_token(const char *str, const char *token);
-
+char *str_token(char *str, const char *token);
+char *str_skip_word(char *str);
 
 #endif  /* UTIL_H */

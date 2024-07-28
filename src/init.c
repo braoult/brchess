@@ -32,9 +32,10 @@ void init_all(void)
     printff("stdout buffering... ");
     setlinebuf(stdout);
 
-    /* for printf() numeric thousands separator */
     printff("locale... ");
+    /* for printf() thousands separator */
     setlocale(LC_NUMERIC, "");
+    setlocale(LC_CTYPE, "C");
 
     /* pseudo random generator seed */
     printff("random generator... ");

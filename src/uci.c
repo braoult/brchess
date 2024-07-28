@@ -13,22 +13,21 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-//#include <string.h>
-//#include <ctype.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #include <brlib.h>
 
 #include "chessdefs.h"
 #include "util.h"
 #include "position.h"
-#include "uci.h"
 #include "hist.h"
 #include "fen.h"
 #include "move-gen.h"
 #include "move-do.h"
 #include "search.h"
 #include "eval-defs.h"
+#include "uci.h"
 
 struct command {
     char *name;                                   /* command name */
@@ -37,19 +36,18 @@ struct command {
 };
 
 int execute_line (pos_t *, struct command *, char *);
-
 struct command *find_command (char *);
-int string_trim (char *str);
 
-/* The names of functions that actually do the manipulation. */
+/* The names of functions that actually do the stuff.
+ */
 
 /* standard UCI commands */
 int do_ucinewgame(pos_t *, char *);
 int do_uci(pos_t *, char *);
 int do_isready(pos_t *, char *);
 int do_quit(pos_t *, char *);
-int do_setoption(pos_t *, char *);
 
+int do_setoption(pos_t *, char *);
 int do_position(pos_t *, char *);
 
 /* commands *NOT* in UCI standard */
@@ -65,7 +63,7 @@ struct command commands[] = {
     { "uci",        do_uci, "" },
     { "ucinewgame", do_ucinewgame, "" },
     { "isready",    do_isready, "" },
-    { "setoption name",  do_setoption, ""},
+    { "setoption",  do_setoption, ""},
     { "position",   do_position, "position startpos|fen [moves ...]" },
 
     { "perft",      do_perft, "(not UCI) perft [divide] [alt] depth" },
@@ -89,7 +87,7 @@ int execute_line(pos_t *pos, struct command *command, char *args)
  * @name: &command string
  *
  * Look up NAME as the name of a command, and return a pointer to that
- *   command.  Return a NULL pointer if NAME isn't a command name.
+ * command.  Return a NULL pointer if NAME isn't a command name.
  */
 struct command *find_command(char *name)
 {
@@ -236,6 +234,27 @@ int do_uci(__unused pos_t *pos, __unused char *arg)
             printf(" var %s", pst_name(i));
     }
     printf("\n");
+    for (int var = 0; var < EV_PARAMS_NB; ++var) {
+        if (param_setable(var)) {
+            int ptyp = param_type(var);
+            int pmin = param_min(var);
+            int pmax = param_max(var);
+            int pval = parameters[var];
+
+            printf("option name %s ", param_name(var));
+            switch(ptyp) {
+                case PAR_BTN:
+                    printf("type button\n");
+                    break;
+                case PAR_CHK:
+                    printf("type check default %s\n", pval? "true": "false");
+                    break;
+                case PAR_SPN:
+                    printf("type spin default %d min %d max %d\n", pval, pmin, pmax);
+                    break;
+            };
+        }
+    }
     printf("uciok\n");
     return 1;
 }
@@ -248,15 +267,67 @@ int do_isready(__unused pos_t *pos, __unused char *arg)
 
 int do_setoption(__unused pos_t *pos, __unused char *arg)
 {
-    __unused char *name, *value, *saveptr;
+    char *name, *value = NULL;
 
-    /* Note: space in var name are unsupported */
-    saveptr = NULL;
-    name = strtok_r(arg, " ", &saveptr);
+    if (str_token(arg, "name") != arg)
+        return 1;
+    if (!(name = str_skip_word(arg)))
+        return 1;
+    /* at this point, we got a valid parameter name */
+    value = str_token(name, "value");             /* put '\0' at name end */
+    if (value) {
+        value = str_skip_word(value);
+        if (!value)
+            return 1;
+    }
+    if (str_eq_case(name, "hash") && value) {
+        tt_create(atoi(value));
+    } else if (str_eq_case(name, "pst")) {
+        pst_set(value);
+    } else {
+        int var = param_find_name(name);
+        if (var < 0) {
+            printf("wrong parameter '%s'\n", name);
+            return 1;
+        }
+        char *pname = param_name(var);
+        printf("found param <%s> = %d\n", pname, var);
+        if (param_setable(var)) {
+            int ptyp = param_min(var);
+            int pmin = param_min(var);
+            int pmax = param_max(var);
+            int pval;
 
-    value = strstr(arg, "value");
+            switch(ptyp) {
+                case PAR_BTN:
+                    bug_on (value);
+                    printf("do button '%s'\n", pname);
+                    break;
+                case PAR_CHK:
+                    bug_on (!value);
+                    if (str_eq_case(value, "true"))
+                        pval = 1;
+                    else if (str_eq_case(value, "false"))
+                        pval = 0;
+                    else {
+                        printf("wrong value '%s' to '%s' boolean parameter\n",
+                               value, pname);
+                        return 1;
+                    }
+                    printf("set '%s' to %s\n", pname, pval? "true": "false");
+                    param_set(var, pval);
+                    break;
+                case PAR_SPN:
+                    bug_on (!value);
+                    pval = clamp(atoi(value), pmin, pmax);
+                    printf("set '%s' to %d\n", param_name(var), pval);
+                    param_set(var, pval);
+                    break;
+            }
+        }
+    }
 
-    return 1;
+    return 0;
 }
 
 
@@ -267,9 +338,7 @@ int do_position(pos_t *pos, char *arg)
     hist_init();
 
     /* separate "moves" section */
-    if ((moves = strstr(arg, "moves"))) {
-        *(moves - 1) = 0;
-    }
+    moves = str_token(arg, "moves");
     saveptr = NULL;
     token = strtok_r(arg, " ", &saveptr);
     if (!strcmp(token, "startpos")) {
@@ -457,7 +526,7 @@ int uci(pos_t *pos)
         if (! *str)
             continue;
         token = strtok_r(str, " ", &saveptr);
-        if (! (command= find_command(token))) {
+        if (! (command = find_command(token))) {
             fprintf(stderr, "Unknown [%s] command. Try 'help'.\n", token);
             continue;
         }

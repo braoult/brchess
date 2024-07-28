@@ -54,19 +54,31 @@ enum {
     WT_MAT,
     WT_PST,
 
+    TST_SPN,
+    TST_CHK,
+
     EV_PARAMS_NB
+};
+
+enum {
+    PAR_CHK,
+    PAR_SPN,
+    PAR_BTN,
+    PAR_STR,
 };
 
 /**
  * ev_params - parameters definition
  * @init: eval_t default value
  * @min, @max: eval_t min and max values
+ * @type: variable type (PARAM_CHECK, etc...)
  * @setable: bool setable (proposed in UCI options)
  * @name: char * human readable name
  */
 struct ev_params {
-    eval_t init, min, max;
+    int type;
     bool setable;                                 /* true: proposed in UCI options */
+    eval_t init, min, max;
     char *name;
 };
 void param_init(void);
@@ -76,6 +88,8 @@ char *param_name(const int num);
 eval_t param_default(const int num);              /* get default param value */
 eval_t param_min(const int num);
 eval_t param_max(const int num);
+bool param_setable(const int num);
+int param_type(const int num);
 
 /* parameters in use */
 extern eval_t parameters[EV_PARAMS_NB];
@@ -98,6 +112,7 @@ extern int pst_current;
 extern eval_t pst_mg[COLOR_NB][PT_NB][SQUARE_NB];
 extern eval_t pst_eg[COLOR_NB][PT_NB][SQUARE_NB];
 
+void pst_set(char *str);
 int pst_find(char *str);
 void pst_init(int pst);
 

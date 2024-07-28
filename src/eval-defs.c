@@ -18,14 +18,18 @@
 #include "position.h"
 #include "piece.h"
 #include "eval-defs.h"
+#include "util.h"
 //#include "eval-simple.h"
 //#include "eval.h"
 
 /* eval parameters definition. */
 static const struct ev_params ev_param_def [EV_PARAMS_NB] = {
-    /*           default  min    max  setable    string */
-    [WT_MAT] = {    100,    0,   400,    true,   "material weight" },
-    [WT_PST] = {    100,    0,   400,    true,   "pst weight" },
+    /*                type      setable def   min    max  name */
+    [WT_MAT]  =     { PAR_SPN,  true,   100,    0,   400, "material weight" },
+    [WT_PST]  =     { PAR_SPN,  true,   100,    0,   400, "pst weight" },
+    [TST_CHK] =     { PAR_CHK,  true,     1,    0,     0, "test check" },
+    [TST_SPN] =     { PAR_BTN,  true,     0,    0,     0, "test button" },
+
 };
 
 void param_init()
@@ -37,7 +41,7 @@ void param_init()
 int param_find_name(char *name)
 {
     for (int i = 0; i < EV_PARAMS_NB; ++i)
-        if (!strcmp(ev_param_def[i].name, name))
+        if (str_eq_case(ev_param_def[i].name, name))
             return i;
     return -1;
 }
@@ -57,6 +61,14 @@ eval_t param_min(const int num)
 eval_t param_max(const int num)
 {
     return ev_param_def[num].max;
+}
+bool param_setable(const int num)
+{
+    return ev_param_def[num].setable;
+}
+int param_type(const int num)
+{
+    return ev_param_def[num].type;
 }
 
 /* parameters in use */
@@ -89,7 +101,7 @@ static const struct pst {
          * rofchade:
          * https://www.talkchess.com/forum3/viewtopic.php?f=2&t=68311&start=19
          */
-        "rofchade",
+        "Rofchade",
         {
             /* A8 ..... H8
              * ...........
@@ -237,7 +249,7 @@ static const struct pst {
          * https://www.chessprogramming.org/Simplified_Evaluation_Function
          * Note: ≠ https://github.com/nescitus/cpw-engine
          */
-        "cpw",
+        "CPW",
         {
             /* A8 ..... H8
              * ...........
@@ -384,7 +396,7 @@ static const struct pst {
          * sjeng: https://github.com/gcp/sjeng
          * Rook and Queen from CPW.
          */
-        "sjeng",
+        "Sjeng",
         {
             /* A8 ..... H8
              * ...........
@@ -530,11 +542,17 @@ int pst_current = PST_DEFAULT;
 eval_t pst_mg[COLOR_NB][PT_NB][SQUARE_NB];
 eval_t pst_eg[COLOR_NB][PT_NB][SQUARE_NB];
 
+void pst_set(char *str)
+{
+    pst_init(pst_find(str));
+}
+
 int pst_find(char *str)
 {
-    for (int i = 0; i < PST_NB; ++i)
-        if (!strcmp(pst_defs[i].name, str))
+    for (int i = 0; i < PST_NB; ++i) {
+        if (str_eq_case(pst_defs[i].name, str))
             return i;
+    }
     return -1;
 }
 
