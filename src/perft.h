@@ -1,4 +1,4 @@
-/* search.h - search for perfect move.
+/* perft.h.h - perft.
  *
  * Copyright (C) 2021-2024 Bruno Raoult ("br")
  * Licensed under the GNU General Public License v3.0 or later.
@@ -11,12 +11,12 @@
  *
  */
 
-#ifndef SEARCH_H
-#define SEARCH_H
+#ifndef PERFT_H
+#define PERFT_H
 
 #include "position.h"
 
-//eval_t negamax(pos_t *pos, int depth, int color);
-//eval_t pvs(pos_t *pos, int depth, int alpha, int beta, int color);
+u64 perft(pos_t *pos, int depth, int ply, bool output);
+u64 perft_alt(pos_t *pos, int depth, int ply, bool output);
 
-#endif  /* SEARCH_H */
+#endif  /* PERFT_H */

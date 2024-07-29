@@ -25,7 +25,7 @@
 #include "move.h"
 #include "move-do.h"
 #include "move-gen.h"
-#include "search.h"
+#include "perft.h"
 
 #include "common-test.h"
 

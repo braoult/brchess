@@ -26,6 +26,7 @@
 #include "move-gen.h"
 #include "move-do.h"
 #include "search.h"
+#include "perft.h"
 #include "eval-defs.h"
 #include "uci.h"
 

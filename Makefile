@@ -420,7 +420,7 @@ BB_OBJS       := $(FEN_OBJS)
 MOVEGEN_OBJS  := $(BB_OBJS) move-gen.o
 ATTACK_OBJS   := $(MOVEGEN_OBJS)
 MOVEDO_OBJS   := $(ATTACK_OBJS) move-do.o
-PERFT_OBJS    := $(MOVEDO_OBJS) search.o
+PERFT_OBJS    := $(MOVEDO_OBJS) perft.o
 TT_OBJS       := $(MOVEDO_OBJS)
 
 TEST          := $(addprefix $(BINDIR)/,$(TEST))
