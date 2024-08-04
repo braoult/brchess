@@ -370,7 +370,7 @@ int do_position(pos_t *pos, char *arg)
     }
     /* link last position t history */
     //hist_pop();
-    hist_link(pos);
+    //hist_link(pos);
     return 1;
 }
 
@@ -378,8 +378,8 @@ int do_moves(__unused pos_t *pos, char *arg)
 {
     char *saveptr = NULL, *token, check[8];
     move_t move;
-    state_t state;
     movelist_t movelist;
+
     saveptr = NULL;
     token = strtok_r(arg, " ", &saveptr);
     while (token) {
@@ -395,13 +395,26 @@ int do_moves(__unused pos_t *pos, char *arg)
             return 1;
         }
         //printf("move: %s\n", move_to_str(check, move, 0));
-        hist_push(&pos->state);                   /* push previous state */
-        move_do(pos, move, &state);
-        pos_print(pos);
+        //hist_push(&pos->state);                   /* push previous state */
+        move_do(pos, move, hist_next());
+        printf("repet=%d\n", pos->repcount);
+        //if (is_repetition(pos))
+        //    printf("rep detected\n");
+        //else if(is_draw(pos))
+        //    printf("draw detected\n");
         hist_static_print();
         token = strtok_r(NULL, " ", &saveptr);
     }
-    //hist_static_print();
+    /* reset position root, and decrease history moves repcounts.
+     * TODO: Maybe use "ucinewgame" to decide when to perform this decrease ?
+     */
+    pos->plyroot = 0;
+    for (state_t *st = &pos->state; st != HIST_START; st = hist_prev(st)) {
+        //printf("adjust rep=%d->\n");
+        st->repcount = max(0, st->repcount - 1);
+    }
+    pos_print(pos);
+    hist_print(pos);
     return 1;
 }
 
@@ -429,7 +442,7 @@ int do_perft(__unused pos_t *pos, __unused char *arg)
     printf("perft: divide=%d alt=%d depth=%d\n", divide, alt, depth);
     if (depth > 0) {
         if (!alt)
-            perft(pos, depth, 1, divide);
+            perft(pos, depth, divide);
         else
             perft_alt(pos, depth, 1, divide);
     }
@@ -438,7 +451,7 @@ int do_perft(__unused pos_t *pos, __unused char *arg)
 
 int do_hist(__unused pos_t *pos, __unused char *arg)
 {
-    hist_static_print();
+    hist_print(pos);
     return 0;
 }
 

@@ -40,7 +40,65 @@
  *
  * @return: total moves found at @depth level.
  */
-u64 perft(pos_t *pos, int depth, int ply, bool divide)
+static u64 do_perft(pos_t *pos, int depth)
+{
+    u64 subnodes = 0, nodes = 0;
+    movelist_t movelist;
+    move_t *move, *last;
+    state_t state;
+
+    pos_set_checkers_pinners_blockers(pos);
+    pos_legal(pos, pos_gen_pseudo(pos, &movelist));
+    if (depth == 1)
+        return movelist.nmoves;
+    last = movelist.move + movelist.nmoves;
+
+    for (move = movelist.move; move < last; ++move) {
+        move_do(pos, *move, &state);
+        if (depth == 2) {
+            movelist_t movelist2;
+            pos_set_checkers_pinners_blockers(pos);
+            subnodes = pos_legal(pos, pos_gen_pseudo(pos, &movelist2))->nmoves;
+        } else if (pos->plyroot >= 3) {
+            hentry_t *entry = tt_probe_perft(pos->key, depth);
+            if (entry != TT_MISS) {
+                subnodes = HASH_PERFT_VAL(entry->data);
+            } else {
+                subnodes = do_perft(pos, depth - 1);
+                tt_store_perft(pos->key, depth, subnodes);
+            }
+        } else {
+            subnodes = do_perft(pos, depth - 1);
+        }
+        move_undo(pos, *move, &state);
+        nodes += subnodes;
+    }
+
+    return nodes;
+}
+
+/**
+ * perft() - Perform perft on position
+ * @pos:    &position to search
+ * @depth:  Wanted depth.
+ * @ply:    current perft depth level (root = 1)
+ * @divide: output total for 1st level moves.
+ *
+ * Run perft on a position. This function displays the available moves at @depth
+ * level for each possible first move, and the total of moves.
+ *
+ * This version uses the algorithm:
+ *    if last depth
+ *      return 1;
+ *    gen legal moves
+ *    loop for legal move
+ *      do-move
+ *      perft (depth -1)
+ *      undo-move
+ *
+ * @return: total moves found at @depth level.
+ */
+u64 perft(pos_t *pos, int depth, bool divide)
 {
     u64 subnodes = 0, nodes = 0;
     movelist_t movelist;
@@ -56,30 +114,15 @@ u64 perft(pos_t *pos, int depth, int ply, bool divide)
             subnodes = 1;
         } else {
             move_do(pos, *move, &state);
-            if (depth == 2) {
-                movelist_t movelist2;
-                pos_set_checkers_pinners_blockers(pos);
-                subnodes = pos_legal(pos, pos_gen_pseudo(pos, &movelist2))->nmoves;
-            } else if (ply >= 3) {
-                hentry_t *entry = tt_probe_perft(pos->key, depth);
-                if (entry != TT_MISS) {
-                    subnodes = HASH_PERFT_VAL(entry->data);
-                } else {
-                    subnodes = perft(pos, depth - 1, ply + 1, divide);
-                    tt_store_perft(pos->key, depth, subnodes);
-                }
-            } else {
-                subnodes = perft(pos, depth - 1, ply + 1, divide);
-            }
+            subnodes = do_perft(pos, depth - 1);
             move_undo(pos, *move, &state);
         }
-        nodes += subnodes;
-        if (ply == 1 && divide) {
+        if (divide) {
             char movestr[8];
             printf("%s: %lu\n", move_to_str(movestr, *move, 0), subnodes);
         }
+        nodes += subnodes;
     }
-
     return nodes;
 }
 

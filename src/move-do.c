@@ -24,6 +24,7 @@
 #include "position.h"
 #include "move-do.h"
 #include "hash.h"
+#include "hist.h"
 
 /**
  * move_do() - do move.
@@ -59,14 +60,16 @@ pos_t *move_do(pos_t *pos, const move_t move, state_t *state)
     hkey_t key = pos->key;
 
     *state = pos->state;                          /* save irreversible changes */
+    pos->prev = state;
 
     /* update key: switch turn, reset castling and ep */
     key ^= zobrist_turn;
     key ^= zobrist_castling[pos->castle];
     key ^= zobrist_ep[EP_ZOBRIST_IDX(pos->en_passant)];
 
-    ++pos->clock_50;
+    ++pos->ply50;
     ++pos->plycount;
+    ++pos->plyroot;
     pos->en_passant = SQUARE_NONE;
     pos->turn = them;
     pos->captured = captured;
@@ -80,7 +83,7 @@ pos_t *move_do(pos_t *pos, const move_t move, state_t *state)
     }
 
     if (captured != EMPTY) {
-        pos->clock_50 = 0;
+        pos->ply50 = 0;
         bug_on(pos->board[to] == EMPTY || COLOR(pos->captured) != them);
         key ^= zobrist_pieces[captured][to];
         pos_clr_sq(pos, to);                      /* clear square */
@@ -99,7 +102,7 @@ pos_t *move_do(pos_t *pos, const move_t move, state_t *state)
         pos_clr_sq(pos, rookfrom);
         pos->castle = clr_castle(pos->castle, us);
     } else if (ptype == PAWN) {                   /* pawn non capture or e.p. */
-        pos->clock_50 = 0;
+        pos->ply50 = 0;
         if (from + up + up == to) {               /* if pawn double push, set e.p. */
             square_t ep = from + up;
             if (bb_pawn_attacks[us][ep] & pos->bb[them][PAWN]) {
@@ -151,6 +154,7 @@ pos_t *move_do(pos_t *pos, const move_t move, state_t *state)
 
     pos->key = key;
 
+    pos->repcount = pos_repcount(pos);
     zobrist_verify(pos);
 
     return pos;
@@ -209,6 +213,8 @@ pos_t *move_undo(pos_t *pos, const move_t move, const state_t *state)
 
     pos->state = *state;                          /* restore irreversible changes */
     pos->turn = us;
+    --pos->plycount;
+    --pos->plyroot;
     return pos;
 }
 
@@ -227,14 +233,16 @@ pos_t *move_do_alt(pos_t *pos, const move_t move, state_t *state)
     hkey_t key = pos->key;
 
     *state = pos->state;                          /* save irreversible changes */
+    pos->prev = state;
 
     /* update key: switch turn, reset castling and ep */
     key ^= zobrist_turn;
     key ^= zobrist_castling[pos->castle];
     key ^= zobrist_ep[EP_ZOBRIST_IDX(pos->en_passant)];
 
-    ++pos->clock_50;
+    ++pos->ply50;
     ++pos->plycount;
+    ++pos->plyroot;
     pos->en_passant = SQUARE_NONE;
     pos->turn = them;
     pos->captured = captured;
@@ -248,8 +256,7 @@ pos_t *move_do_alt(pos_t *pos, const move_t move, state_t *state)
     }
 
     if (captured != EMPTY) {
-        pos->clock_50 = 0;
-        //pos->captured = pos->board[to];           /* save capture info */
+        pos->ply50 = 0;
         bug_on(pos->board[to] == EMPTY || COLOR(pos->captured) != them);
         key ^= zobrist_pieces[captured][to];
         pos_clr_sq(pos, to);                      /* clear square */
@@ -268,7 +275,7 @@ pos_t *move_do_alt(pos_t *pos, const move_t move, state_t *state)
         pos_clr_sq(pos, rookfrom);
         pos->castle = clr_castle(pos->castle, us);
     } else if (ptype == PAWN) {                   /* pawn non capture or e.p. */
-        pos->clock_50 = 0;
+        pos->ply50 = 0;
         if (from + up + up == to) {               /* if pawn double push, set e.p. */
             square_t ep = from + up;
             if (bb_pawn_attacks[us][ep] & pos->bb[them][PAWN]) {
@@ -320,6 +327,7 @@ pos_t *move_do_alt(pos_t *pos, const move_t move, state_t *state)
 
     pos->key = key;
 
+    pos->repcount = pos_repcount(pos);
     zobrist_verify(pos);
 
     return pos;
@@ -361,5 +369,7 @@ pos_t *move_undo_alt(pos_t *pos, const move_t move, const state_t *state)
 
     pos->state = *state;                          /* restore irreversible changes */
     pos->turn = us;
+    --pos->plycount;
+    --pos->plyroot;
     return pos;
 }

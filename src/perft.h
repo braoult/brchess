@@ -16,7 +16,7 @@
 
 #include "position.h"
 
-u64 perft(pos_t *pos, int depth, int ply, bool output);
+u64 perft(pos_t *pos, int depth,/* int ply,*/ bool divide);
 u64 perft_alt(pos_t *pos, int depth, int ply, bool output);
 
 #endif  /* PERFT_H */

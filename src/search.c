@@ -20,6 +20,21 @@
 #include "move-do.h"
 #include "search.h"
 #include "attack.h"
+#include "hist.h"
+
+/**
+ * is_draw() - check if position is draw by 50 or repetition rule.
+ * @pos: &position to search
+ *
+ * Note that states before (and including) root position state have
+ * their repcount decreased by one.
+ *
+ * @return: The @pos negamax evaluation.
+ */
+bool is_draw(pos_t *pos)
+{
+    return (pos->ply50 > 100 || pos->repcount);
+}
 
 /**
  * negamax() - search position negamax.

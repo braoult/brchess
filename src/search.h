@@ -16,6 +16,7 @@
 
 #include "position.h"
 
+bool is_draw(pos_t *pos);
 //eval_t negamax(pos_t *pos, int depth, int color);
 //eval_t pvs(pos_t *pos, int depth, int alpha, int beta, int color);
 

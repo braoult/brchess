@@ -48,6 +48,7 @@ extern hist_t hist;
 #define HIST_START  (hist.state)
 
 void hist_init(void);
+state_t *hist_next(void);
 void hist_push(state_t *st); //, move_t *move);
 void hist_link(pos_t *pos);
 state_t *hist_pop(void);

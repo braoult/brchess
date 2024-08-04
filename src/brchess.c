@@ -37,10 +37,10 @@ int main(int ac, char **av)
     pos_t *pos;
     int opt;
 
+    printf("brchess " VERSION "\n");
     init_all();
     pos = pos_new();
-    hist_link(pos);
-    printf("\nWelcome to brchess " VERSION "\nEngine ready.\n");
+    printf("Engine ready.\n");
 
     // size_t len = 0;
     // char *str = NULL;

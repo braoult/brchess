@@ -14,7 +14,6 @@
 #ifndef EVAL_DEFS_H
 #define EVAL_DEFS_H
 
-
 #include "chessdefs.h"
 #include "piece.h"
 #include "eval.h"
@@ -26,7 +25,6 @@ enum {
     ENDGAME,
     PHASE_NB
 };
-typedef s16 phase_t;
 
 /* pieces weight in phase calculation.
  */

@@ -27,6 +27,7 @@
 #include "piece.h"
 #include "move.h"
 #include "board.h"
+#include "eval-defs.h"
 
 typedef struct __pos_s {
     u64 node_count;                               /* evaluated nodes */
@@ -50,14 +51,14 @@ typedef struct __pos_s {
 
                         /* 16 bits */
                         move_t move;
-                        u16 plycount;             /* plies so far, start from 1 */
-                        s16 phase;
 
                         /* 8 bits */
                         square_t en_passant;
                         castle_rights_t castle;
                         piece_t captured;         /* only used in move_undo */
-                        u8 clock_50;
+                        phase_t phase;
+                        u8 ply50;
+                        u8 repcount;              /* repetition count */
         );
     eval_t eval;
     bitboard_t checkers;                          /* opponent checkers */
@@ -66,6 +67,8 @@ typedef struct __pos_s {
     piece_t board[BOARDSIZE];
     bitboard_t bb[2][PT_NB];                      /* bb[0][PAWN], bb[1][ALL_PIECES] */
     square_t king[2];                             /* dup with bb, faster retrieval */
+    u16 plycount;                                 /* plies in game, start from 1 */
+    u8 plyroot;                                   /* plies since search root. root=0 */
 } pos_t;
 
 typedef struct state_s state_t;
@@ -183,6 +186,7 @@ void pos_del(pos_t *pos);
 pos_t *pos_clear(pos_t *pos);
 bool pos_cmp(const pos_t *pos1, const pos_t *pos2);
 
+u8 pos_repcount(pos_t *pos);
 void pos_set_checkers_pinners_blockers(pos_t *pos);
 void pos_set_pinners_blockers(pos_t *pos);
 bitboard_t pos_checkers(const pos_t *pos, const color_t color);

@@ -19,7 +19,7 @@
 #include "chessdefs.h"
 #include "eval-defs.h"
 
-s16 calc_phase(pos_t *pos);
+phase_t calc_phase(pos_t *pos);
 
 eval_t eval_mobility(pos_t *pos, bool color);
 eval_t eval_square_control(pos_t *pos, bool color);

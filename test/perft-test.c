@@ -364,7 +364,7 @@ int main(int ac, char**av)
 
         if (run & 1) {
             clock_start(&clock);
-            my_count = perft(pos, depth, 1, divide);
+            my_count = perft(pos, depth, divide);
             ms = clock_elapsed_ms(&clock);
             if (!ms) {
                 res[0].skipped++;

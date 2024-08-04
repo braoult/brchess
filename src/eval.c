@@ -30,7 +30,7 @@
  *
  * @return:
  */
-s16 calc_phase(pos_t *pos)
+phase_t calc_phase(pos_t *pos)
 {
     int phase = ALL_PHASE;
     phase -= P_PHASE * popcount64(pos->bb[WHITE][PAWN]   | pos->bb[BLACK][PAWN]);

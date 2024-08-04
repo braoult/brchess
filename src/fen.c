@@ -230,12 +230,12 @@ pos_t *fen2pos(pos_t *pos, const char *fen)
 
     /* 5) half moves since last capture or pawn move (50 moves rule)
      */
-    tmppos.clock_50 = 0;
+    tmppos.ply50 = 0;
     tmppos.plycount = 1;
     if (sscanf(cur, "%hd%n", &tmp, &consumed) != 1)
         goto end;                                 /* early end, ignore w/o err */
 
-    tmppos.clock_50 = tmp;
+    tmppos.ply50 = tmp;
     cur += consumed;
     SKIP_BLANK(cur);
 
@@ -350,7 +350,7 @@ char *pos2fen(const pos_t *pos, char *fen)
     /* 5) moves since last capture or pawn move (50 moves rule)
      * 6) current full move number, starting with 1
      */
-    sprintf(fen+cur, "%d %d", pos->clock_50,
+    sprintf(fen+cur, "%d %d", pos->ply50,
             1 + (pos->plycount - (pos->turn == BLACK)) / 2);
     return fen;
 }

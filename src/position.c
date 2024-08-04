@@ -108,6 +108,7 @@ pos_t *pos_clear(pos_t *pos)
 
     pos->king[WHITE] = SQUARE_NONE;
     pos->king[BLACK] = SQUARE_NONE;
+    pos->prev = HIST_START;
 
     return pos;
 }
@@ -130,7 +131,7 @@ bool pos_cmp(const pos_t *pos1, const pos_t *pos2)
 
     /* move_do/undo position state */
     if (_cmpf(key) || _cmpf(en_passant) || _cmpf(castle) ||
-        _cmpf(clock_50) || _cmpf(plycount) || _cmpf(captured))
+        _cmpf(ply50) || _cmpf(plycount) || _cmpf(captured))
         goto end;
 
     if (_cmpf(checkers) || _cmpf(pinners) || _cmpf(blockers))
@@ -178,6 +179,36 @@ bitboard_t pos_checkers(const pos_t *pos, const color_t color)
 {
     bitboard_t occ = pos_occ(pos);
     return sq_attackers(pos, occ, pos->king[color], OPPONENT(color));
+}
+
+/**
+ * pos_repcount() - return position repetition count.
+ * @pos: &position to search
+ *
+ * Attention: positions before (and including) root position repcount is
+ * decreased by one. See do_moves() in uci.c.
+ *
+ * @return: The number of repetitions in history, zero otherwise.
+ */
+u8 pos_repcount(pos_t *pos)
+{
+    int c50 = pos->ply50;
+    state_t *st = &pos->state;
+    hkey_t key = pos->key;
+
+    st = hist_prev4(st);
+    //printf("is rep: START=%p ", HIST_START);
+    //printf("state=%p diff=%zd c50=%d k1=%#lx k2=%#lx\n",
+    //       st, st - HIST_START, c50, hash_short(pos->key), hash_short(st->key));
+
+    /* attention, what about root position ? Isn't it dangerous to compare with
+     * its key ? like: st->prev != HIST_START
+     */
+    for (; c50 >= 0 && st != HIST_START; st = hist_prev2(st), c50 -= 2) {
+        if (key == st->key)
+            return st->repcount + 1;
+    }
+    return false;
 }
 
 /**

@@ -38,6 +38,16 @@ void hist_init(void)
 }
 
 /**
+ * hist_next() - get next history slot.
+ *
+ * return: @state_t next history slot.
+ */
+state_t *hist_next(void)
+{
+    return hist.state + hist.nstates++;
+}
+
+/**
  * hist_push() - add a state to hist list
  * @st:   &state_t to add
  *
@@ -134,9 +144,10 @@ void hist_static_print(void)
 
     printf("UCI state history: ");
     while (true) {
-        printf("%s(#%lx) ",
+        printf("%s(#%lx r=%d) ",
                move_to_str(movestr, st->move, 0),
-               hash_short(st->key));
+               hash_short(st->key),
+               st->repcount);
         if (st == HIST_START)
             break;
         st = hist_prev(st);
@@ -154,9 +165,10 @@ void hist_print(pos_t *pos)
     state_t *st = &pos->state;
     printf("position states history: ");
     while (true) {
-        printf("%s(#%lx) ",
+        printf("%s(#%lx r=%d) ",
                move_to_str(movestr, st->move, 0),
-               hash_short(st->key));
+               hash_short(st->key),
+               st->repcount);
         if (st == HIST_START)
             break;
         st = hist_prev(st);
