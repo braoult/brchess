@@ -47,34 +47,36 @@ bool is_draw(pos_t *pos)
  *
  * @return: The @pos negamax evaluation.
  */
-/*
- * eval_t negamax(pos_t *pos, int depth, int color)
- * {
- *     move_t *move;
- *     pos_t *newpos;
- *     eval_t best = EVAL_MIN, score;
- *
- *     pos->node_count++;
- *     if (depth == 0) {
- *         moves_gen_all_nomoves(pos);
- *         score = eval(pos) * color;
- *         return score;
- *     }
- *     moves_gen_all(pos);
- *     list_for_each_entry(move, &pos->moves[pos->turn], list) {
- *         newpos = move_do(pos, move);
- *         score = -negamax(newpos, depth - 1, -color);
- *         pos->node_count += newpos->node_count;
- *         move->negamax = score;
- *         if (score > best) {
- *             best = score;
- *             pos->bestmove = move;
- *         }
- *         move_undo(newpos, move);
- *     }
- *     return best;
- * }
- */
+eval_t negamax(pos_t *pos, int depth, int color)
+{
+    move_t *move, *last;
+    state_t state;
+    eval_t best = EVAL_MIN, score;
+    movelist_t movelist;
+
+    pos->node_count++;
+    if (depth == 0) {
+        score = eval(pos) * color;
+        return score;
+    }
+    pos_set_checkers_pinners_blockers(pos);
+    pos_gen_legal(pos, &movelist);
+    last = movelist.move + movelist.nmoves;
+    //moves_gen_all(pos);
+    for (move = movelist.move; move < last; ++move) {
+        //list_for_each_entry(move, &pos->moves[pos->turn], list) {
+        move_do(pos, *move, &state);
+        score = -negamax(pos, depth - 1, -color);
+        pos->node_count += pos->node_count;
+        //move->negamax = score;
+        if (score > best) {
+            best = score;
+            pos->eval = best;
+        }
+        move_undo(pos, *move, &state);
+    }
+    return best;
+}
 
 
 /**

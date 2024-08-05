@@ -20,59 +20,79 @@
 #include "move-do.h"
 
 /**
- * perft() - Perform perft on position
+ * do_perft() - perft engine
  * @pos:    &position to search
  * @depth:  Wanted depth.
- * @ply:    current perft depth level (root = 1)
- * @divide: output total for 1st level moves.
  *
- * Run perft on a position. This function displays the available moves at @depth
- * level for each possible first move, and the total of moves.
+ * Run perft on a position.
  *
  * This version uses the algorithm:
- *    if last depth
- *      return 1;
  *    gen legal moves
+ *    if last depth
+ *      return number of legal move
  *    loop for legal move
  *      do-move
- *      perft (depth -1)
+ *      if depth == 2
+ *
+ *      do_perft (depth -1)
  *      undo-move
  *
  * @return: total moves found at @depth level.
  */
 static u64 do_perft(pos_t *pos, int depth)
 {
-    u64 subnodes = 0, nodes = 0;
+    u64 nodes = 0;
     movelist_t movelist;
     move_t *move, *last;
     state_t state;
 
     pos_set_checkers_pinners_blockers(pos);
     pos_legal(pos, pos_gen_pseudo(pos, &movelist));
-    if (depth == 1)
-        return movelist.nmoves;
-    last = movelist.move + movelist.nmoves;
 
-    for (move = movelist.move; move < last; ++move) {
-        move_do(pos, *move, &state);
-        if (depth == 2) {
-            movelist_t movelist2;
-            pos_set_checkers_pinners_blockers(pos);
-            subnodes = pos_legal(pos, pos_gen_pseudo(pos, &movelist2))->nmoves;
-        } else if (pos->plyroot >= 3) {
-            hentry_t *entry = tt_probe_perft(pos->key, depth);
-            if (entry != TT_MISS) {
-                subnodes = HASH_PERFT_VAL(entry->data);
-            } else {
-                subnodes = do_perft(pos, depth - 1);
-                tt_store_perft(pos->key, depth, subnodes);
+    //if (depth == 1)
+    //    return movelist.nmoves;
+
+    last = movelist.move + movelist.nmoves;
+    switch (depth) {
+        case 1:
+            /* This case could be removed if 'case 2' is handled in perft()
+             */
+            return movelist.nmoves;
+            break;
+        case 2:
+            /* For depth 2, we directly calculate the possible legal moves
+             * after each possible moves.
+             */
+            for (move = movelist.move; move < last; ++move) {
+                move_do(pos, *move, &state);
+                movelist_t movelist2;
+                pos_set_checkers_pinners_blockers(pos);
+                nodes += pos_legal(pos, pos_gen_pseudo(pos, &movelist2))->nmoves;
+                move_undo(pos, *move, &state);
             }
-        } else {
-            subnodes = do_perft(pos, depth - 1);
-        }
-        move_undo(pos, *move, &state);
-        nodes += subnodes;
+            break;
+        default:
+            /* Default: Search in TT for same key+depth. Use it if found, create
+             * it otherwise.
+             */
+            for (move = movelist.move; move < last; ++move) {
+                move_do(pos, *move, &state);
+                hentry_t *entry = tt_probe_perft(pos->key, depth);
+                if (entry != TT_MISS) {
+                    nodes += HASH_PERFT_VAL(entry->data);
+                } else {
+                    u64 subnodes = do_perft(pos, depth - 1);
+                    tt_store_perft(pos->key, depth, subnodes);
+                    nodes += subnodes;
+                }
+                move_undo(pos, *move, &state);
+            }
+            //} else {
+            //subnodes = do_perft(pos, depth - 1);
     }
+        //move_undo(pos, *move, &state);
+        //nodes += subnodes;
+    //}
 
     return nodes;
 }
