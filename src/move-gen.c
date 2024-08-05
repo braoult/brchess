@@ -480,3 +480,18 @@ finish:
     return movelist;
     //return movelist->nmoves = moves - movelist->move;
 }
+
+/**
+ * pos_gen_legal() - generate position legal moves
+ * @pos: position
+ * @movelist: &movelist_t array to store moves
+ *
+ * Generate all @pos legal moves for player-to-move.
+ * @movelist is filled with the moves.
+ *
+ * @Return: movelist
+ */
+movelist_t *pos_gen_legal(pos_t *pos, movelist_t *movelist)
+{
+    return pos_legal(pos, pos_gen_pseudo(pos, movelist));
+}

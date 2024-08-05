@@ -102,7 +102,7 @@ endif
 # if no version, use last commit and date.
 # else, if last commit != last tag commit, add commit and date to version number
 ifeq ($(VERSION),)
-  VERSION := $(build)-$(COMMIT)-$(DATE)
+  VERSION := $(build)-git.$(COMMIT)-$(DATE)
 else ifneq ($(COMMIT), $(TAG_COMMIT))
   VERSION := $(VERSION)-next-$(build)-$(COMMIT)-$(DATE)
 endif
