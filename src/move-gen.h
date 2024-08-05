@@ -27,5 +27,6 @@ movelist_t *pos_legal_dup(const pos_t *pos, movelist_t *pseudo, movelist_t *lega
 movelist_t *pos_legal(const pos_t *pos, movelist_t *list);
 
 movelist_t *pos_gen_pseudo(pos_t *pos, movelist_t *movelist);
+movelist_t *pos_gen_legal(pos_t *pos, movelist_t *movelist);
 
 #endif  /* MOVEGEN_H */

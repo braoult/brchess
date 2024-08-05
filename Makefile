@@ -102,7 +102,7 @@ endif
 # if no version, use last commit and date.
 # else, if last commit != last tag commit, add commit and date to version number
 ifeq ($(VERSION),)
-  VERSION := $(build)-$(COMMIT)-$(DATE)
+  VERSION := $(build)-git.$(COMMIT)-$(DATE)
 else ifneq ($(COMMIT), $(TAG_COMMIT))
   VERSION := $(VERSION)-next-$(build)-$(COMMIT)-$(DATE)
 endif
@@ -415,7 +415,7 @@ TEST          += movedo-test perft-test tt-test
 PIECE_OBJS    := piece.o
 FEN_OBJS      := $(PIECE_OBJS) fen.o position.o bitboard.o board.o \
 	hq.o attack.o hash.o init.o util.o alloc.o move.o \
-	eval.o eval-defs.o eval-simple.o
+	eval.o eval-defs.o eval-simple.o hist.o
 BB_OBJS       := $(FEN_OBJS)
 MOVEGEN_OBJS  := $(BB_OBJS) move-gen.o
 ATTACK_OBJS   := $(MOVEGEN_OBJS)
