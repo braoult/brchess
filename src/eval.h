@@ -20,6 +20,11 @@
 #include "eval-defs.h"
 
 phase_t calc_phase(pos_t *pos);
+#ifdef PHASE_VERIFY
+bool phase_verify(pos_t *pos);
+#else
+#define phase_verify(p) true
+#endif
 
 eval_t eval_mobility(pos_t *pos, bool color);
 eval_t eval_square_control(pos_t *pos, bool color);

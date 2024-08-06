@@ -97,12 +97,11 @@ hkey_t zobrist_calc(pos_t *pos)
  * @pos: &position
  *
  * Verify that position Zobrist key matches a full Zobrist calculation.
- * This function cannot be called if ZOBRIST_VERIFY is not set.
+ * This function is inactive if ZOBRIST_VERIFY is not set.
  *
- * @return: True if Zobrist key is OK.
+ * @return: True if Zobrist key is OK, no return otherwise.
  */
 #ifdef ZOBRIST_VERIFY
-
 bool zobrist_verify(pos_t *pos)
 {
     hkey_t diff, key = zobrist_calc(pos);

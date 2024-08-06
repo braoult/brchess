@@ -124,13 +124,14 @@ else # ifeq ($(build),dev)
         #        fen.c
         #CPPFLAGS  += -DDEBUG_FEN                           # FEN decoding
         #        hash / TT
-        #CPPFLAGS  += -DZOBRIST_VERIFY                      # double chk zobrist
+        #CPPFLAGS  += -DZOBRIST_VERIFY                      # incr. zobrist check
         #CPPFLAGS  += -DPERFT_MOVE_HISTORY                  # perft, keep prev moves
         #        attack.c
         #CPPFLAGS  += -DDEBUG_ATTACK_ATTACKERS              # sq_attackers
         #CPPFLAGS  += -DDEBUG_ATTACK_PINNERS                # sq_pinners details
         #        eval.c eval-simple.c
-        CPPFLAGS  += -DDEBUG_EVAL                           # eval
+        CPPFLAGS  += -DDEBUG_EVAL                          # eval
+        CPPFLAGS  += -DPHASE_VERIFY                        # incr. phase check
 
         #        old unused flags
         #CPPFLAGS  += -DDEBUG_POS                           # position.c

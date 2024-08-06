@@ -36,18 +36,24 @@ enum {
     Q_PHASE = 4,
     ALL_PHASE = P_PHASE*16 + N_PHASE*4 + B_PHASE*4 + R_PHASE*4 + Q_PHASE*2
 };
+extern phase_t piece_phase[PIECE_TYPE_NB];
+
+static inline phase_t pt_phase(piece_type_t pt)
+{
+    return piece_phase[pt];
+}
 
 /* max pieces eval is 9*QUEEN_VALUE + 2*ROOK_VALUE + 2*BISHOP_VALUE
  * + 2*KNIGHT_VALUE which is (for a pawn valued at 100) well less than 15,000.
  */
 #define EVAL_MAX     (SHRT_MAX)                   /* 32767 */
 #define EVAL_MIN     (-EVAL_MAX)
-
+#define EVAL_DRAW    0
 #define EVAL_INV     EVAL_MIN
 
 #define EVAL_MATE    30000
 
-/* eval parameters */
+/* engine parameters */
 enum {
     WT_MAT,
     WT_PST,

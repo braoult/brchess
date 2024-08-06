@@ -185,8 +185,8 @@ bitboard_t pos_checkers(const pos_t *pos, const color_t color)
  * pos_repcount() - return position repetition count.
  * @pos: &position to search
  *
- * Attention: positions before (and including) root position repcount is
- * decreased by one. See do_moves() in uci.c.
+ * Attention: positions before (and including) root position repcount are
+ * already decreased by one. See do_moves() in uci.c.
  *
  * @return: The number of repetitions in history, zero otherwise.
  */

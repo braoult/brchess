@@ -19,6 +19,50 @@
 #include "position.h"
 #include "eval.h"
 #include "eval-simple.h"
+#include "hist.h"
+
+/**
+ * calc_phase - calculate position phase
+ * @pos: &position
+ *
+ * This function should be calculated when a new position is setup, or as
+ * a verification of an incremental one.
+ * Note: phase is *not* clamped, to avoid update errors.
+ *
+ * @return: phase value
+ */
+phase_t calc_phase(pos_t *pos)
+{
+    int phase = ALL_PHASE;
+    for (piece_type_t pt = PAWN; pt < KING; ++pt)
+        phase -= piece_phase[pt] * popcount64(pos->bb[WHITE][pt] | pos->bb[BLACK][pt]);
+#   ifdef DEBUG_PHASE
+    printf("calc phase:%d\n", phase);
+#   endif
+    return phase;
+}
+
+/**
+ * phase_verify() - verify position phase.
+ * @pos: &position
+ *
+ * Verify that position phase is correct (a full recalculation is performed).
+ * This function is inactive if PHASE_VERIFY is not set.
+ *
+ * @return: True if phase key is OK, no return otherwise.
+ */
+#ifdef PHASE_VERIFY
+bool phase_verify(pos_t *pos)
+{
+    phase_t verif = calc_phase(pos);
+    if (pos->phase != verif) {
+        warn(true, "warn phase=%d verif=%d\n", pos->phase, verif);
+        hist_print(pos);
+        bug_on(pos->phase != verif);
+    }
+    return true;
+}
+#endif
 
 /**
  * calc_phase - calculate position phase
@@ -30,7 +74,7 @@
  *
  * @return:
  */
-phase_t calc_phase(pos_t *pos)
+__unused static phase_t calc_phase2(pos_t *pos)
 {
     int phase = ALL_PHASE;
     phase -= P_PHASE * popcount64(pos->bb[WHITE][PAWN]   | pos->bb[BLACK][PAWN]);
@@ -41,7 +85,7 @@ phase_t calc_phase(pos_t *pos)
 
     phase = max(phase, 0);
 #   ifdef DEBUG_EVAL
-    printf("calc phase:%d\n", phase);
+    printf("calc phase:%d verif=%d\n", phase, calc_phase(pos));
 #   endif
     return phase;
 }

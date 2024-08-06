@@ -22,6 +22,10 @@
 //#include "eval-simple.h"
 //#include "eval.h"
 
+phase_t piece_phase[PIECE_TYPE_NB] = {
+    0, P_PHASE, N_PHASE, B_PHASE, R_PHASE, Q_PHASE, 0
+};
+
 /* eval parameters definition. */
 static const struct ev_params ev_param_def [EV_PARAMS_NB] = {
     /*                type      setable def   min    max  name */

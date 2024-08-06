@@ -79,16 +79,21 @@ pos_t *move_do(pos_t *pos, const move_t move, state_t *state)
 
     if (is_promotion(move)) {
         bug_on(sq_rank(to) != sq_rel_rank(RANK_8, us));
-        new_piece = MAKE_PIECE(move_promoted(move), us);
+        piece_t promoted = move_promoted(move);
+        new_piece = MAKE_PIECE(promoted, us);
+        pos->phase += pt_phase(PAWN) - pt_phase(promoted);
     }
 
     if (captured != EMPTY) {
         pos->ply50 = 0;
-        bug_on(pos->board[to] == EMPTY || COLOR(pos->captured) != them);
+        pos->phase += pt_phase(PIECE(captured));
+
+        bug_on(COLOR(captured) != them);
         key ^= zobrist_pieces[captured][to];
         pos_clr_sq(pos, to);                      /* clear square */
     } else if (is_castle(move)) {                 /* handle rook move */
         square_t rookfrom, rookto;
+
         if (to > from) {
             rookfrom = sq_rel(H1, us);
             rookto = sq_rel(F1, us);
@@ -105,6 +110,7 @@ pos_t *move_do(pos_t *pos, const move_t move, state_t *state)
         pos->ply50 = 0;
         if (from + up + up == to) {               /* if pawn double push, set e.p. */
             square_t ep = from + up;
+
             if (bb_pawn_attacks[us][ep] & pos->bb[them][PAWN]) {
                 pos->en_passant = ep;
                 key ^= zobrist_ep[EP_ZOBRIST_IDX(pos->en_passant)];
@@ -112,6 +118,8 @@ pos_t *move_do(pos_t *pos, const move_t move, state_t *state)
         } else if (is_enpassant(move)) {          /* clear grabbed pawn */
             square_t grabbed = to - up;
             piece_t pc = pos->board[grabbed];
+
+            pos->phase += pt_phase(PAWN);
             key ^= zobrist_pieces[pc][grabbed];
             pos_clr_sq(pos, grabbed);
         }
@@ -155,7 +163,12 @@ pos_t *move_do(pos_t *pos, const move_t move, state_t *state)
     pos->key = key;
 
     pos->repcount = pos_repcount(pos);
+
+    /* consistency checks.
+     * Checks done only if compiled with '-DZOBRIST_VERIFY' or '-DPHASE_VERIFY'
+     */
     zobrist_verify(pos);
+    phase_verify(pos);
 
     return pos;
 }
