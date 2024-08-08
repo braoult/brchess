@@ -39,7 +39,9 @@ OBJ       := $(addprefix $(OBJDIR)/,$(SRC_FN:.c=.o))
 TSTSRC    := $(wildcard $(TSTDIR)/*.c)
 
 LIB       := br_$(shell uname -m)                           # library name
-LIBS      := $(strip -l$(LIB))
+LIB       := $(strip $(LIB))
+LIBFILE   := ${BRLIBDIR}/lib$(strip ${LIB}).a
+LIBS      := $(addprefix -l,$(strip $(LIB)))
 
 DEP_FN    := $(SRC_FN)
 DEP       := $(addprefix $(DEPDIR)/,$(DEP_FN:.c=.d))
@@ -345,6 +347,7 @@ brlib:
 	$(info calling with build=$(build))
 	$(MAKE) -e -C $(BRLIB) lib-static
 unexport build
+
 ##################################### brchess binaries
 .PHONY: targets cleanbin cleanbindir
 
@@ -356,9 +359,9 @@ cleanbin:
 cleanbindir:
 	$(call rmdir,$(BINDIR),binaries)
 
-$(TARGET): libs $(OBJ) | $(BINDIR)
+$(TARGET): $(LIBFILE) $(OBJ) | $(BINDIR) libs
 	@echo linking $@.
-	$(CC) $(LDFLAGS) $(OBJ) $(LIBS) -o $@
+	$(CC) $(ALL_LDFLAGS) $(OBJ) -o $@
 
 ##################################### pre-processed (.i) and assembler (.s) output
 .PHONY: cleanasmcpp
@@ -491,6 +494,7 @@ wtf:
 	@#echo LIBSRC=$(LIBSRC)
 
 zob:
+	echo $(LIBFILE)
 	@#$(CC) $(LDFLAGS) $(CPPFLAGS) $(CFLAGS) $< $(LIBS) src/util.c -o util
 
 ##################################### End of multi-targets
