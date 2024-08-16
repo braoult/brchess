@@ -48,19 +48,15 @@ eval_t eval_material(pos_t *pos)
  * eval_simple() - simple and fast position evaluation
  * @pos: &position to evaluate
  *
- * This function is normally used only during initialization,
- * or when changing phase (middlegame <--> endgame), as the eval
- * will be done incrementally when doing moves.
- *
  * @return: the @pos evaluation in centipawns
  */
 eval_t eval_simple(pos_t *pos)
 {
-    eval_t eval[2] = { 0, 0 };
+    eval_t eval[2] = { 0, 0 }, res;
     eval_t mg_eval[2], eg_eval[2];
-    //struct pc_sq = sq_ int (*gg)[6 + 2][64] = eg? pc_sq_eg: pc_sq_mg;
 
-    //pos->eval_simple_phase = ENDGAME;
+    int eg_weight = clamp((int) pos->phase, ALL_PHASE, 0);
+    int mg_weight = ALL_PHASE - pos->phase;
 
     for (color_t color = WHITE; color < COLOR_NB; ++color) {
         mg_eval[color] = 0;
@@ -80,10 +76,15 @@ eval_t eval_simple(pos_t *pos)
 
         }
     }
+    eval[WHITE] = mg_eval[WHITE] * mg_weight + eg_eval[WHITE] * eg_weight;
+    eval[BLACK] = mg_eval[BLACK] * mg_weight + eg_eval[BLACK] * eg_weight;
+    res = (eval[WHITE] - eval[BLACK]) / ALL_PHASE;
 #   ifdef DEBUG_EVAL
-    printf("phase:%d mg[WHITE]:%d mg[BLACK]:%d eg[WHITE]:%d eg[BLACK]:%d\n",
-           pos->phase, mg_eval[WHITE], mg_eval[BLACK], eg_eval[WHITE], eg_eval[BLACK]);
+    printf("phase:%d mg:%d/%d eg:%d/%d ev:%d/%d RES=%d\n",
+           pos->phase, mg_eval[WHITE], mg_eval[BLACK],
+           eg_eval[WHITE], eg_eval[BLACK],
+           eval[WHITE], eval[BLACK], res
+        );
 #   endif
-
-    return eval[WHITE] - eval[BLACK];
+    return res;
 }

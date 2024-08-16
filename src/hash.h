@@ -44,14 +44,16 @@ typedef u64 hkey_t;                               /* cannot use typedef for key_
  * 16 bytes in future, it should be updated to be exactly 32 bytes.
  */
 typedef struct {
-    hkey_t key;                                   /* zobrist */
+    hkey_t key;                                   /* position key */
     union {
         u64 data;
         struct {
-            u16 depth;                            /* ply in search */
-            s16 eval;
-            move_t move;
-            //u8 flags;                             /* maybe for locking, etc... */
+            s16 eval;                             /* 16: eval */
+            move_t move;                          /* 16: best move */
+            u8 depth;                             /*  8: search depth */
+            u8 gen8;                              /*  8: search generation */
+
+            //flags;                             /* maybe for locking, etc... */
             //u8 filler;
         };
     };

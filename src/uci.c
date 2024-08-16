@@ -17,6 +17,7 @@
 #include <ctype.h>
 
 #include <brlib.h>
+#include <bug.h>
 
 #include "chessdefs.h"
 #include "util.h"
@@ -50,6 +51,7 @@ int do_quit(pos_t *, char *);
 
 int do_setoption(pos_t *, char *);
 int do_position(pos_t *, char *);
+int do_go(pos_t *, char *);
 
 /* commands *NOT* in UCI standard */
 int do_moves(pos_t *, char *);
@@ -66,6 +68,8 @@ struct command commands[] = {
     { "isready",    do_isready, "" },
     { "setoption",  do_setoption, ""},
     { "position",   do_position, "position startpos|fen [moves ...]" },
+    { "go",         do_go, "go" },
+
 
     { "perft",      do_perft, "(not UCI) perft [divide] [alt] depth" },
     { "moves",      do_moves, "(not UCI) moves ..." },
@@ -334,13 +338,12 @@ int do_setoption(__unused pos_t *pos, __unused char *arg)
 
 int do_position(pos_t *pos, char *arg)
 {
-    char *saveptr, *token, *fen, *moves;
+    char *saveptr = NULL, *token, *fen, *moves;
 
     hist_init();
 
     /* separate "moves" section */
     moves = str_token(arg, "moves");
-    saveptr = NULL;
     token = strtok_r(arg, " ", &saveptr);
     if (!strcmp(token, "startpos")) {
         startpos(pos);
@@ -374,13 +377,56 @@ int do_position(pos_t *pos, char *arg)
     return 1;
 }
 
+
+int do_go(pos_t *pos, char *arg)
+{
+    char *ptr = NULL, *tok, *val;
+
+    //token = strtok_r(arg, " ", &saveptr);
+    for (tok = strtok_r(arg, " ", &ptr); tok; tok = strtok_r(arg, " ", &ptr)) {
+        /* TODO: Find a "clever" way to get the different values without
+         * multiple "strcmp"
+         */
+
+        if (!strcmp(tok, "searchmoves")) {        /* moves list */
+            ;
+        } else if (!strcmp(tok, "wtime")) {       /* integer */
+            ;
+        } else if (!strcmp(tok, "btime")) {       /* integer */
+            ;
+        } else if (!strcmp(tok, "winc")) {        /* integer */
+            ;
+        } else if (!strcmp(tok, "binc")) {        /* integer */
+            ;
+        } else if (!strcmp(tok, "movestogo")) {   /* integer */
+            ;
+        } else if (!strcmp(tok, "depth")) {       /* integer */
+            if ((val = strtok_r(arg, " ", &ptr)))
+                search_uci.depth = atoi(val);
+            ;
+        } else if (!strcmp(tok, "nodes")) {       /* integer */
+            ;
+        } else if (!strcmp(tok, "mate")) {        /* integer */
+            ;
+        } else if (!strcmp(tok, "movetime")) {    /* integer */
+            ;
+        } else if (!strcmp(tok, "ponder")) {      /* no param */
+            ;
+        } else if (!strcmp(tok, "infinite")) {    /* no param */
+            ;
+        }
+
+    }
+    search(pos);
+    return 1;
+}
+
 int do_moves(__unused pos_t *pos, char *arg)
 {
     char *saveptr = NULL, *token, check[8];
     move_t move;
     movelist_t movelist;
 
-    saveptr = NULL;
     token = strtok_r(arg, " ", &saveptr);
     while (token) {
         move = move_from_str(token);

@@ -16,8 +16,21 @@
 
 #include "position.h"
 
+/**
+ * search_values_t - search values given by "go" command
+ * @depth: max depth "go depth X", MAX_DEPTH for no limit
+ *
+ *
+ */
+typedef struct {
+    u16 depth;                                    /* go depth X */
+} search_uci_t;
+
+extern search_uci_t search_uci;
+
 bool is_draw(pos_t *pos);
-//eval_t negamax(pos_t *pos, int depth, int color);
+eval_t negamax(pos_t *pos, int depth, int color);
+void search(pos_t *pos);
 //eval_t pvs(pos_t *pos, int depth, int alpha, int beta, int color);
 
 #endif  /* SEARCH_H */

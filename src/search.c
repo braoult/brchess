@@ -15,12 +15,16 @@
 
 #include <brlib.h>
 
+#include "chessdefs.h"
+
 #include "position.h"
 #include "move-gen.h"
 #include "move-do.h"
 #include "search.h"
 #include "attack.h"
 #include "hist.h"
+
+search_uci_t search_uci;
 
 /**
  * is_draw() - check if position is draw by 50 or repetition rule.
@@ -55,20 +59,25 @@ eval_t negamax(pos_t *pos, int depth, int color)
     movelist_t movelist;
 
     pos->node_count++;
+
+    if (pos_repcount(pos))                        /* repetition */
+        return EVAL_DRAW * color;
+
+    pos_set_checkers_pinners_blockers(pos);
+    pos_gen_legal(pos, &movelist);
+
+    if (!movelist.nmoves)                         /* no move: mate ot draw */
+        return (pos->checkers? EVAL_MATE: EVAL_DRAW) * color;
+
     if (depth == 0) {
         score = eval(pos) * color;
         return score;
     }
-    pos_set_checkers_pinners_blockers(pos);
-    pos_gen_legal(pos, &movelist);
+
     last = movelist.move + movelist.nmoves;
-    //moves_gen_all(pos);
     for (move = movelist.move; move < last; ++move) {
-        //list_for_each_entry(move, &pos->moves[pos->turn], list) {
         move_do(pos, *move, &state);
         score = -negamax(pos, depth - 1, -color);
-        pos->node_count += pos->node_count;
-        //move->negamax = score;
         if (score > best) {
             best = score;
             pos->eval = best;
@@ -78,6 +87,21 @@ eval_t negamax(pos_t *pos, int depth, int color)
     return best;
 }
 
+/**
+ * search() - do (iterative) search.
+ * @pos: &position to search
+ * @depth: wanted depth.
+ * @alpha: alpha.
+ * @beta: beta.
+ * @color: 1 for white, -1 for black.
+ *
+ *
+ * @return: The @pos PVS evaluation.
+ */
+void search(__unused pos_t *pos)
+{
+
+}
 
 /**
  * pvs() - Principal Variation Search.
