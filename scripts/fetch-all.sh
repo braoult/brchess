@@ -29,6 +29,9 @@ readarray -t orig_b  < <(git for-each-ref --format='%(refname:short)' \
 # bugs:
 #  - We only check local branch existence, not tracking information correctness.
 #  - What about sub-branches ? Like remote/a and remote/a/b not being tracked ?
+#for i in `git branch -a | grep remote | grep -v HEAD | grep -v master`; do
+#    git branch --track ${i#remotes/origin/} $i
+#done
 for remote_b in "${orig_b[@]}"; do
     short=${remote_b#"$origin"/};
     # OR (??): short=${remote_b##*/}

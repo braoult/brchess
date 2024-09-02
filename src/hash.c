@@ -266,10 +266,8 @@ hentry_t *tt_probe(hkey_t key)
     for (i = 0; i < ENTRIES_PER_BUCKET; ++i) {
         entry = bucket->entry + i;
         if (key == entry->key)
-            break;
+            return entry;
     }
-    if (i < ENTRIES_PER_BUCKET)
-        return entry;
     return NULL;
 }
 
