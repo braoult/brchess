@@ -76,15 +76,15 @@ typedef struct {
 
     /* memory size in bytes/mb */
     size_t bytes;
-    u32  mb;
+    u32 mb;
 
     /* size in buckets/keys */
     size_t nbuckets;
     size_t nkeys;                                 /* nbuckets * NBUCKETS */
 
     /* internal representation */
-    u32  nbits;                                   /* #buckets in bits, power of 2 */
-    u32  mask;                                    /* nbuckets - 1, key mask */
+    u32 nbits;                                    /* #buckets in bits, power of 2 */
+    u64 mask;                                     /* nbuckets - 1, bucket mask */
 
     /* stats - unsure about usage */
     //size_t used_buckets;
@@ -106,8 +106,8 @@ typedef struct {
 
 extern hkey_t zobrist_pieces[16][64];
 extern hkey_t zobrist_castling[4 * 4 + 1];
-extern hkey_t zobrist_turn;                        /* for black, XOR each ply */
-extern hkey_t zobrist_ep[9];                       /* 0-7: ep file, 8: SQUARE_NONE */
+extern hkey_t zobrist_turn;                       /* for black, XOR each ply */
+extern hkey_t zobrist_ep[9];                      /* 0-7: ep file, 8: SQUARE_NONE */
 
 extern hasht_t hash_tt;                           /* main transposition table */
 

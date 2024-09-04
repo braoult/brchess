@@ -199,6 +199,10 @@ struct fentest {
      * tests from talkchess                              *
      *****************************************************/
     { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
+      "https://talkchess.com/viewtopic.php?t=21343",
+      "8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1"
+    },
+    { __LINE__, FEN | MOVEGEN | MOVEDO | PERFT,
       "https://www.talkchess.com/forum3/viewtopic.php?f=7&t=71379",
       "8/6kR/8/8/8/bq6/1rqqqqqq/K1nqnbrq b - - 0 1"
     },

@@ -16,9 +16,10 @@
 
 #include <brlib.h>                                /* brlib types */
 
-#define ONE                1ul
 #define U64(const_u64)     const_u64##UL
-#define BIT(i)             ( (u64) (ONE << (i)) )
+#define BIT(i)             ( U64(1) << (i) )
+#define BIT_NONE           ( U64(0) )
+#define BIT_ALL            ( ~BIT_NONE )
 
 #define BOARDSIZE          (8*8)
 #define GAMESIZE           1024                   /* max game size (512 moves) */

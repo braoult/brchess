@@ -202,7 +202,7 @@ int tt_create(s32 sizemb)
         hash_tt.bytes    = hash_tt.nbuckets * sizeof(bucket_t);
         hash_tt.mb       = hash_tt.bytes / 1024 / 1024;
 
-        hash_tt.mask     = -1ull >> (64 - nbits);
+        hash_tt.mask     = BIT_ALL >> (64 - nbits);
 
         hash_tt.keys     = safe_alloc_aligned_hugepage(hash_tt.bytes);
 
@@ -295,6 +295,7 @@ hentry_t *tt_probe_perft(const hkey_t key, const u16 depth)
     /* find key in buckets */
     for (i = 0; i < ENTRIES_PER_BUCKET; ++i) {
         entry = bucket->entry + i;
+        bug_on(entry->key && (key & hash_tt.mask) != (entry->key & hash_tt.mask));
         if (key == entry->key && HASH_PERFT_DEPTH(entry->data) == depth) {
             hash_tt.hits++;
             /*
@@ -390,7 +391,7 @@ hentry_t *tt_store_perft(const hkey_t key, const u16 depth, const u64 nodes)
 void tt_info()
 {
     if (hash_tt.keys) {
-        printf("TT: Mb:%d buckets:%'lu (bits:%u mask:%#x) entries:%'lu\n",
+        printf("TT: Mb:%d buckets:%'lu (bits:%u mask:%#lx) entries:%'lu\n",
                hash_tt.mb, hash_tt.nbuckets, hash_tt.nbits,
                hash_tt.mask, hash_tt.nkeys);
     } else {

@@ -256,8 +256,7 @@ static const struct pst {
              * A1 ..... H1
              */
             [PAWN] = {
-                { /* H1                                 H8 */
-                    /* midgame */
+                {                                 /* midgame */
                     +0,  0,   0,   0,   0,   0,  0,  0,
                     50, 50,  50,  50,  50,  50, 50, 50,
                     10, 10,  20,  30,  30,  20, 10, 10,
@@ -575,8 +574,8 @@ void pst_init(int set)
         eval_t mid_pc = piece_midval(pt);
         eval_t end_pc = piece_endval(pt);
         for (square_t sq = 0; sq < SQUARE_NB; ++sq) {
-            eval_t mid_pst = pst->val[MIDGAME][pt][sq];
-            eval_t end_pst = pst->val[ENDGAME][pt][sq];
+            eval_t mid_pst = pst->val[pt][MIDGAME][sq];
+            eval_t end_pst = pst->val[pt][ENDGAME][sq];
 
             pst_mg[BLACK][pt][sq] = (mid_pc * wmat + mid_pst * wpst) / 100;
             pst_eg[BLACK][pt][sq] = (end_pc * wmat + end_pst * wpst) / 100;
