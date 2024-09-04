@@ -159,22 +159,22 @@ ifeq ($(build),release)
         #CFLAGS    += -g
         #CFLAGS    += -ginline-points                   # inlined funcs debug info
         LDFLAGS   += -flto
+else ifeq ($(build),perf)
+        CFLAGS    += -O3
+        CFLAGS    += -ggdb0                            # symbols (gdb, perf, etc.)
+        CFLAGS    += -ginline-points                   # inlined funcs debug info
+        CFLAGS    += -funroll-loops
 else ifeq ($(build),dev)
-        CFLAGS    += -Og
-        CFLAGS    += -g                                # symbols (gdb, perf, etc.)
+        CFLAGS    += -O1
+        CFLAGS    += -ggdb                             # symbols (gdb, perf, etc.)
         CFLAGS    += -ginline-points                   # inlined funcs debug info
         #CFLAGS += -pg                                 # gprof
         # Next one may be useful for valgrind (when invalid instructions)
         #CFLAGS += -mno-tbm
-else ifeq ($(build),perf)
-        CFLAGS    += -O3
-        CFLAGS    += -g                                # symbols (gdb, perf, etc.)
-        CFLAGS    += -ginline-points                   # inlined funcs debug info
-        CFLAGS    += -funroll-loops
 else ifeq ($(build),debug)
-        CFLAGS    += -Og
-        CFLAGS    += -g                                # symbols (gdb, perf, etc.)
-        CFLAGS    += -ginline-points                   # inlined funcs debug info
+        CFLAGS    += -O0                               # -Og hides some variables
+        CFLAGS    += -ggdb3                            # symbols (including macro)
+        #CFLAGS    += -ginline-points                   # inlined funcs debug info
         # for gprof
         #CFLAGS += -pg
         # Next one may be useful for valgrind (when invalid instructions)
