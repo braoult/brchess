@@ -41,7 +41,7 @@ s16 calc_phase(pos_t *pos)
 
     phase = max(phase, 0);
 #   ifdef DEBUG_EVAL
-    printf("calc phase:%d\n", phase);
+    printf("calculated phase:%d\n", phase);
 #   endif
     return phase;
 }

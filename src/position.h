@@ -88,8 +88,8 @@ static __always_inline void pos_set_sq(pos_t *pos, square_t square, piece_t piec
     bug_on(pos->board[square] != EMPTY);
 
     pos->board[square] = piece;
-    pos->bb[color][type] |= BIT(square);
-    pos->bb[color][ALL_PIECES] |= BIT(square);
+    pos->bb[color][type] ^= BIT(square);
+    pos->bb[color][ALL_PIECES] ^= BIT(square);
     //if (type == KING)
     //    pos->king[color] = square;
 
@@ -114,10 +114,36 @@ static __always_inline void pos_clr_sq(pos_t *pos, square_t square)
     //pos->key ^= zobrist_pieces[piece][square];
 
     pos->board[square] = EMPTY;
-    pos->bb[color][type] &= ~BIT(square);
-    pos->bb[color][ALL_PIECES] &= ~BIT(square);
+    pos->bb[color][type] ^= BIT(square);
+    pos->bb[color][ALL_PIECES] ^= BIT(square);
     //if (type == KING)
     //    pos->king[color] = SQUARE_NONE;
+}
+
+/**
+ * pos_mv_sq - move a piece from a square to another one.
+ * @pos: position
+ * @from: source square
+ * @to: dest square
+ *
+ * Both position board and bitboards are modified.
+ * This function is equivalent to:
+ *      pos_set_sq(pos, to, pos->board[from]);
+ *      pos_clr_sq(pos, from);
+ */
+static __always_inline void pos_mv_sq(pos_t *pos, square_t from, square_t to)
+{
+    piece_t pc = pos->board[from];
+    piece_type_t pt = PIECE(pc);
+    color_t color = COLOR(pc);
+    bitboard_t bb_squares = BIT(from) | BIT(to);
+
+    bug_on(pc == EMPTY || pos->board[to] != EMPTY);
+
+    pos->board[from] = EMPTY;
+    pos->board[to] = pc;
+    pos->bb[color][pt] ^= bb_squares;
+    pos->bb[color][ALL_PIECES] ^= bb_squares;
 }
 
 /**

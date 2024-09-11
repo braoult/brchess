@@ -183,19 +183,6 @@ static __always_inline bitboard_t bb_file(int file)
 */
 
 /**
- * bb_first_bb() - return bitboard of first square of a bitboard.
- * @bb: bitboard
- *
- * bb must be non-zero.
- *
- * @return: bitboard of first square (lsb) of @bb.
- */
-static __always_inline square_t bb_first_bb(bitboard_t bb)
-{
-    return bb & -bb;
-}
-
-/**
  * bb_next() - clear and return next (lsb) square of a bitboard.
  * @bb: &bitboard
  *
@@ -205,7 +192,7 @@ static __always_inline square_t bb_first_bb(bitboard_t bb)
  */
 static __always_inline square_t bb_next(bitboard_t *bb)
 {
-    square_t sq = ctz64(*bb);
+    square_t sq = lsb64(*bb);
     *bb &= *bb - 1;
     return sq;
 }

@@ -52,8 +52,8 @@ int main(int __unused ac, __unused char**av)
         for (move = movelist.move; move < last; ++move) {
             //pos_print(pos);
             //printf("i=%d j=%d  turn=%d move=[%s]\n", i, j, pos->turn,
-            //       move_str(movebuf, move, 0));
-            //move_p
+            //       move_to_str(movebuf, *move, 0));
+
             move_do(pos, *move, &state);
             //pos_print(pos);
             //fflush(stdout);
@@ -67,6 +67,7 @@ int main(int __unused ac, __unused char**av)
             move_undo(pos, *move, &state);
             pos->state = state;
             if (!pos_ok(pos, false)) {
+                //pos_print(pos);
                 printf("*** fen %d [%s] move %d [%s] invalid position after move_undo\n",
                        test_line, fen, j, movebuf);
                 exit(0);

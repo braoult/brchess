@@ -51,7 +51,7 @@
 
 /* castle_t bits structure
  */
-typedef enum {
+enum {
     CASTLE_NONE = 0,
     CASTLE_WK   = (1 << 0),                       /* 0001 */
     CASTLE_WQ   = (1 << 1),                       /* 0010 */
@@ -65,7 +65,9 @@ typedef enum {
     CASTLE_K  = (1 << 0),                         /* generic K/Q, bits 0 and 1 */
     CASTLE_Q  = (1 << 1),
     CASTLE_KQ = (CASTLE_K |CASTLE_Q),
-} castle_rights_t;
+};
+
+typedef u8 castle_rights_t;
 
 /* determine is oo or ooo is possible with castle flags f and color c
  */
