@@ -126,7 +126,7 @@ else # ifeq ($(build),dev)
         #        fen.c
         #CPPFLAGS  += -DDEBUG_FEN                           # FEN decoding
         #        hash / TT
-        #CPPFLAGS  += -DZOBRIST_VERIFY                      # double chk zobrist
+        CPPFLAGS  += -DZOBRIST_VERIFY                       # double chk zobrist
         #CPPFLAGS  += -DPERFT_MOVE_HISTORY                  # perft, keep prev moves
         #        attack.c
         #CPPFLAGS  += -DDEBUG_ATTACK_ATTACKERS              # sq_attackers
@@ -229,16 +229,16 @@ else
 all: libs testing $(TARGET)
 
 release:
-	$(MAKE) BUILD=release clean all
+	$(MAKE) build=release clean all
 
 dev:
-	$(MAKE) BUILD=dev clean all
+	$(MAKE) build=dev clean all
 
 perf:
-	$(MAKE) BUILD=perf clean all
+	$(MAKE) build=perf clean all
 
 debug:
-	$(MAKE) BUILD=debug clean all
+	$(MAKE) build=debug clean all
 
 compile: brlib objs
 

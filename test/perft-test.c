@@ -242,7 +242,9 @@ static int usage(char *prg)
     fprintf(stderr, "Usage: %s [-cms][-d depth] [-p version] [-t size:\n", prg);
     fprintf(stderr, "\t-c:         do *not* print FEN comments\n");
     fprintf(stderr, "\t-d depth:   perft depth (default: 6)\n");
+    fprintf(stderr, "\t-l line:    start from 'line' test\n");
     fprintf(stderr, "\t-m:         print moves details\n");
+    fprintf(stderr, "\t-n number:  do 'number' tests (default: all)\n");
     fprintf(stderr, "\t-s:         use Stockfish to validate perft result\n");
     fprintf(stderr, "\t-t size:    Transposition Table size (Mb). Default: 32\n");
     fprintf(stderr,
@@ -252,7 +254,7 @@ static int usage(char *prg)
 
 int main(int ac, char**av)
 {
-    int curtest = 0;
+    int curtest = 0, totalfen = 0;
     u64 sf_count = 0, my_count;
     bool comment = true, sf_run = false, divide = false;
     char *fen;
@@ -262,6 +264,8 @@ int main(int ac, char**av)
     FILE *outfd = NULL;
     s64 ms, lps;
     int opt, depth = 6, run = 3, tt, newtt = HASH_SIZE_DEFAULT;
+    int startline = 1, ntests = INT_MAX;
+
     struct {
         s64 count, countskipped, ms;
         s64 minlps, maxlps;
@@ -273,7 +277,8 @@ int main(int ac, char**av)
         { .minlps = LONG_MAX },
     };
 
-    while ((opt = getopt(ac, av, "cd:mp:st:")) != -1) {
+    printf("Perft " VERSION "\n");
+    while ((opt = getopt(ac, av, "cd:l:mn:p:st:")) != -1) {
         switch (opt) {
             case 'c':
                 comment = false;
@@ -283,8 +288,14 @@ int main(int ac, char**av)
                 if (depth <= 0)
                     depth = 6;
                 break;
+            case 'l':
+                startline = atoi(optarg);
+                break;
             case 'm':
                 divide = true;
+                break;
+            case 'n':
+                ntests = atoi(optarg);
                 break;
             case 'p':
                 run = atoi(optarg);
@@ -325,14 +336,23 @@ int main(int ac, char**av)
     if (sf_run)
         outfd = open_stockfish();
 
+    /* count total fen tests we will do */
+    while (next_fen(PERFT | MOVEDO))
+        totalfen++;
+    restart_fen();
+
     CLOCK_DEFINE(clock, CLOCK_MONOTONIC);
     while ((fen = next_fen(PERFT | MOVEDO))) {
+        if (cur_line() < startline)
+            continue;
+        if (curtest >= ntests)
+            break;
         if (!(fenpos = fen2pos(pos, fen))) {
             printf("wrong fen line:%d fen:%s\n\n", cur_line(), fen);
             continue;
         }
         curtest++;
-        printf("test:%d line:%d fen:%s\n", curtest, cur_line(), fen);
+        printf("test:%d/%d line:%d fen:%s\n", curtest, totalfen, cur_line(), fen);
         if (comment)
             printf("\t\"%s\"\n",
                    *cur_comment()? cur_comment(): "no test desc");

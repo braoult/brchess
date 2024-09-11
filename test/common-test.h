@@ -451,7 +451,12 @@ struct fentest {
 
 static int fentest_cur = -1;
 
-static char *next_fen(uint module)
+static __unused void restart_fen(void)
+{
+    fentest_cur = -1;
+}
+
+static __unused char *next_fen(uint module)
 {
     fentest_cur++;
 
