@@ -143,7 +143,8 @@ endif
 CPPFLAGS  := $(strip $(CPPFLAGS))
 
 ##################################### compiler / linker flags
-CFLAGS    := -std=gnu11
+#CFLAGS    := -std=gnu11
+CFLAGS    := -std=gnu17
 
 CFLAGS    += -Wall -Wextra -Wshadow -Wmissing-declarations
 CFLAGS    += -march=native
